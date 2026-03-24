@@ -1,10 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { criarProfissional } from "../services/profissionais";
 import { listarClinicas } from "../services/clinicas";
+import { useAuth } from "../context/AuthContext";
+
+function getPerfil(user) {
+  return String(user?.perfil || "").trim().toUpperCase();
+}
+
+function isAdmin(user) {
+  return ["ADMIN", "ADMIN_CLINICA", "ADMINISTRADOR"].includes(getPerfil(user));
+}
 
 export default function NovoProfissional() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  const admin = useMemo(() => isAdmin(user), [user]);
 
   const [form, setForm] = useState({
     nome: "",
@@ -14,7 +26,7 @@ export default function NovoProfissional() {
   });
 
   const [clinicas, setClinicas] = useState([]);
-  const [loadingClinicas, setLoadingClinicas] = useState(true);
+  const [loadingClinicas, setLoadingClinicas] = useState(false);
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -24,23 +36,32 @@ export default function NovoProfissional() {
 
   useEffect(() => {
     async function loadClinicas() {
+      if (!admin) return;
+
       try {
         setLoadingClinicas(true);
         const data = await listarClinicas();
         setClinicas(Array.isArray(data) ? data : []);
       } catch (e) {
-        const msg =
-          e?.response?.data?.detail ||
-          e?.message ||
-          "Falha ao carregar clínicas.";
-        setErro(String(msg));
+        setErro("Falha ao carregar clínicas.");
       } finally {
         setLoadingClinicas(false);
       }
     }
 
     loadClinicas();
-  }, []);
+  }, [admin]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (!admin && user?.clinica_id) {
+      setForm((prev) => ({
+        ...prev,
+        clinica_id: String(user.clinica_id),
+      }));
+    }
+  }, [user, admin]);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -51,8 +72,16 @@ export default function NovoProfissional() {
       return;
     }
 
-    if (!form.clinica_id) {
-      setErro("Selecione a clínica.");
+    const clinicaIdFinal = admin
+      ? form.clinica_id
+      : user?.clinica_id
+      ? String(user.clinica_id)
+      : "";
+
+    if (!clinicaIdFinal) {
+      setErro(
+        admin ? "Selecione a clínica." : "Usuário sem clínica vinculada."
+      );
       return;
     }
 
@@ -63,87 +92,73 @@ export default function NovoProfissional() {
         nome: form.nome.trim(),
         email: form.email?.trim() || null,
         especialidade: form.especialidade?.trim() || null,
-        clinica_id: Number(form.clinica_id),
+        clinica_id: Number(clinicaIdFinal),
       });
 
       navigate("/profissionais");
     } catch (e2) {
       const msg =
         e2?.response?.data?.detail ||
-        e2?.message ||
         "Falha ao criar profissional.";
-      setErro(String(msg));
+      setErro(msg);
     } finally {
       setSaving(false);
     }
   }
+
+  if (loading) return <div>Carregando...</div>;
 
   return (
     <div style={{ padding: 24, maxWidth: 720, margin: "0 auto" }}>
       <h2>Novo Profissional</h2>
 
       <form onSubmit={onSubmit}>
-        <div style={{ marginTop: 12 }}>
-          <label>Nome</label>
-          <input
-            value={form.nome}
-            onChange={(e) => setField("nome", e.target.value)}
-            required
-            style={{ width: "100%", padding: 10 }}
-          />
-        </div>
+        <input
+          placeholder="Nome"
+          value={form.nome}
+          onChange={(e) => setField("nome", e.target.value)}
+        />
 
-        <div style={{ marginTop: 12 }}>
-          <label>Email</label>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(e) => setField("email", e.target.value)}
-            style={{ width: "100%", padding: 10 }}
-          />
-        </div>
+        <input
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) => setField("email", e.target.value)}
+        />
 
-        <div style={{ marginTop: 12 }}>
-          <label>Especialidade</label>
-          <input
-            value={form.especialidade}
-            onChange={(e) => setField("especialidade", e.target.value)}
-            placeholder="Ex.: Psicologia, Fonoaudiologia, Terapia Ocupacional"
-            style={{ width: "100%", padding: 10 }}
-          />
-        </div>
+        <input
+          placeholder="Especialidade"
+          value={form.especialidade}
+          onChange={(e) => setField("especialidade", e.target.value)}
+        />
 
-        <div style={{ marginTop: 12 }}>
+        <div>
           <label>Clínica</label>
-          <select
-            value={form.clinica_id}
-            onChange={(e) => setField("clinica_id", e.target.value)}
-            required
-            disabled={loadingClinicas}
-            style={{ width: "100%", padding: 10 }}
-          >
-            <option value="">
-              {loadingClinicas ? "Carregando clínicas..." : "(selecione)"}
-            </option>
-            {clinicas.map((clinica) => (
-              <option key={clinica.id} value={clinica.id}>
-                {clinica.nome}
-              </option>
-            ))}
-          </select>
+
+          {admin ? (
+            <select
+              value={form.clinica_id}
+              onChange={(e) => setField("clinica_id", e.target.value)}
+            >
+              <option value="">Selecione</option>
+              {clinicas.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              value={`Clínica ID ${user?.clinica_id}`}
+              disabled
+            />
+          )}
         </div>
 
-        {erro && <p style={{ color: "red", marginTop: 12 }}>{erro}</p>}
+        {erro && <p style={{ color: "red" }}>{erro}</p>}
 
-        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-          <button type="button" onClick={() => navigate(-1)} disabled={saving}>
-            Voltar
-          </button>
-
-          <button type="submit" disabled={saving}>
-            {saving ? "Salvando..." : "Salvar profissional"}
-          </button>
-        </div>
+        <button type="submit">
+          {saving ? "Salvando..." : "Salvar"}
+        </button>
       </form>
     </div>
   );
