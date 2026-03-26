@@ -43,7 +43,11 @@ export default function Clinicas() {
         }}
       >
         <div>
-          <h2 style={{ margin: 0 }}>Clínicas</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button onClick={() => navigate("/dashboard")}>← Voltar</button>
+            <h2 style={{ margin: 0 }}>Clínicas</h2>
+          </div>
+
           <p style={{ marginTop: 6, color: "#4b5563" }}>
             Gestão das clínicas monitoradas pela plataforma Monitra.
           </p>

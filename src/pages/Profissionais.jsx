@@ -64,7 +64,11 @@ export default function Profissionais() {
         }}
       >
         <div>
-          <h2 style={{ margin: 0 }}>Profissionais</h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <button onClick={() => navigate("/dashboard")}>← Voltar</button>
+            <h2 style={{ margin: 0 }}>Profissionais</h2>
+          </div>
+
           <p style={{ marginTop: 6, color: "#4b5563" }}>
             Gestão da equipe clínica vinculada às clínicas.
           </p>
