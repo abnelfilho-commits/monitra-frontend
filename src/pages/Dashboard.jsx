@@ -438,8 +438,9 @@ export default function Dashboard() {
           <CardIndicador
             titulo="📉 Em piora recente"
             valor={analitico.totalEmPiora}
-            subtitulo="Evolução recente desfavorável"
-            background="white"
+            subtitulo="Tendência clínica desfavorável"
+            background="#fff7ed"
+            corValor="#c2410c"
           />
         </div>
 
@@ -451,11 +452,30 @@ export default function Dashboard() {
             gap: 12,
           }}
         >
-          <CardIndicador titulo="🟢 Estáveis" valor={analitico.totalVerde} background="#f0fdf4" />
-          <CardIndicador titulo="🟡 Em alerta" valor={analitico.totalAmarelo} background="#fefce8" />
-          <CardIndicador titulo="🔴 Piora clínica" value={undefined} />
-          <CardIndicador titulo="🔴 Piora clínica" valor={analitico.totalVermelho} background="#fef2f2" />
-          <CardIndicador titulo="⚪ Sem dados" valor={analitico.totalSemDados} background="#f3f4f6" />
+          <CardIndicador
+            titulo="🟢 Estáveis"
+            valor={analitico.totalVerde}
+            background="#f0fdf4"
+            corValor="#166534"
+          />
+          <CardIndicador
+            titulo="⚪ Sem dados"
+            valor={analitico.totalSemDados}
+            background="#f3f4f6"
+            corValor="#4b5563"
+          />
+          <CardIndicador
+            titulo="🧠 Intervenções"
+            valor={analitico.totalIntervencoes}
+            subtitulo="Total registrado"
+            background="white"
+          />
+          <CardIndicador
+            titulo="📋 Registros diários"
+            valor={analitico.totalRegistros}
+            subtitulo="Total registrado"
+            background="white"
+          />
         </div>
       </div>
 
