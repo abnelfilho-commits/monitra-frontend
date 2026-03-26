@@ -138,6 +138,42 @@ function TooltipCustom({ active, payload, label }) {
   );
 }
 
+function CardIndicador({ titulo, valor, subtitulo, background = "white", corValor = "#111827" }) {
+  return (
+    <div
+      style={{
+        border: "1px solid #ddd",
+        borderRadius: 14,
+        padding: 16,
+        background,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+      }}
+    >
+      <div style={{ fontSize: 13, opacity: 0.75 }}>{titulo}</div>
+      <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6, color: corValor }}>
+        {valor}
+      </div>
+      {subtitulo ? (
+        <div style={{ fontSize: 12, color: "#6b7280", marginTop: 6 }}>{subtitulo}</div>
+      ) : null}
+    </div>
+  );
+}
+
+function TituloSecao({ children }) {
+  return (
+    <h3
+      style={{
+        marginTop: 0,
+        marginBottom: 14,
+        fontSize: 18,
+      }}
+    >
+      {children}
+    </h3>
+  );
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
 
@@ -329,7 +365,7 @@ export default function Dashboard() {
           justifyContent: "space-between",
           gap: 12,
           flexWrap: "wrap",
-          alignItems: "center",
+          alignItems: "flex-start",
           marginBottom: 8,
         }}
       >
@@ -352,420 +388,136 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={() => navigate("/pacientes")}>Pacientes</button>
-          <button onClick={() => navigate("/profissionais")}>Profissionais</button>
-          <button onClick={() => navigate("/clinicas")}>Clínicas</button>
-          <button onClick={() => navigate(`/clinicas/1/mapa-risco`)}>
-            🧠 Mapa de Risco
-          </button>
-          <button onClick={() => navigate("/pacientes/novo")}>+ Novo Paciente</button>
-          <button onClick={() => navigate("/profissionais/novo")}>+ Novo Profissional</button>
-          <button onClick={loadDashboard}>↻ Atualizar</button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <button onClick={() => navigate("/pacientes")}>Pacientes</button>
+            <button onClick={() => navigate("/profissionais")}>Profissionais</button>
+            <button onClick={() => navigate("/clinicas")}>Clínicas</button>
+            <button onClick={() => navigate(`/clinicas/1/mapa-risco`)}>🧠 Mapa de Risco</button>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <button onClick={() => navigate("/pacientes/novo")}>+ Novo Paciente</button>
+            <button onClick={() => navigate("/profissionais/novo")}>+ Novo Profissional</button>
+            <button onClick={loadDashboard}>↻ Atualizar</button>
+          </div>
         </div>
       </div>
 
       {erro && <p style={{ color: "red" }}>{erro}</p>}
 
-      <div
-        style={{
-          marginTop: 20,
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 12,
-        }}
-      >
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>Total de pacientes</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-            {analitico.totalPacientes}
-          </div>
-        </div>
+      <div style={{ marginTop: 24 }}>
+        <TituloSecao>📊 Indicadores principais</TituloSecao>
 
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "#f0fdf4" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>🟢 Estáveis</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-            {analitico.totalVerde}
-          </div>
-        </div>
-
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "#fefce8" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>🟡 Em alerta</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-            {analitico.totalAmarelo}
-          </div>
-        </div>
-
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "#fef2f2" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>🔴 Piora clínica</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-            {analitico.totalVermelho}
-          </div>
-        </div>
-
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "#f3f4f6" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>⚪ Sem dados</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-            {analitico.totalSemDados}
-          </div>
-        </div>
-
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "#fef2f2" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>🚨 Alto risco</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6, color: "#b91c1c" }}>
-            {analitico.totalAltoRisco}
-          </div>
-        </div>
-
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "#fefce8" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>📍 Atenção (risco)</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6, color: "#a16207" }}>
-            {analitico.totalAtencaoRisco}
-          </div>
-        </div>
-
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white" }}>
-          <div style={{ fontSize: 13, opacity: 0.75 }}>📉 Em piora recente</div>
-          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-            {analitico.totalEmPiora}
-          </div>
-        </div>
-      </div>
-
-      <div
-        style={{
-          marginTop: 20,
-          border: "1px solid #fecaca",
-          borderRadius: 16,
-          padding: 16,
-          background: "linear-gradient(180deg, #fff7f7 0%, #ffffff 100%)",
-          boxShadow: "0 8px 30px rgba(239, 68, 68, 0.08)",
-        }}
-      >
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
             gap: 12,
-            alignItems: "flex-start",
-            flexWrap: "wrap",
-            marginBottom: 12,
           }}
         >
-          <div>
-            <h3 style={{ margin: 0 }}>Pacientes críticos do dia</h3>
-            <p style={{ marginTop: 8, color: "#4b5563", maxWidth: 760 }}>
-              Esta lista destaca automaticamente os pacientes que exigem maior atenção clínica no momento,
-              considerando classificação de risco, pontuação e tendência recente.
-            </p>
-          </div>
+          <CardIndicador
+            titulo="Total de pacientes"
+            valor={analitico.totalPacientes}
+            subtitulo="Pacientes cadastrados na plataforma"
+          />
+          <CardIndicador
+            titulo="🚨 Alto risco"
+            valor={analitico.totalAltoRisco}
+            subtitulo="Pacientes com atenção imediata"
+            background="#fef2f2"
+            corValor="#b91c1c"
+          />
+          <CardIndicador
+            titulo="📍 Atenção"
+            valor={analitico.totalAtencaoRisco}
+            subtitulo="Pacientes sob monitoramento clínico"
+            background="#fefce8"
+            corValor="#a16207"
+          />
+          <CardIndicador
+            titulo="📉 Em piora recente"
+            valor={analitico.totalEmPiora}
+            subtitulo="Evolução recente desfavorável"
+            background="white"
+          />
+        </div>
 
+        <div
+          style={{
+            marginTop: 12,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: 12,
+          }}
+        >
+          <CardIndicador titulo="🟢 Estáveis" valor={analitico.totalVerde} background="#f0fdf4" />
+          <CardIndicador titulo="🟡 Em alerta" valor={analitico.totalAmarelo} background="#fefce8" />
+          <CardIndicador titulo="🔴 Piora clínica" value={undefined} />
+          <CardIndicador titulo="🔴 Piora clínica" valor={analitico.totalVermelho} background="#fef2f2" />
+          <CardIndicador titulo="⚪ Sem dados" valor={analitico.totalSemDados} background="#f3f4f6" />
+        </div>
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <TituloSecao>🚨 Prioridade do dia</TituloSecao>
+
+        <div
+          style={{
+            border: "1px solid #fecaca",
+            borderRadius: 16,
+            padding: 16,
+            background: "linear-gradient(180deg, #fff7f7 0%, #ffffff 100%)",
+            boxShadow: "0 8px 30px rgba(239, 68, 68, 0.08)",
+          }}
+        >
           <div
             style={{
-              padding: "8px 12px",
-              borderRadius: 999,
-              background: "#fee2e2",
-              color: "#991b1b",
-              fontWeight: 700,
-              fontSize: 13,
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              marginBottom: 12,
             }}
           >
-            Prioridade assistencial
-          </div>
-        </div>
-
-        {analitico.pacientesCriticos.length === 0 ? (
-          <p>Nenhum paciente crítico encontrado.</p>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {analitico.pacientesCriticos.map((p, index) => {
-              const riscoAtual = p.risco?.risco_atual;
-              const altoRisco = riscoAtual === "alto_risco";
-
-              return (
-                <div
-                  key={p.id}
-                  style={{
-                    border: altoRisco ? "1px solid #fecaca" : "1px solid #fde68a",
-                    borderRadius: 14,
-                    padding: 14,
-                    background: altoRisco ? "#fff5f5" : "#fffdf0",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      alignItems: "flex-start",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div style={{ flex: 1, minWidth: 280 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        <div
-                          style={{
-                            minWidth: 28,
-                            height: 28,
-                            borderRadius: 999,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            background: altoRisco ? "#ef4444" : "#eab308",
-                            color: "#111",
-                            fontSize: 12,
-                            fontWeight: 800,
-                          }}
-                        >
-                          {index + 1}
-                        </div>
-
-                        <div style={{ fontWeight: 800, fontSize: 16 }}>{p.nome}</div>
-
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: 999,
-                            background: corRisco(riscoAtual),
-                            color: "#111",
-                            fontSize: 12,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {labelRisco(riscoAtual)}
-                        </span>
-
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: 999,
-                            background: "#f3f4f6",
-                            color: "#374151",
-                            fontSize: 12,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {labelTendencia(p.risco?.tendencia)}
-                        </span>
-                      </div>
-
-                      <div style={{ marginTop: 8, fontSize: 13, color: "#4b5563" }}>
-                        Profissional: {p.profissional_nome || "-"}
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: 10,
-                          padding: 12,
-                          borderRadius: 10,
-                          background: "#ffffff",
-                          border: "1px solid #f1f5f9",
-                          color: "#1f2937",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 4 }}>
-                          Leitura clínica automática
-                        </div>
-                        {p.risco?.status_resumido || "Sem resumo clínico."}
-                      </div>
-                    </div>
-
-                    <div style={{ minWidth: 180, textAlign: "right" }}>
-                      <div
-                        style={{
-                          fontSize: 12,
-                          color: "#6b7280",
-                        }}
-                      >
-                        Score de risco
-                      </div>
-                      <div
-                        style={{
-                          marginTop: 2,
-                          fontSize: 28,
-                          fontWeight: 800,
-                          color: corRiscoTexto(riscoAtual),
-                        }}
-                      >
-                        {p.risco?.pontuacao_risco ?? "-"}
-                      </div>
-
-                      <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-                        Registros: <b>{p.totalRegistros}</b> | Intervenções: <b>{p.totalIntervencoes}</b>
-                      </div>
-
-                      <button
-                        style={{
-                          marginTop: 10,
-                          minWidth: 150,
-                          padding: "10px 12px",
-                          borderRadius: 10,
-                          border: "1px solid #d1d5db",
-                          background: "white",
-                          cursor: "pointer",
-                          fontWeight: 600,
-                        }}
-                        onClick={() => navigate(`/pacientes/${p.id}`)}
-                      >
-                        Abrir prontuário
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      <div
-        style={{
-          marginTop: 20,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 16,
-        }}
-      >
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white" }}>
-          <h3 style={{ marginTop: 0 }}>Intervenções por paciente</h3>
-
-          {analitico.graficoIntervencoes.length === 0 ? (
-            <p>Nenhum dado disponível.</p>
-          ) : (
-            <div style={{ width: "100%", height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={analitico.graficoIntervencoes}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nome" hide />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip content={<TooltipCustom />} />
-                  <Bar dataKey="valor" name="Intervenções">
-                    {analitico.graficoIntervencoes.map((entry, index) => (
-                      <Cell
-                        key={`cell-int-${index}`}
-                        fill={entry.semDados ? "#d1d5db" : "#2563eb"}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div>
+              <h3 style={{ margin: 0 }}>Pacientes críticos do dia</h3>
+              <p style={{ marginTop: 8, color: "#4b5563", maxWidth: 760 }}>
+                Pacientes com maior prioridade clínica neste momento.
+              </p>
             </div>
-          )}
-        </div>
 
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white" }}>
-          <h3 style={{ marginTop: 0 }}>Registros diários por paciente</h3>
-
-          {analitico.graficoRegistros.length === 0 ? (
-            <p>Nenhum dado disponível.</p>
-          ) : (
-            <div style={{ width: "100%", height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={analitico.graficoRegistros}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="nome" hide />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip content={<TooltipCustom />} />
-                  <Bar dataKey="valor" name="Registros">
-                    {analitico.graficoRegistros.map((entry, index) => (
-                      <Cell
-                        key={`cell-reg-${index}`}
-                        fill={entry.semDados ? "#d1d5db" : corStatus(entry.status)}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div
+              style={{
+                padding: "8px 12px",
+                borderRadius: 999,
+                background: "#fee2e2",
+                color: "#991b1b",
+                fontWeight: 700,
+                fontSize: 13,
+              }}
+            >
+              Prioridade assistencial
             </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      <div
-        style={{
-          marginTop: 20,
-          display: "grid",
-          gridTemplateColumns: "1fr 1.4fr",
-          gap: 16,
-        }}
-      >
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white" }}>
-          <h3 style={{ marginTop: 0 }}>Resumo por paciente</h3>
-
-          {analitico.pacientesComEventos.length === 0 ? (
-            <p>Nenhum paciente encontrado.</p>
+          {analitico.pacientesCriticos.length === 0 ? (
+            <p>Nenhum paciente crítico encontrado.</p>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {analitico.pacientesComEventos.map((p) => (
-                <div
-                  key={p.id}
-                  style={{
-                    border: "1px solid #eee",
-                    borderRadius: 12,
-                    padding: 12,
-                    background: corStatusSuave(p.status),
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 12,
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{p.nome || `Paciente #${p.id}`}</div>
-                      <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
-                        Intervenções: {p.totalIntervencoes} | Registros: {p.totalRegistros}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                      <span
-                        style={{
-                          padding: "4px 10px",
-                          borderRadius: 999,
-                          background: corStatus(p.status),
-                          color: "#111",
-                          fontSize: 12,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {labelStatus(p.status)}
-                      </span>
-
-                      <button onClick={() => navigate(`/pacientes/${p.id}`)}>
-                        Abrir
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white" }}>
-          <h3 style={{ marginTop: 0 }}>Últimos eventos da clínica</h3>
-
-          {analitico.eventosRecentes.length === 0 ? (
-            <p>Nenhum evento recente encontrado.</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {analitico.eventosRecentes.map((item) => {
-                const isIntervencao = item.tipo_evento === "INTERVENCAO";
+              {analitico.pacientesCriticos.map((p, index) => {
+                const riscoAtual = p.risco?.risco_atual;
+                const altoRisco = riscoAtual === "alto_risco";
 
                 return (
                   <div
-                    key={`${item.paciente_id}-${item.tipo_evento}-${item.id}`}
+                    key={p.id}
                     style={{
-                      border: "1px solid #ddd",
-                      borderRadius: 12,
-                      padding: 12,
-                      background: isIntervencao ? "#f5f9ff" : "#f9fff5",
+                      border: altoRisco ? "1px solid #fecaca" : "1px solid #fde68a",
+                      borderRadius: 14,
+                      padding: 14,
+                      background: altoRisco ? "#fff5f5" : "#fffdf0",
                     }}
                   >
                     <div
@@ -774,49 +526,118 @@ export default function Dashboard() {
                         justifyContent: "space-between",
                         gap: 12,
                         alignItems: "flex-start",
+                        flexWrap: "wrap",
                       }}
                     >
-                      <div>
-                        <div style={{ fontWeight: 700 }}>
-                          {isIntervencao ? "🧠 Intervenção" : "📋 Registro Diário"}
-                        </div>
-
-                        <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
-                          Paciente:{" "}
-                          <button
-                            onClick={() => navigate(`/pacientes/${item.paciente_id}`)}
+                      <div style={{ flex: 1, minWidth: 280 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <div
                             style={{
-                              background: "transparent",
-                              border: "none",
-                              padding: 0,
-                              margin: 0,
-                              color: "#0366d6",
-                              cursor: "pointer",
+                              minWidth: 28,
+                              height: 28,
+                              borderRadius: 999,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: altoRisco ? "#ef4444" : "#eab308",
+                              color: "#111",
+                              fontSize: 12,
+                              fontWeight: 800,
                             }}
                           >
-                            {item.paciente_nome || `#${item.paciente_id}`}
-                          </button>
-                        </div>
+                            {index + 1}
+                          </div>
 
-                        <div style={{ marginTop: 6 }}>{item.descricao}</div>
-                      </div>
+                          <div style={{ fontWeight: 800, fontSize: 16 }}>{p.nome}</div>
 
-                      <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                        <small>{formatarData(item.data)}</small>
-                        <div style={{ marginTop: 6 }}>
                           <span
                             style={{
                               padding: "4px 10px",
                               borderRadius: 999,
-                              background: corStatus(item.status),
+                              background: corRisco(riscoAtual),
                               color: "#111",
                               fontSize: 12,
                               fontWeight: 700,
                             }}
                           >
-                            {labelStatus(item.status)}
+                            {labelRisco(riscoAtual)}
+                          </span>
+
+                          <span
+                            style={{
+                              padding: "4px 10px",
+                              borderRadius: 999,
+                              background: "#f3f4f6",
+                              color: "#374151",
+                              fontSize: 12,
+                              fontWeight: 700,
+                            }}
+                          >
+                            {labelTendencia(p.risco?.tendencia)}
                           </span>
                         </div>
+
+                        <div style={{ marginTop: 8, fontSize: 13, color: "#4b5563" }}>
+                          Profissional: {p.profissional_nome || "-"}
+                        </div>
+
+                        <div
+                          style={{
+                            marginTop: 10,
+                            padding: 12,
+                            borderRadius: 10,
+                            background: "#ffffff",
+                            border: "1px solid #f1f5f9",
+                            color: "#1f2937",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          <div style={{ fontSize: 12, fontWeight: 700, color: "#6b7280", marginBottom: 4 }}>
+                            Leitura clínica automática
+                          </div>
+                          {p.risco?.status_resumido || "Sem resumo clínico."}
+                        </div>
+                      </div>
+
+                      <div style={{ minWidth: 180, textAlign: "right" }}>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            color: "#6b7280",
+                          }}
+                        >
+                          Score de risco
+                        </div>
+                        <div
+                          style={{
+                            marginTop: 2,
+                            fontSize: 28,
+                            fontWeight: 800,
+                            color: corRiscoTexto(riscoAtual),
+                          }}
+                        >
+                          {p.risco?.pontuacao_risco ?? "-"}
+                        </div>
+
+                        <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+                          Registros: <b>{p.totalRegistros}</b> | Intervenções: <b>{p.totalIntervencoes}</b>
+                        </div>
+
+                        <button
+                          style={{
+                            marginTop: 10,
+                            minWidth: 150,
+                            padding: "10px 12px",
+                            borderRadius: 10,
+                            border: "1px solid #d1d5db",
+                            background: "white",
+                            cursor: "pointer",
+                            fontWeight: 600,
+                          }}
+                          onClick={() => navigate(`/pacientes/${p.id}`)}
+                        >
+                          Abrir prontuário
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -824,6 +645,220 @@ export default function Dashboard() {
               })}
             </div>
           )}
+        </div>
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <TituloSecao>📈 Análises</TituloSecao>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 16,
+          }}
+        >
+          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+            <h3 style={{ marginTop: 0 }}>Intervenções por paciente</h3>
+
+            {analitico.graficoIntervencoes.length === 0 ? (
+              <p>Nenhum dado disponível.</p>
+            ) : (
+              <div style={{ width: "100%", height: 300, minHeight: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analitico.graficoIntervencoes}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="nome" hide />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Bar dataKey="valor" name="Intervenções">
+                      {analitico.graficoIntervencoes.map((entry, index) => (
+                        <Cell
+                          key={`cell-int-${index}`}
+                          fill={entry.semDados ? "#d1d5db" : "#2563eb"}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+            <h3 style={{ marginTop: 0 }}>Registros diários por paciente</h3>
+
+            {analitico.graficoRegistros.length === 0 ? (
+              <p>Nenhum dado disponível.</p>
+            ) : (
+              <div style={{ width: "100%", height: 300, minHeight: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={analitico.graficoRegistros}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="nome" hide />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip content={<TooltipCustom />} />
+                    <Bar dataKey="valor" name="Registros">
+                      {analitico.graficoRegistros.map((entry, index) => (
+                        <Cell
+                          key={`cell-reg-${index}`}
+                          fill={entry.semDados ? "#d1d5db" : corStatus(entry.status)}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 28 }}>
+        <TituloSecao>📋 Operacional</TituloSecao>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1.4fr",
+            gap: 16,
+          }}
+        >
+          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+            <h3 style={{ marginTop: 0 }}>Resumo por paciente</h3>
+
+            {analitico.pacientesComEventos.length === 0 ? (
+              <p>Nenhum paciente encontrado.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {analitico.pacientesComEventos.map((p) => (
+                  <div
+                    key={p.id}
+                    style={{
+                      border: "1px solid #eee",
+                      borderRadius: 12,
+                      padding: 12,
+                      background: corStatusSuave(p.status),
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: 12,
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{p.nome || `Paciente #${p.id}`}</div>
+                        <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
+                          Intervenções: {p.totalIntervencoes} | Registros: {p.totalRegistros}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                        <span
+                          style={{
+                            padding: "4px 10px",
+                            borderRadius: 999,
+                            background: corStatus(p.status),
+                            color: "#111",
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          {labelStatus(p.status)}
+                        </span>
+
+                        <button onClick={() => navigate(`/pacientes/${p.id}`)}>
+                          Abrir
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+            <h3 style={{ marginTop: 0 }}>Últimos eventos da clínica</h3>
+
+            {analitico.eventosRecentes.length === 0 ? (
+              <p>Nenhum evento recente encontrado.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {analitico.eventosRecentes.map((item) => {
+                  const isIntervencao = item.tipo_evento === "INTERVENCAO";
+
+                  return (
+                    <div
+                      key={`${item.paciente_id}-${item.tipo_evento}-${item.id}`}
+                      style={{
+                        border: "1px solid #ddd",
+                        borderRadius: 12,
+                        padding: 12,
+                        background: isIntervencao ? "#f5f9ff" : "#f9fff5",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          gap: 12,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 700 }}>
+                            {isIntervencao ? "🧠 Intervenção" : "📋 Registro Diário"}
+                          </div>
+
+                          <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
+                            Paciente:{" "}
+                            <button
+                              onClick={() => navigate(`/pacientes/${item.paciente_id}`)}
+                              style={{
+                                background: "transparent",
+                                border: "none",
+                                padding: 0,
+                                margin: 0,
+                                color: "#0366d6",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {item.paciente_nome || `#${item.paciente_id}`}
+                            </button>
+                          </div>
+
+                          <div style={{ marginTop: 6 }}>{item.descricao}</div>
+                        </div>
+
+                        <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                          <small>{formatarData(item.data)}</small>
+                          <div style={{ marginTop: 6 }}>
+                            <span
+                              style={{
+                                padding: "4px 10px",
+                                borderRadius: 999,
+                                background: corStatus(item.status),
+                                color: "#111",
+                                fontSize: 12,
+                                fontWeight: 700,
+                              }}
+                            >
+                              {labelStatus(item.status)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
