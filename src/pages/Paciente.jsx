@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import VincularResponsavelModal from "../components/VincularResponsavelModal";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   BarChart,
@@ -313,6 +314,9 @@ export default function Paciente() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
+  const [abrirVinculoResponsavel, setAbrirVinculoResponsavel] = useState(false);
+  const [mensagemResponsavel, setMensagemResponsavel] = useState("");
+
   const [filtro, setFiltro] = useState("TODOS");
 
   if (!id || Number.isNaN(pacienteId) || pacienteId <= 0) {
@@ -578,6 +582,21 @@ export default function Paciente() {
             Editar Paciente
           </button>
 
+          <button
+            type="button"
+            onClick={() => setAbrirVinculoResponsavel(true)}
+            style={{
+              border: "1px solid #d1d5db",
+              borderRadius: 10,
+              padding: "10px 14px",
+              background: "#fff",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Vincular responsável
+          </button>
+
           <button onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}>
             + Registro Diário
           </button>
@@ -604,6 +623,23 @@ export default function Paciente() {
           </button>
         </div>
       </div>
+
+      {mensagemResponsavel ? (
+        <div
+          style={{
+            marginTop: 12,
+            padding: "10px 12px",
+            borderRadius: 10,
+            background: "#ecfdf3",
+            border: "1px solid #abefc6",
+            color: "#067647",
+            fontSize: 14,
+            fontWeight: 500,
+          }}
+        >
+          {mensagemResponsavel}
+        </div>
+      ) : null}
 
       {erro && <p style={{ color: "red" }}>{erro}</p>}
 
@@ -1027,6 +1063,19 @@ export default function Paciente() {
         <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 12 }}>
           {ordenados.map((item) => {
             const isIntervencao = item.tipo_evento === "INTERVENCAO";
+            const origem = item.origem || (isIntervencao ? "PROFISSIONAL" : "PROFISSIONAL");
+
+            const badgeStyle = {
+              padding: "4px 10px",
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 700,
+              display: "inline-block",
+              marginBottom: 8,
+              background: origem === "RESPONSAVEL" ? "#dcfce7" : "#dbeafe",
+              color: origem === "RESPONSAVEL" ? "#166534" : "#1d4ed8",
+              border: origem === "RESPONSAVEL" ? "1px solid #86efac" : "1px solid #93c5fd",
+            };
 
             return (
               <div
@@ -1047,8 +1096,23 @@ export default function Paciente() {
                   }}
                 >
                   <div style={{ flex: 1 }}>
-                    <b>{isIntervencao ? "🧠 Intervenção" : "📋 Registro Diário"}</b>
-                    <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{item.descricao}</div>
+                    <span style={badgeStyle}>
+                      {origem === "RESPONSAVEL" ? "Responsável" : "Profissional"}
+                    </span>
+
+                    <div style={{ marginTop: 6 }}>
+                      <b>{isIntervencao ? "🧠 Intervenção" : "📋 Registro Diário"}</b>
+                    </div>
+
+                    {origem === "RESPONSAVEL" && (
+                      <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                        Dados reportados pela família
+                      </div>
+                    )}
+
+                    <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>
+                      {item.descricao}
+                    </div>
                   </div>
 
                   <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
@@ -1094,6 +1158,17 @@ export default function Paciente() {
                       >
                         Excluir
                       </button>
+
+                      <VincularResponsavelModal
+                        aberto={abrirVinculoResponsavel}
+                        pacienteId={paciente?.id}
+                        onClose={() => setAbrirVinculoResponsavel(false)}
+                        onSuccess={() => {
+                          setMensagemResponsavel("Responsável vinculado com sucesso.");
+                          setTimeout(() => setMensagemResponsavel(""), 3000);
+                        }}
+                      />
+
                     </div>
                   </div>
                 </div>
