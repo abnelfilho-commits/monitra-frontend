@@ -14,3 +14,8 @@ export async function vincularResponsavelPaciente(payload) {
   const res = await api.post("/responsaveis/vinculos", payload);
   return res.data;
 }
+
+export async function listarPacientes() {
+  const res = await api.get("/pacientes/");
+  return res.data;
+}

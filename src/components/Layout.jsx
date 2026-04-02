@@ -99,6 +99,11 @@ export default function Layout() {
             active={pathname.startsWith("/pacientes")}
             onClick={go}
           />
+
+          <button onClick={() => navigate("/responsaveis")}>
+            Responsáveis
+          </button>
+
         </div>
 
         <hr style={{ margin: "18px 0" }} />

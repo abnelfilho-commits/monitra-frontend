@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import Responsaveis from "./pages/Responsaveis";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Pacientes from "./pages/Pacientes";
@@ -51,6 +52,7 @@ export default function App() {
               <Route path="/clinicas/:id/editar" element={<EditarClinica />} />
               <Route path="/clinicas/:id" element={<ClinicaDetalhe />} />
               <Route path="/clinicas/:id/mapa-risco" element={<MapaRiscoClinica />} />
+              <Route path="/responsaveis" element={<Responsaveis />} />
             </Route>
           </Route>
 
