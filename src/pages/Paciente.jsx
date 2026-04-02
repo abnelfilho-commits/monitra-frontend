@@ -316,8 +316,6 @@ export default function Paciente() {
   const [erro, setErro] = useState("");
 
   const [abrirVinculoResponsavel, setAbrirVinculoResponsavel] = useState(false);
-  const [mensagemResponsavel, setMensagemResponsavel] = useState("");
-
   const [abrirCadastroResponsavel, setAbrirCadastroResponsavel] = useState(false);
   const [mensagemResponsavel, setMensagemResponsavel] = useState("");
 
