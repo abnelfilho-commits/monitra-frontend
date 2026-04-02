@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import VincularResponsavelModal from "../components/VincularResponsavelModal";
-import ResponsavelFormModal from "../components/ResponsavelFormModal";
+import { VincularResponsavelModal } from "../components/VincularResponsavelModal";
+import { ResponsavelFormModal } from "../components/ResponsavelFormModal";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   BarChart,
