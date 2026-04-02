@@ -100,9 +100,12 @@ export default function Layout() {
             onClick={go}
           />
 
-          <button onClick={() => navigate("/responsaveis")}>
-            Responsáveis
-          </button>
+          <ItemMenu
+            label="Responsáveis"
+            to="/responsaveis"
+            active={pathname.startsWith("/responsaveis")}
+            onClick={go}
+          />
 
         </div>
 
