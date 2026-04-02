@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import VincularResponsavelModal from "../components/VincularResponsavelModal";
+import ResponsavelFormModal from "../components/ResponsavelFormModal";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   BarChart,
@@ -317,6 +318,9 @@ export default function Paciente() {
   const [abrirVinculoResponsavel, setAbrirVinculoResponsavel] = useState(false);
   const [mensagemResponsavel, setMensagemResponsavel] = useState("");
 
+  const [abrirCadastroResponsavel, setAbrirCadastroResponsavel] = useState(false);
+  const [mensagemResponsavel, setMensagemResponsavel] = useState("");
+
   const [filtro, setFiltro] = useState("TODOS");
 
   if (!id || Number.isNaN(pacienteId) || pacienteId <= 0) {
@@ -580,6 +584,22 @@ export default function Paciente() {
         <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
           <button onClick={() => navigate(`/pacientes/${pacienteId}/editar`)}>
             Editar Paciente
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setAbrirCadastroResponsavel(true)}
+            style={{
+              border: "none",
+              borderRadius: 10,
+              padding: "10px 14px",
+              background: "#0f62fe",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            Novo responsável
           </button>
 
           <button
@@ -1165,6 +1185,15 @@ export default function Paciente() {
                         onClose={() => setAbrirVinculoResponsavel(false)}
                         onSuccess={() => {
                           setMensagemResponsavel("Responsável vinculado com sucesso.");
+                          setTimeout(() => setMensagemResponsavel(""), 3000);
+                        }}
+                      />
+
+                      <ResponsavelFormModal
+                        aberto={abrirCadastroResponsavel}
+                        onClose={() => setAbrirCadastroResponsavel(false)}
+                        onSuccess={() => {
+                          setMensagemResponsavel("Responsável cadastrado com sucesso.");
                           setTimeout(() => setMensagemResponsavel(""), 3000);
                         }}
                       />
