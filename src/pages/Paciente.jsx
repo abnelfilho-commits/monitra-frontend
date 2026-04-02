@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import VincularResponsavelModal from "../components/VincularResponsavelModal";
-import ResponsavelFormModal from "../components/ResponsavelFormModal";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   BarChart,
@@ -365,10 +363,6 @@ export default function Paciente() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
 
-  const [abrirVinculoResponsavel, setAbrirVinculoResponsavel] = useState(false);
-  const [abrirCadastroResponsavel, setAbrirCadastroResponsavel] = useState(false);
-  const [mensagemResponsavel, setMensagemResponsavel] = useState("");
-
   const [filtro, setFiltro] = useState("TODOS");
 
   if (!id || Number.isNaN(pacienteId) || pacienteId <= 0) {
@@ -656,22 +650,6 @@ export default function Paciente() {
             </button>
 
             <button
-              type="button"
-              onClick={() => setAbrirCadastroResponsavel(true)}
-              style={buttonPrimaryStyle}
-            >
-              Novo responsável
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setAbrirVinculoResponsavel(true)}
-              style={buttonSecondaryStyle}
-            >
-              Vincular responsável
-            </button>
-
-            <button
               onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}
               style={buttonSecondaryStyle}
             >
@@ -698,23 +676,6 @@ export default function Paciente() {
             </button>
           </div>
         </div>
-
-        {mensagemResponsavel ? (
-          <div
-            style={{
-              marginTop: 12,
-              padding: "10px 12px",
-              borderRadius: 10,
-              background: "#ecfdf3",
-              border: "1px solid #abefc6",
-              color: "#067647",
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
-            {mensagemResponsavel}
-          </div>
-        ) : null}
 
         {erro && <p style={{ color: "red" }}>{erro}</p>}
 
@@ -1355,27 +1316,6 @@ export default function Paciente() {
           </div>
         )}
       </div>
-
-      <VincularResponsavelModal
-        aberto={abrirVinculoResponsavel}
-        pacienteId={paciente?.id}
-        onClose={() => setAbrirVinculoResponsavel(false)}
-        onSuccess={() => {
-          setMensagemResponsavel("Responsável vinculado com sucesso.");
-          setTimeout(() => setMensagemResponsavel(""), 3000);
-          load();
-        }}
-      />
-
-      <ResponsavelFormModal
-        aberto={abrirCadastroResponsavel}
-        onClose={() => setAbrirCadastroResponsavel(false)}
-        onSuccess={() => {
-          setMensagemResponsavel("Responsável cadastrado com sucesso.");
-          setTimeout(() => setMensagemResponsavel(""), 3000);
-          load();
-        }}
-      />
     </>
   );
 }
