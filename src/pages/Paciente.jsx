@@ -642,17 +642,17 @@ export default function Paciente() {
               flexWrap: "wrap",
             }}
           >
-            <Button 
+            <button 
               variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/editar`)}>
               Editar Paciente
             </button>
 
-            <Button 
+            <button 
               variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}>
               + Registro Diário
             </button>
 
-            <Button
+            <button
               variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/intervencao/nova`)}>
               + Intervenção
             </button>
@@ -665,7 +665,7 @@ export default function Paciente() {
               ↻ Atualizar
             </button>
             
-            <Button variant="danger" onClick={onInativar}>
+            <button variant="danger" onClick={onInativar}>
               Inativar Paciente
             </button>
           </div>
@@ -1152,32 +1152,21 @@ export default function Paciente() {
           <h3 style={{ margin: 0 }}>Timeline Clínica</h3>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+
             <button
-              onClick={() => setFiltro("TODOS")}
-              style={{
-                ...buttonSecondaryStyle,
-                fontWeight: filtro === "TODOS" ? "bold" : "normal",
-              }}
+              variant="secondary" onClick={() => setFiltro("TODOS")}
             >
               Todos
             </button>
 
             <button
-              onClick={() => setFiltro("INTERVENCAO")}
-              style={{
-                ...buttonSecondaryStyle,
-                fontWeight: filtro === "INTERVENCAO" ? "bold" : "normal",
-              }}
+              variant="secondary" onClick={() => setFiltro("INTERVENCAO")}
             >
               Intervenções
             </button>
 
             <button
-              onClick={() => setFiltro("REGISTRO_DIARIO")}
-              style={{
-                ...buttonSecondaryStyle,
-                fontWeight: filtro === "REGISTRO_DIARIO" ? "bold" : "normal",
-              }}
+              variant="secondary" onClick={() => setFiltro("REGISTRO_DIARIO")}
             >
               Registros Diários
             </button>
@@ -1273,10 +1262,9 @@ export default function Paciente() {
                       >
                         {item.tipo_evento === "REGISTRO_DIARIO" && (
                           <button
-                            onClick={() =>
+                            variant="secondary" onClick={() =>
                               navigate(`/pacientes/${pacienteId}/registros/${item.id}/editar`)
                             }
-                            style={buttonSecondaryStyle}
                           >
                             Editar
                           </button>
@@ -1284,20 +1272,18 @@ export default function Paciente() {
 
                         {item.tipo_evento === "INTERVENCAO" && (
                           <button
-                            onClick={() =>
+                            variant="secondary" onClick={() =>
                               navigate(
                                 `/pacientes/${pacienteId}/intervencoes/${item.id}/editar`
                               )
                             }
-                            style={buttonSecondaryStyle}
                           >
                             Editar
                           </button>
                         )}
 
                         <button
-                          onClick={() => onExcluirEvento(item)}
-                          style={buttonDangerStyle}
+                          variant="secondary" onClick={() => onExcluirEvento(item)}
                         >
                           Excluir
                         </button>
