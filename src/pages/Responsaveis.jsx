@@ -1,3 +1,4 @@
+import Button from "../components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -224,7 +225,7 @@ export default function Responsaveis() {
             + Novo Responsável
           </button>
 
-          <button onClick={load} style={buttonSecondaryStyle}>
+          <Button variant="secondary" onClick={load}>
             ↻ Atualizar
           </button>
         </div>
@@ -336,7 +337,7 @@ export default function Responsaveis() {
             </label>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button type="submit" style={buttonPrimaryStyle}>
+              <button type="submit">
                 Salvar Responsável
               </button>
 

@@ -369,7 +369,7 @@ export default function Paciente() {
     return (
       <div style={{ padding: 24 }}>
         <p>Paciente inválido.</p>
-        <button onClick={() => navigate("/pacientes")}>Ir para Pacientes</button>
+        <button variant="secondary" onClick={() => navigate("/pacientes")}>Ir para Pacientes</button>
       </div>
     );
   }
@@ -642,36 +642,30 @@ export default function Paciente() {
               flexWrap: "wrap",
             }}
           >
-            <button
-              onClick={() => navigate(`/pacientes/${pacienteId}/editar`)}
-              style={buttonSecondaryStyle}
-            >
+            <Button 
+              variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/editar`)}>
               Editar Paciente
             </button>
 
-            <button
-              onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}
-              style={buttonSecondaryStyle}
-            >
+            <Button 
+              variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}>
               + Registro Diário
             </button>
 
-            <button
-              onClick={() => navigate(`/pacientes/${pacienteId}/intervencao/nova`)}
-              style={buttonSecondaryStyle}
-            >
+            <Button
+              variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/intervencao/nova`)}>
               + Intervenção
             </button>
 
-            <button onClick={onBaixarRelatorioPdf} style={buttonSecondaryStyle}>
+            <button variant="secondary" onClick={onBaixarRelatorioPdf}>
               Gerar PDF
             </button>
 
-            <button onClick={load} style={buttonSecondaryStyle}>
+            <button variant="secondary" onClick={load}>
               ↻ Atualizar
             </button>
-
-            <button onClick={onInativar} style={buttonDangerStyle}>
+            
+            <Button variant="danger" onClick={onInativar}>
               Inativar Paciente
             </button>
           </div>
