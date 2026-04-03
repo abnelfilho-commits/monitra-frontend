@@ -1,6 +1,7 @@
 export default function Button({
   children,
   variant = "primary",
+  style = {},
   ...props
 }) {
   const base = {
@@ -9,6 +10,7 @@ export default function Button({
     fontWeight: 600,
     cursor: "pointer",
     border: "none",
+    fontSize: 14,
   };
 
   const variants = {
@@ -29,7 +31,10 @@ export default function Button({
   };
 
   return (
-    <button style={{ ...base, ...variants[variant] }} {...props}>
+    <button
+      style={{ ...base, ...variants[variant], ...style }}
+      {...props}
+    >
       {children}
     </button>
   );

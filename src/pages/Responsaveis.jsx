@@ -225,7 +225,7 @@ export default function Responsaveis() {
             + Novo Responsável
           </button>
 
-          <Button variant="secondary" onClick={load}>
+          <button variant="secondary" onClick={load}>
             ↻ Atualizar
           </button>
         </div>
