@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listarPacientes } from "../services/pacientes";
 import { getApiErrorMessage } from "../utils/errors";
+import Button from "../components/ui/Button";
 
 function formatarDataBR(data) {
   if (!data) return "-";
@@ -78,33 +79,69 @@ export default function Pacientes() {
   }, [paginaAtual, totalPaginas]);
 
   return (
-    <div style={{ padding: 24 }}>
+    <div
+      style={{
+        padding: 24,
+        maxWidth: 1220,
+        margin: "0 auto",
+      }}
+    >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          gap: 12,
-          alignItems: "center",
+          gap: 16,
+          alignItems: "flex-start",
           flexWrap: "wrap",
+          marginBottom: 8,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={() => navigate("/dashboard")}>← Voltar</button>
-          <h2 style={{ margin: 0 }}>Pacientes</h2>
+        <div style={{ flex: "1 1 320px", minWidth: 280 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>
+              ← Voltar
+            </Button>
+
+            <div>
+              <h2 style={{ margin: 0 }}>Pacientes</h2>
+              <p style={{ marginTop: 4, color: "#4b5563" }}>
+                Lista de pacientes cadastrados com acesso rápido ao prontuário.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={() => navigate("/pacientes/novo")}>
-            + Novo Paciente
-          </button>
+        <div style={{ flex: "1 1 320px", minWidth: 260 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button onClick={() => navigate("/pacientes/novo")}>
+              + Novo Paciente
+            </Button>
 
-          <button onClick={load} disabled={loading}>
-            ↻ Atualizar
-          </button>
+            <Button variant="secondary" onClick={load} disabled={loading}>
+              ↻ Atualizar
+            </Button>
+          </div>
         </div>
       </div>
 
-      <div style={{ marginTop: 16, maxWidth: 420 }}>
+      <div
+        style={{
+          marginTop: 16,
+          maxWidth: 460,
+          background: "#fff",
+          border: "1px solid #e5e7eb",
+          borderRadius: 14,
+          padding: 12,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+        }}
+      >
         <input
           type="text"
           placeholder="Buscar paciente por nome..."
@@ -114,71 +151,109 @@ export default function Pacientes() {
             width: "100%",
             padding: 10,
             border: "1px solid #d1d5db",
-            borderRadius: 8,
+            borderRadius: 10,
+            outline: "none",
+            fontSize: 14,
           }}
         />
       </div>
 
-      {loading && <p>Carregando...</p>}
+      {loading && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          Carregando...
+        </div>
+      )}
 
       {erro && (
         <div
           style={{
             background: "#fee2e2",
-            padding: 12,
-            borderRadius: 8,
-            marginTop: 12,
+            border: "1px solid #fecaca",
+            padding: 14,
+            borderRadius: 12,
+            marginTop: 16,
+            color: "#991b1b",
           }}
         >
-          {erro}
+          <div>{erro}</div>
+
           <div style={{ marginTop: 10 }}>
-            <button onClick={load}>Tentar novamente</button>
+            <Button variant="secondary" onClick={load}>
+              Tentar novamente
+            </Button>
           </div>
         </div>
       )}
 
       {!loading && !erro && pacientesFiltrados.length === 0 && (
-        <p style={{ marginTop: 16 }}>
+        <div
+          style={{
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+            color: "#475467",
+          }}
+        >
           {busca
             ? "Nenhum paciente encontrado para essa busca."
             : "Nenhum paciente cadastrado."}
-        </p>
+        </div>
       )}
 
       {!loading && !erro && pacientesFiltrados.length > 0 && (
         <>
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+          <div style={{ display: "grid", gap: 12, marginTop: 16 }}>
             {pacientesPaginados.map((p) => (
               <div
                 key={p.id}
                 style={{
                   border: "1px solid #e5e7eb",
-                  borderRadius: 8,
-                  padding: 12,
+                  borderRadius: 14,
+                  padding: 14,
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   gap: 12,
+                  flexWrap: "wrap",
+                  background: "#fff",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
                 }}
               >
-                <div>
-                  <div style={{ fontWeight: 700 }}>{p.nome}</div>
+                <div style={{ flex: "1 1 320px", minWidth: 280 }}>
+                  <div style={{ fontWeight: 700, fontSize: 16, color: "#111827" }}>
+                    {p.nome}
+                  </div>
 
-                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                  <div style={{ fontSize: 13, color: "#64748b", marginTop: 6 }}>
                     Nasc.: {formatarDataBR(p.data_nascimento)}{" "}
                     {p.idade != null ? `• ${p.idade} anos` : ""}
                     {" • "}Gênero: {formatarGenero(p.genero)}
                   </div>
 
-                  <div style={{ fontSize: 12, color: "#64748b", marginTop: 4 }}>
+                  <div style={{ fontSize: 13, color: "#64748b", marginTop: 4 }}>
                     Profissional: {p.profissional_nome || "-"} {" • "}
                     Clínica: {p.clinica_nome || "-"}
                   </div>
                 </div>
 
-                <button onClick={() => navigate(`/pacientes/${p.id}`)}>
-                  Ver
-                </button>
+                <div>
+                  <Button
+                    variant="secondary"
+                    onClick={() => navigate(`/pacientes/${p.id}`)}
+                  >
+                    Ver
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -191,33 +266,39 @@ export default function Pacientes() {
               alignItems: "center",
               gap: 12,
               flexWrap: "wrap",
+              padding: 12,
+              border: "1px solid #e5e7eb",
+              borderRadius: 14,
+              background: "#fff",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
             }}
           >
             <div style={{ fontSize: 14, color: "#64748b" }}>
-              Mostrando {pacientesPaginados.length} de {pacientesFiltrados.length}{" "}
-              paciente(s)
+              Mostrando {pacientesPaginados.length} de {pacientesFiltrados.length} paciente(s)
             </div>
 
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <button
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <Button
+                variant="secondary"
                 onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
                 disabled={paginaAtual === 1}
               >
                 Anterior
-              </button>
+              </Button>
 
-              <span style={{ fontSize: 14 }}>
+              <span style={{ fontSize: 14, color: "#374151" }}>
                 Página {paginaAtual} de {totalPaginas}
               </span>
 
-              <button
+              <Button
+                variant="secondary"
                 onClick={() =>
                   setPaginaAtual((prev) => Math.min(prev + 1, totalPaginas))
                 }
                 disabled={paginaAtual === totalPaginas}
               >
                 Próxima
-              </button>
+              </Button>
             </div>
           </div>
         </>

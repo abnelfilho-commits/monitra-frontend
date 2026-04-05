@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { listarPacientes } from "../services/pacientes";
 import { listarTimelinePorPaciente } from "../services/timeline";
 import { obterRiscoPaciente } from "../services/analytics";
+import Button from "../components/ui/Button";
 import {
   BarChart,
   Bar,
@@ -138,7 +139,13 @@ function TooltipCustom({ active, payload, label }) {
   );
 }
 
-function CardIndicador({ titulo, valor, subtitulo, background = "white", corValor = "#111827" }) {
+function CardIndicador({
+  titulo,
+  valor,
+  subtitulo,
+  background = "white",
+  corValor = "#111827",
+}) {
   return (
     <div
       style={{
@@ -363,13 +370,13 @@ export default function Dashboard() {
         style={{
           display: "flex",
           justifyContent: "space-between",
-          gap: 12,
+          gap: 16,
           flexWrap: "wrap",
           alignItems: "flex-start",
           marginBottom: 8,
         }}
       >
-        <div>
+        <div style={{ flex: "1 1 320px", minWidth: 280 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <img
               src="/icon-monitra.png"
@@ -388,18 +395,47 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <button onClick={() => navigate("/pacientes")}>Pacientes</button>
-            <button onClick={() => navigate("/profissionais")}>Profissionais</button>
-            <button onClick={() => navigate("/clinicas")}>Clínicas</button>
-            <button onClick={() => navigate(`/clinicas/1/mapa-risco`)}>🧠 Mapa de Risco</button>
-          </div>
+        <div style={{ flex: "1 1 520px", minWidth: 320 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+              alignItems: "center",
+            }}
+          >
+            <Button variant="secondary" onClick={() => navigate("/pacientes")}>
+              Pacientes
+            </Button>
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <button onClick={() => navigate("/pacientes/novo")}>+ Novo Paciente</button>
-            <button onClick={() => navigate("/profissionais/novo")}>+ Novo Profissional</button>
-            <button onClick={loadDashboard}>↻ Atualizar</button>
+            <Button variant="secondary" onClick={() => navigate("/profissionais")}>
+              Profissionais
+            </Button>
+
+            <Button variant="secondary" onClick={() => navigate("/clinicas")}>
+              Clínicas
+            </Button>
+
+            <Button variant="secondary" onClick={() => navigate("/responsaveis")}>
+              Responsáveis
+            </Button>
+
+            <Button variant="secondary" onClick={() => navigate(`/clinicas/1/mapa-risco`)}>
+              🧠 Mapa de Risco
+            </Button>
+
+            <Button onClick={() => navigate("/pacientes/novo")}>
+              + Novo Paciente
+            </Button>
+
+            <Button onClick={() => navigate("/profissionais/novo")}>
+              + Novo Profissional
+            </Button>
+
+            <Button variant="secondary" onClick={loadDashboard}>
+              ↻ Atualizar
+            </Button>
           </div>
         </div>
       </div>
@@ -643,21 +679,13 @@ export default function Dashboard() {
                           Registros: <b>{p.totalRegistros}</b> | Intervenções: <b>{p.totalIntervencoes}</b>
                         </div>
 
-                        <button
-                          style={{
-                            marginTop: 10,
-                            minWidth: 150,
-                            padding: "10px 12px",
-                            borderRadius: 10,
-                            border: "1px solid #d1d5db",
-                            background: "white",
-                            cursor: "pointer",
-                            fontWeight: 600,
-                          }}
+                        <Button
+                          variant="secondary"
+                          style={{ marginTop: 10, minWidth: 150 }}
                           onClick={() => navigate(`/pacientes/${p.id}`)}
                         >
                           Abrir prontuário
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -678,7 +706,15 @@ export default function Dashboard() {
             gap: 16,
           }}
         >
-          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 14,
+              padding: 16,
+              background: "white",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+          >
             <h3 style={{ marginTop: 0 }}>Intervenções por paciente</h3>
 
             {analitico.graficoIntervencoes.length === 0 ? (
@@ -705,7 +741,15 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 14,
+              padding: 16,
+              background: "white",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+          >
             <h3 style={{ marginTop: 0 }}>Registros diários por paciente</h3>
 
             {analitico.graficoRegistros.length === 0 ? (
@@ -744,7 +788,15 @@ export default function Dashboard() {
             gap: 16,
           }}
         >
-          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 14,
+              padding: 16,
+              background: "white",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+          >
             <h3 style={{ marginTop: 0 }}>Resumo por paciente</h3>
 
             {analitico.pacientesComEventos.length === 0 ? (
@@ -791,9 +843,12 @@ export default function Dashboard() {
                           {labelStatus(p.status)}
                         </span>
 
-                        <button onClick={() => navigate(`/pacientes/${p.id}`)}>
+                        <Button
+                          variant="secondary"
+                          onClick={() => navigate(`/pacientes/${p.id}`)}
+                        >
                           Abrir
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -802,7 +857,15 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div style={{ border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+          <div
+            style={{
+              border: "1px solid #ddd",
+              borderRadius: 14,
+              padding: 16,
+              background: "white",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            }}
+          >
             <h3 style={{ marginTop: 0 }}>Últimos eventos da clínica</h3>
 
             {analitico.eventosRecentes.length === 0 ? (
@@ -837,19 +900,19 @@ export default function Dashboard() {
 
                           <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>
                             Paciente:{" "}
-                            <button
-                              onClick={() => navigate(`/pacientes/${item.paciente_id}`)}
+                            <Button
+                              variant="secondary"
                               style={{
+                                padding: "4px 8px",
+                                fontSize: 12,
+                                borderRadius: 8,
                                 background: "transparent",
-                                border: "none",
-                                padding: 0,
-                                margin: 0,
-                                color: "#0366d6",
-                                cursor: "pointer",
+                                border: "1px solid #d1d5db",
                               }}
+                              onClick={() => navigate(`/pacientes/${item.paciente_id}`)}
                             >
                               {item.paciente_nome || `#${item.paciente_id}`}
-                            </button>
+                            </Button>
                           </div>
 
                           <div style={{ marginTop: 6 }}>{item.descricao}</div>

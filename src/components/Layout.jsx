@@ -9,10 +9,18 @@ function ItemMenu({ label, to, active, onClick }) {
         textAlign: "left",
         padding: "10px 12px",
         borderRadius: 10,
-        border: "1px solid #e5e7eb",
-        background: active ? "#ecfdf5" : "white",
+        border: active ? "1px solid #bbf7d0" : "1px solid #e5e7eb",
+        background: active ? "#ecfdf5" : "#fff",
         fontWeight: active ? 700 : 500,
+        color: "#111827",
         cursor: "pointer",
+        transition: "all 0.15s ease",
+      }}
+      onMouseEnter={(e) => {
+        if (!active) e.currentTarget.style.background = "#f9fafb";
+      }}
+      onMouseLeave={(e) => {
+        if (!active) e.currentTarget.style.background = "#fff";
       }}
     >
       {label}
@@ -39,104 +47,131 @@ export default function Layout() {
         background: "#f8fafc",
       }}
     >
+      {/* SIDEBAR */}
       <aside
         style={{
           borderRight: "1px solid #e5e7eb",
           padding: 16,
-          background: "white",
+          background: "#ffffff",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
         }}
       >
-        <div style={{ marginBottom: 18 }}>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <img
-              src="/logo-monitra.png"
-              alt="Monitra"
+        {/* TOPO */}
+        <div>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ display: "flex", justifyContent: "center" }}>
+              <img
+                src="/logo-monitra.png"
+                alt="Monitra"
+                style={{
+                  width: 140,
+                  height: "auto",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+
+            <div
               style={{
-                width: 150,
-                height: "auto",
-                objectFit: "contain",
+                fontSize: 12,
+                color: "#6b7280",
+                marginTop: 8,
+                textAlign: "center",
               }}
+            >
+              Inteligência clínica em tempo real
+            </div>
+          </div>
+
+          {/* MENU PRINCIPAL */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <ItemMenu
+              label="Dashboard"
+              to="/dashboard"
+              active={pathname === "/dashboard"}
+              onClick={go}
+            />
+
+            <ItemMenu
+              label="Clínicas"
+              to="/clinicas"
+              active={pathname.startsWith("/clinicas")}
+              onClick={go}
+            />
+
+            <ItemMenu
+              label="Profissionais"
+              to="/profissionais"
+              active={pathname.startsWith("/profissionais")}
+              onClick={go}
+            />
+
+            <ItemMenu
+              label="Pacientes"
+              to="/pacientes"
+              active={pathname.startsWith("/pacientes")}
+              onClick={go}
+            />
+
+            <ItemMenu
+              label="Responsáveis"
+              to="/responsaveis"
+              active={pathname.startsWith("/responsaveis")}
+              onClick={go}
             />
           </div>
 
+          {/* SEPARADOR */}
           <div
             style={{
-              fontSize: 12,
-              color: "#6b7280",
-              marginTop: 8,
-              textAlign: "center",
+              height: 1,
+              background: "#e5e7eb",
+              margin: "18px 0",
             }}
-          >
-            Inteligência clínica em tempo real
+          />
+
+          {/* AÇÕES RÁPIDAS */}
+          <div>
+            <div
+              style={{
+                fontSize: 12,
+                color: "#6b7280",
+                marginBottom: 8,
+                fontWeight: 600,
+              }}
+            >
+              Ações rápidas
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <ItemMenu
+                label="+ Nova Clínica"
+                to="/clinicas/nova"
+                active={pathname === "/clinicas/nova"}
+                onClick={go}
+              />
+
+              <ItemMenu
+                label="+ Novo Profissional"
+                to="/profissionais/novo"
+                active={pathname === "/profissionais/novo"}
+                onClick={go}
+              />
+
+              <ItemMenu
+                label="+ Novo Paciente"
+                to="/pacientes/novo"
+                active={pathname === "/pacientes/novo"}
+                onClick={go}
+              />
+            </div>
           </div>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <ItemMenu
-            label="Dashboard"
-            to="/dashboard"
-            active={pathname === "/dashboard"}
-            onClick={go}
-          />
-
-          <ItemMenu
-            label="Clínicas"
-            to="/clinicas"
-            active={pathname.startsWith("/clinicas")}
-            onClick={go}
-          />
-
-          <ItemMenu
-            label="Profissionais"
-            to="/profissionais"
-            active={pathname.startsWith("/profissionais")}
-            onClick={go}
-          />
-
-          <ItemMenu
-            label="Pacientes"
-            to="/pacientes"
-            active={pathname.startsWith("/pacientes")}
-            onClick={go}
-          />
-
-          <ItemMenu
-            label="Responsáveis"
-            to="/responsaveis"
-            active={pathname.startsWith("/responsaveis")}
-            onClick={go}
-          />
-
-        </div>
-
-        <hr style={{ margin: "18px 0" }} />
-
-        <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 8 }}>
-          Ações rápidas
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <ItemMenu
-            label="+ Nova Clínica"
-            to="/clinicas/nova"
-            active={pathname === "/clinicas/nova"}
-            onClick={go}
-          />
-
-          <ItemMenu
-            label="+ Novo Profissional"
-            to="/profissionais/novo"
-            active={pathname === "/profissionais/novo"}
-            onClick={go}
-          />
-
-          <ItemMenu
-            label="+ Novo Paciente"
-            to="/pacientes/novo"
-            active={pathname === "/pacientes/novo"}
-            onClick={go}
-          />
-
+        {/* RODAPÉ */}
+        <div>
           <button
             onClick={() => {
               localStorage.removeItem("token");
@@ -160,7 +195,13 @@ export default function Layout() {
         </div>
       </aside>
 
-      <main style={{ padding: 0 }}>
+      {/* CONTEÚDO */}
+      <main
+        style={{
+          padding: 0,
+          overflow: "auto",
+        }}
+      >
         <Outlet />
       </main>
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listarClinicas } from "../services/clinicas";
+import Button from "../components/ui/Button";
 
 export default function Clinicas() {
   const navigate = useNavigate();
@@ -32,43 +33,114 @@ export default function Clinicas() {
   }, []);
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+    <div
+      style={{
+        padding: 24,
+        maxWidth: 1220,
+        margin: "0 auto",
+      }}
+    >
+      {/* HEADER */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          gap: 12,
+          gap: 16,
           flexWrap: "wrap",
-          alignItems: "center",
+          alignItems: "flex-start",
+          marginBottom: 8,
         }}
       >
-        <div>
+        <div style={{ flex: "1 1 320px", minWidth: 280 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <button onClick={() => navigate("/dashboard")}>← Voltar</button>
-            <h2 style={{ margin: 0 }}>Clínicas</h2>
-          </div>
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>
+              ← Voltar
+            </Button>
 
-          <p style={{ marginTop: 6, color: "#4b5563" }}>
-            Gestão das clínicas monitoradas pela plataforma Monitra.
-          </p>
+            <div>
+              <h2 style={{ margin: 0 }}>Clínicas</h2>
+              <p style={{ marginTop: 4, color: "#4b5563" }}>
+                Gestão das clínicas monitoradas pela plataforma Monitra.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={() => navigate("/clinicas/nova")}>
-            + Nova Clínica
-          </button>
-          <button onClick={load}>↻ Atualizar</button>
+        <div style={{ flex: "1 1 320px", minWidth: 260 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button onClick={() => navigate("/clinicas/nova")}>
+              + Nova Clínica
+            </Button>
+
+            <Button variant="secondary" onClick={load}>
+              ↻ Atualizar
+            </Button>
+          </div>
         </div>
       </div>
 
-      {loading && <p style={{ marginTop: 16 }}>Carregando clínicas...</p>}
-
-      {erro && <p style={{ color: "red", marginTop: 16 }}>{erro}</p>}
-
-      {!loading && !erro && clinicas.length === 0 && (
-        <p style={{ marginTop: 16 }}>Nenhuma clínica cadastrada.</p>
+      {/* LOADING */}
+      {loading && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+            color: "#475467",
+          }}
+        >
+          Carregando clínicas...
+        </div>
       )}
 
+      {/* ERRO */}
+      {erro && (
+        <div
+          style={{
+            background: "#fee2e2",
+            border: "1px solid #fecaca",
+            padding: 14,
+            borderRadius: 12,
+            marginTop: 16,
+            color: "#991b1b",
+          }}
+        >
+          <div>{erro}</div>
+
+          <div style={{ marginTop: 10 }}>
+            <Button variant="secondary" onClick={load}>
+              Tentar novamente
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* VAZIO */}
+      {!loading && !erro && clinicas.length === 0 && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+            color: "#475467",
+          }}
+        >
+          Nenhuma clínica cadastrada.
+        </div>
+      )}
+
+      {/* LISTA */}
       {!loading && !erro && clinicas.length > 0 && (
         <div
           style={{
@@ -85,10 +157,13 @@ export default function Clinicas() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 14,
                 padding: 16,
-                background: "white",
+                background: "#fff",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 800 }}>{c.nome}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>
+                {c.nome}
+              </div>
 
               <div style={{ marginTop: 10, fontSize: 14, color: "#4b5563" }}>
                 <div><b>CNPJ:</b> {c.cnpj || "-"}</div>
@@ -104,17 +179,25 @@ export default function Clinicas() {
                   flexWrap: "wrap",
                 }}
               >
-                <button onClick={() => navigate(`/clinicas/${c.id}`)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/clinicas/${c.id}`)}
+                >
                   Abrir
-                </button>
+                </Button>
 
-                <button onClick={() => navigate(`/clinicas/${c.id}/editar`)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/clinicas/${c.id}/editar`)}
+                >
                   Editar
-                </button>
+                </Button>
 
-                <button onClick={() => navigate(`/clinicas/${c.id}/mapa-risco`)}>
+                <Button
+                  onClick={() => navigate(`/clinicas/${c.id}/mapa-risco`)}
+                >
                   Mapa de Risco
-                </button>
+                </Button>
               </div>
             </div>
           ))}

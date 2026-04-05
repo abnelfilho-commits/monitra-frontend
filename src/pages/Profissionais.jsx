@@ -4,6 +4,7 @@ import {
   listarProfissionais,
   inativarProfissional,
 } from "../services/profissionais";
+import Button from "../components/ui/Button";
 
 export default function Profissionais() {
   const navigate = useNavigate();
@@ -53,41 +54,114 @@ export default function Profissionais() {
   }, []);
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
+    <div
+      style={{
+        padding: 24,
+        maxWidth: 1220,
+        margin: "0 auto",
+      }}
+    >
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          gap: 12,
+          gap: 16,
           flexWrap: "wrap",
-          alignItems: "center",
+          alignItems: "flex-start",
+          marginBottom: 8,
         }}
       >
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <button onClick={() => navigate("/dashboard")}>← Voltar</button>
-            <h2 style={{ margin: 0 }}>Profissionais</h2>
-          </div>
+        <div style={{ flex: "1 1 320px", minWidth: 280 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
+            <Button variant="secondary" onClick={() => navigate("/dashboard")}>
+              ← Voltar
+            </Button>
 
-          <p style={{ marginTop: 6, color: "#4b5563" }}>
-            Gestão da equipe clínica vinculada às clínicas.
-          </p>
+            <div>
+              <h2 style={{ margin: 0 }}>Profissionais</h2>
+              <p style={{ marginTop: 4, color: "#4b5563" }}>
+                Gestão da equipe clínica vinculada às clínicas.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={() => navigate("/profissionais/novo")}>
-            + Novo Profissional
-          </button>
-          <button onClick={load}>↻ Atualizar</button>
+        <div style={{ flex: "1 1 320px", minWidth: 260 }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              justifyContent: "flex-end",
+            }}
+          >
+            <Button onClick={() => navigate("/profissionais/novo")}>
+              + Novo Profissional
+            </Button>
+
+            <Button variant="secondary" onClick={load} disabled={loading}>
+              ↻ Atualizar
+            </Button>
+          </div>
         </div>
       </div>
 
-      {loading && <p style={{ marginTop: 16 }}>Carregando profissionais...</p>}
+      {loading && (
+        <div
+          style={{
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+            color: "#475467",
+          }}
+        >
+          Carregando profissionais...
+        </div>
+      )}
 
-      {erro && <p style={{ color: "red", marginTop: 16 }}>{erro}</p>}
+      {erro && (
+        <div
+          style={{
+            background: "#fee2e2",
+            border: "1px solid #fecaca",
+            padding: 14,
+            borderRadius: 12,
+            marginTop: 16,
+            color: "#991b1b",
+          }}
+        >
+          <div>{erro}</div>
+
+          <div style={{ marginTop: 10 }}>
+            <Button variant="secondary" onClick={load}>
+              Tentar novamente
+            </Button>
+          </div>
+        </div>
+      )}
 
       {!loading && !erro && profissionais.length === 0 && (
-        <p style={{ marginTop: 16 }}>Nenhum profissional cadastrado.</p>
+        <div
+          style={{
+            marginTop: 16,
+            padding: 14,
+            borderRadius: 12,
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+            color: "#475467",
+          }}
+        >
+          Nenhum profissional cadastrado.
+        </div>
       )}
 
       {!loading && !erro && profissionais.length > 0 && (
@@ -106,14 +180,21 @@ export default function Profissionais() {
                 border: "1px solid #e5e7eb",
                 borderRadius: 14,
                 padding: 16,
-                background: "white",
+                background: "#fff",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
               }}
             >
-              <div style={{ fontSize: 18, fontWeight: 800 }}>{prof.nome}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#111827" }}>
+                {prof.nome}
+              </div>
 
               <div style={{ marginTop: 10, fontSize: 14, color: "#4b5563" }}>
-                <div><b>Especialidade:</b> {prof.especialidade || "-"}</div>
-                <div style={{ marginTop: 4 }}><b>Email:</b> {prof.email || "-"}</div>
+                <div>
+                  <b>Especialidade:</b> {prof.especialidade || "-"}
+                </div>
+                <div style={{ marginTop: 4 }}>
+                  <b>Email:</b> {prof.email || "-"}
+                </div>
                 <div style={{ marginTop: 4 }}>
                   <b>Clínica:</b> {prof.clinica_nome || prof.clinica_id || "-"}
                 </div>
@@ -127,20 +208,19 @@ export default function Profissionais() {
                   flexWrap: "wrap",
                 }}
               >
-                <button onClick={() => navigate(`/profissionais/${prof.id}/editar`)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/profissionais/${prof.id}/editar`)}
+                >
                   Editar
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="danger"
                   onClick={() => onInativar(prof)}
-                  style={{
-                    background: "#fff5f5",
-                    border: "1px solid #e0b4b4",
-                    color: "#a33",
-                  }}
                 >
                   Inativar
-                </button>
+                </Button>
               </div>
             </div>
           ))}
