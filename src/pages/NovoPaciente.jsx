@@ -36,7 +36,11 @@ export default function NovoPaciente() {
         const data = await listarClinicas();
         setClinicas(Array.isArray(data) ? data : []);
       } catch (e) {
-        setErro("Falha ao carregar clínicas.");
+        setErro(
+          e?.response?.data?.detail ||
+            e?.message ||
+            "Falha ao carregar clínicas."
+        );
       } finally {
         setLoadingClinicas(false);
       }
@@ -58,7 +62,11 @@ export default function NovoPaciente() {
         const data = await listarProfissionaisPorClinica(Number(form.clinica_id));
         setProfissionais(Array.isArray(data) ? data : []);
       } catch (e) {
-        setErro("Falha ao carregar profissionais.");
+        setErro(
+          e?.response?.data?.detail ||
+            e?.message ||
+            "Falha ao carregar profissionais."
+        );
         setProfissionais([]);
       } finally {
         setLoadingProfissionais(false);
@@ -72,22 +80,37 @@ export default function NovoPaciente() {
     e.preventDefault();
     setErro("");
 
-    if (!form.clinica_id) return setErro("Selecione a clínica.");
-    if (!form.profissional_id)
-      return setErro("Selecione o profissional responsável.");
+    if (!form.clinica_id) {
+      setErro("Selecione a clínica.");
+      return;
+    }
+
+    if (!form.profissional_id) {
+      setErro("Selecione o profissional responsável.");
+      return;
+    }
 
     setSaving(true);
 
     try {
-      const novo = await criarPaciente({
-        ...form,
+      const payload = {
+        nome: form.nome.trim(),
+        data_nascimento: form.data_nascimento,
+        genero: form.genero || null,
+        responsavel_nome: form.responsavel_nome?.trim() || null,
+        responsavel_email: form.responsavel_email?.trim() || null,
         clinica_id: Number(form.clinica_id),
         profissional_id: Number(form.profissional_id),
-      });
+      };
 
+      const novo = await criarPaciente(payload);
       navigate(`/pacientes/${novo.id}`);
-    } catch (e) {
-      setErro("Falha ao criar paciente.");
+    } catch (e2) {
+      const msg =
+        e2?.response?.data?.detail ||
+        e2?.message ||
+        "Falha ao criar paciente.";
+      setErro(String(msg));
     } finally {
       setSaving(false);
     }
@@ -98,9 +121,7 @@ export default function NovoPaciente() {
       <div style={headerStyle}>
         <div>
           <h2 style={{ margin: 0 }}>Novo Paciente</h2>
-          <small style={{ color: "#6b7280" }}>
-            Cadastro de paciente
-          </small>
+          <small style={{ color: "#6b7280" }}>Cadastro de paciente</small>
         </div>
 
         <Button variant="secondary" onClick={() => navigate("/pacientes")}>
@@ -115,16 +136,16 @@ export default function NovoPaciente() {
               placeholder="Nome"
               value={form.nome}
               onChange={(e) => setField("nome", e.target.value)}
-              style={inputStyle}
               required
+              style={{ ...inputStyle, gridColumn: "span 2" }}
             />
 
             <input
               type="date"
               value={form.data_nascimento}
               onChange={(e) => setField("data_nascimento", e.target.value)}
-              style={inputStyle}
               required
+              style={inputStyle}
             />
 
             <select
@@ -140,14 +161,16 @@ export default function NovoPaciente() {
             <select
               value={form.clinica_id}
               onChange={(e) => setField("clinica_id", e.target.value)}
+              required
+              disabled={loadingClinicas}
               style={inputStyle}
             >
               <option value="">
-                {loadingClinicas ? "Carregando..." : "Clínica"}
+                {loadingClinicas ? "Carregando clínicas..." : "Clínica"}
               </option>
-              {clinicas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
+              {clinicas.map((clinica) => (
+                <option key={clinica.id} value={clinica.id}>
+                  {clinica.nome}
                 </option>
               ))}
             </select>
@@ -155,16 +178,21 @@ export default function NovoPaciente() {
             <select
               value={form.profissional_id}
               onChange={(e) => setField("profissional_id", e.target.value)}
-              style={{ ...inputStyle, gridColumn: "span 2" }}
+              required
+              disabled={!form.clinica_id || loadingProfissionais}
+              style={inputStyle}
             >
               <option value="">
                 {!form.clinica_id
-                  ? "Selecione clínica primeiro"
-                  : "Profissional"}
+                  ? "Selecione a clínica primeiro"
+                  : loadingProfissionais
+                  ? "Carregando profissionais..."
+                  : "Profissional responsável"}
               </option>
-              {profissionais.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nome}
+              {profissionais.map((prof) => (
+                <option key={prof.id} value={prof.id}>
+                  {prof.nome}
+                  {prof.especialidade ? ` - ${prof.especialidade}` : ""}
                 </option>
               ))}
             </select>
@@ -177,6 +205,7 @@ export default function NovoPaciente() {
             />
 
             <input
+              type="email"
               placeholder="Email do responsável"
               value={form.responsavel_email}
               onChange={(e) => setField("responsavel_email", e.target.value)}
@@ -187,11 +216,17 @@ export default function NovoPaciente() {
           {erro && <div style={erroStyle}>{erro}</div>}
 
           <div style={actionsStyle}>
-            <Button variant="secondary" onClick={() => navigate("/pacientes")}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => navigate("/pacientes")}
+              disabled={saving}
+            >
               Cancelar
             </Button>
-            <Button type="submit">
-              {saving ? "Salvando..." : "Salvar"}
+
+            <Button type="submit" disabled={saving}>
+              {saving ? "Salvando..." : "Salvar paciente"}
             </Button>
           </div>
         </form>
@@ -199,3 +234,52 @@ export default function NovoPaciente() {
     </div>
   );
 }
+
+const headerStyle = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 20,
+  gap: 12,
+  flexWrap: "wrap",
+};
+
+const cardStyle = {
+  border: "1px solid #e5e7eb",
+  borderRadius: 16,
+  padding: 20,
+  background: "white",
+  boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
+};
+
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: 12,
+};
+
+const inputStyle = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid #d1d5db",
+  fontSize: 14,
+  outline: "none",
+};
+
+const erroStyle = {
+  marginTop: 12,
+  padding: 12,
+  background: "#fee2e2",
+  border: "1px solid #fecaca",
+  borderRadius: 10,
+  color: "#991b1b",
+};
+
+const actionsStyle = {
+  marginTop: 16,
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 10,
+  flexWrap: "wrap",
+};
