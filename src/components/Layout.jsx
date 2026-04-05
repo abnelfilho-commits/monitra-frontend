@@ -1,4 +1,5 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import Button from "../components/ui/Button";
 
 function ItemMenu({ label, to, active, onClick }) {
   return (
@@ -36,6 +37,12 @@ export default function Layout() {
     navigate(to);
   }
 
+  function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("clinica_id");
+    navigate("/login");
+  }
+
   const pathname = location.pathname;
 
   return (
@@ -47,20 +54,21 @@ export default function Layout() {
         background: "#f8fafc",
       }}
     >
-      {/* SIDEBAR */}
       <aside
         style={{
           borderRight: "1px solid #e5e7eb",
           padding: 16,
           background: "#ffffff",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
         }}
       >
-        {/* TOPO */}
-        <div>
-          <div style={{ marginBottom: 18 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
+          <div>
             <div style={{ display: "flex", justifyContent: "center" }}>
               <img
                 src="/logo-monitra.png"
@@ -85,7 +93,6 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* MENU PRINCIPAL */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <ItemMenu
               label="Dashboard"
@@ -123,16 +130,13 @@ export default function Layout() {
             />
           </div>
 
-          {/* SEPARADOR */}
           <div
             style={{
               height: 1,
               background: "#e5e7eb",
-              margin: "18px 0",
             }}
           />
 
-          {/* AÇÕES RÁPIDAS */}
           <div>
             <div
               style={{
@@ -168,34 +172,26 @@ export default function Layout() {
               />
             </div>
           </div>
-        </div>
 
-        {/* RODAPÉ */}
-        <div>
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("clinica_id");
-              navigate("/login");
-            }}
+          <div
             style={{
-              width: "100%",
-              textAlign: "left",
-              padding: "10px 12px",
-              borderRadius: 10,
-              border: "1px solid #fecaca",
-              background: "#fff1f2",
-              color: "#b91c1c",
-              fontWeight: 700,
-              cursor: "pointer",
+              height: 1,
+              background: "#e5e7eb",
             }}
-          >
-            Sair
-          </button>
+          />
+
+          <div>
+            <Button
+              variant="danger"
+              onClick={logout}
+              style={{ width: "100%" }}
+            >
+              Sair
+            </Button>
+          </div>
         </div>
       </aside>
 
-      {/* CONTEÚDO */}
       <main
         style={{
           padding: 0,

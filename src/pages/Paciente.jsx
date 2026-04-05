@@ -68,20 +68,23 @@ function classificarStatusPaciente(eventos) {
     if (
       texto.includes("irritabilidade: nenhuma") ||
       texto.includes("irritabilidade: leve")
-    )
+    ) {
       score += 1;
+    }
     if (
       texto.includes("crise sensorial: não") ||
       texto.includes("crise sensorial: nao")
-    )
+    ) {
       score += 1;
+    }
 
     if (texto.includes("sono: ruim") || texto.includes("sono: muito ruim")) score -= 1;
     if (
       texto.includes("irritabilidade: alta") ||
       texto.includes("irritabilidade: muito alta")
-    )
+    ) {
       score -= 1;
+    }
     if (texto.includes("crise sensorial: alta")) score -= 1;
   });
 
@@ -324,35 +327,6 @@ function classificarMomentoClinico(painel) {
   };
 }
 
-const buttonBaseStyle = {
-  borderRadius: 10,
-  padding: "10px 14px",
-  cursor: "pointer",
-  fontWeight: 600,
-  fontSize: 14,
-};
-
-const buttonSecondaryStyle = {
-  ...buttonBaseStyle,
-  border: "1px solid #d1d5db",
-  background: "#fff",
-  color: "#111827",
-};
-
-const buttonPrimaryStyle = {
-  ...buttonBaseStyle,
-  border: "none",
-  background: "#0f62fe",
-  color: "#fff",
-};
-
-const buttonDangerStyle = {
-  ...buttonBaseStyle,
-  background: "#fff5f5",
-  border: "1px solid #e0b4b4",
-  color: "#a33",
-};
-
 export default function Paciente() {
   const { id } = useParams();
   const pacienteId = Number(id);
@@ -363,14 +337,15 @@ export default function Paciente() {
   const [evolucaoRisco, setEvolucaoRisco] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
-
   const [filtro, setFiltro] = useState("TODOS");
 
   if (!id || Number.isNaN(pacienteId) || pacienteId <= 0) {
     return (
       <div style={{ padding: 24 }}>
         <p>Paciente inválido.</p>
-        <button variant="secondary" onClick={() => navigate("/pacientes")}>Ir para Pacientes</button>
+        <Button variant="secondary" onClick={() => navigate("/pacientes")}>
+          Ir para Pacientes
+        </Button>
       </div>
     );
   }
@@ -564,119 +539,337 @@ export default function Paciente() {
     return classificarMomentoClinico(painelClinico);
   }, [painelClinico]);
 
-  if (loading) return <div style={{ padding: 24 }}>Carregando...</div>;
+  if (loading) {
+    return (
+      <div
+        style={{
+          padding: 24,
+          maxWidth: 1220,
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            padding: 14,
+            borderRadius: 12,
+            background: "#f8fafc",
+            border: "1px solid #e5e7eb",
+            color: "#475467",
+          }}
+        >
+          Carregando...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div style={{ padding: 24, maxWidth: 980, margin: "0 auto" }}>
+    <div style={{ padding: 24, maxWidth: 1220, margin: "0 auto" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 16,
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+        }}
+      >
+        <div style={{ flex: "1 1 420px", minWidth: 320 }}>
+          <h2 style={{ margin: 0 }}>
+            Paciente: {paciente?.nome || `#${pacienteId}`}
+          </h2>
+
+          <p style={{ marginTop: 8, color: "#111827" }}>
+            <b>Nascimento:</b> {formatarSoData(paciente?.data_nascimento) || "-"}
+            {paciente?.idade != null ? (
+              <>
+                {" "} | <b>Idade:</b> {paciente.idade} anos
+              </>
+            ) : null}
+            {" | "}
+            <b>Gênero:</b> {formatarGenero(paciente?.genero)}
+          </p>
+
+          <p style={{ marginTop: 6, color: "#111827" }}>
+            <b>Profissional:</b> {paciente?.profissional_nome || "-"}
+            {" | "}
+            <b>Clínica:</b> {paciente?.clinica_nome || "-"}
+          </p>
+
+          {(paciente?.responsavel_nome || paciente?.responsavel_email) && (
+            <p style={{ marginTop: 6, color: "#111827" }}>
+              {paciente?.responsavel_nome ? (
+                <>
+                  <b>Responsável:</b> {paciente.responsavel_nome}
+                </>
+              ) : null}
+
+              {paciente?.responsavel_nome && paciente?.responsavel_email ? " | " : null}
+
+              {paciente?.responsavel_email ? (
+                <>
+                  <b>Email:</b> {paciente.responsavel_email}
+                </>
+              ) : null}
+            </p>
+          )}
+
+          <div
+            style={{
+              marginTop: 12,
+              padding: "12px 14px",
+              borderRadius: 12,
+              background: corStatusSuave(statusPaciente),
+              border: `1px solid ${corStatus(statusPaciente)}`,
+              color: "#111",
+              fontWeight: 700,
+              display: "inline-block",
+            }}
+          >
+            Status clínico atual: {labelStatus(statusPaciente)}
+          </div>
+        </div>
+
+        <div
+          style={{
+            flex: "1 1 420px",
+            minWidth: 320,
+            display: "flex",
+            gap: 8,
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            justifyContent: "flex-end",
+          }}
+        >
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/pacientes/${pacienteId}/editar`)}
+          >
+            Editar Paciente
+          </Button>
+
+          <Button
+            onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}
+          >
+            + Registro Diário
+          </Button>
+
+          <Button
+            onClick={() => navigate(`/pacientes/${pacienteId}/intervencao/nova`)}
+          >
+            + Intervenção
+          </Button>
+
+          <Button variant="secondary" onClick={onBaixarRelatorioPdf}>
+            Gerar PDF
+          </Button>
+
+          <Button variant="secondary" onClick={load}>
+            ↻ Atualizar
+          </Button>
+
+          <Button variant="danger" onClick={onInativar}>
+            Inativar Paciente
+          </Button>
+        </div>
+      </div>
+
+      {erro && (
+        <div
+          style={{
+            background: "#fee2e2",
+            border: "1px solid #fecaca",
+            padding: 14,
+            borderRadius: 12,
+            marginTop: 16,
+            color: "#991b1b",
+          }}
+        >
+          <div>{erro}</div>
+
+          <div style={{ marginTop: 10 }}>
+            <Button variant="secondary" onClick={load}>
+              Tentar novamente
+            </Button>
+          </div>
+        </div>
+      )}
+
+      <div
+        style={{
+          marginTop: 20,
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: 12,
+        }}
+      >
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 12,
+            padding: 16,
+            background: "white",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div style={{ fontSize: 13, opacity: 0.75 }}>Intervenções</div>
+          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
+            {totalIntervencoes}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 12,
+            padding: 16,
+            background: "white",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div style={{ fontSize: 13, opacity: 0.75 }}>Registros diários</div>
+          <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
+            {totalRegistros}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 12,
+            padding: 16,
+            background: "white",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div style={{ fontSize: 13, opacity: 0.75 }}>Último evento</div>
+          <div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>
+            {ultimoEvento
+              ? ultimoEvento.tipo_evento === "INTERVENCAO"
+                ? "Intervenção"
+                : "Registro diário"
+              : "-"}
+          </div>
+          <div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>
+            {ultimoEvento ? formatarData(ultimoEvento.data) : "-"}
+          </div>
+        </div>
+
+        <div
+          style={{
+            border: "1px solid #ddd",
+            borderRadius: 12,
+            padding: 16,
+            background: "white",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div style={{ fontSize: 13, opacity: 0.75 }}>Resumo recente</div>
+          <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6 }}>
+            {ultimoEvento ? resumirTexto(ultimoEvento.descricao, 70) : "-"}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 20,
+          border: `1px solid ${leituraClinica.borda}`,
+          borderRadius: 16,
+          padding: 18,
+          background: `linear-gradient(180deg, ${leituraClinica.corFundo} 0%, #ffffff 100%)`,
+          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
+        }}
+      >
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            gap: 16,
+            gap: 12,
+            alignItems: "flex-start",
             flexWrap: "wrap",
           }}
         >
           <div>
-            <h2 style={{ margin: 0 }}>
-              Paciente: {paciente?.nome || `#${pacienteId}`}
-            </h2>
-
-            <p style={{ marginTop: 8 }}>
-              <b>Nascimento:</b> {formatarSoData(paciente?.data_nascimento) || "-"}
-              {paciente?.idade != null ? (
-                <>
-                  {" "} | <b>Idade:</b> {paciente.idade} anos
-                </>
-              ) : null}
-              {" | "}
-              <b>Gênero:</b> {formatarGenero(paciente?.genero)}
-            </p>
-
-            <p style={{ marginTop: 6 }}>
-              <b>Profissional:</b> {paciente?.profissional_nome || "-"}
-              {" | "}
-              <b>Clínica:</b> {paciente?.clinica_nome || "-"}
-            </p>
-
-            {(paciente?.responsavel_nome || paciente?.responsavel_email) && (
-              <p style={{ marginTop: 6 }}>
-                {paciente?.responsavel_nome ? (
-                  <>
-                    <b>Responsável:</b> {paciente.responsavel_nome}
-                  </>
-                ) : null}
-
-                {paciente?.responsavel_nome && paciente?.responsavel_email
-                  ? " | "
-                  : null}
-
-                {paciente?.responsavel_email ? (
-                  <>
-                    <b>Email:</b> {paciente.responsavel_email}
-                  </>
-                ) : null}
-              </p>
-            )}
-
             <div
               style={{
-                marginTop: 12,
-                padding: "12px 14px",
-                borderRadius: 12,
-                background: corStatusSuave(statusPaciente),
-                border: `1px solid ${corStatus(statusPaciente)}`,
-                color: "#111",
-                fontWeight: 700,
-                display: "inline-block",
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: 0.4,
+                textTransform: "uppercase",
+                color: leituraClinica.corTexto,
               }}
             >
-              Status clínico atual: {labelStatus(statusPaciente)}
+              Inteligência clínica
+            </div>
+
+            <h3 style={{ marginTop: 6, marginBottom: 6 }}>
+              Resumo clínico automático
+            </h3>
+
+            <div style={{ color: leituraClinica.corTexto, fontWeight: 700 }}>
+              {leituraClinica.titulo}
+            </div>
+
+            <div style={{ marginTop: 6, color: "#4b5563", maxWidth: 760 }}>
+              {leituraClinica.subtitulo}
             </div>
           </div>
 
           <div
             style={{
-              display: "flex",
-              gap: 12,
-              alignItems: "flex-start",
-              flexWrap: "wrap",
+              padding: "8px 12px",
+              borderRadius: 999,
+              background: "#ffffff",
+              border: "1px solid #e5e7eb",
+              fontSize: 12,
+              fontWeight: 700,
+              color: "#374151",
             }}
           >
-            <button 
-              variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/editar`)}>
-              Editar Paciente
-            </button>
-
-            <button 
-              variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}>
-              + Registro Diário
-            </button>
-
-            <button
-              variant="secondary" onClick={() => navigate(`/pacientes/${pacienteId}/intervencao/nova`)}>
-              + Intervenção
-            </button>
-
-            <button variant="secondary" onClick={onBaixarRelatorioPdf}>
-              Gerar PDF
-            </button>
-
-            <button variant="secondary" onClick={load}>
-              ↻ Atualizar
-            </button>
-            
-            <button variant="danger" onClick={onInativar}>
-              Inativar Paciente
-            </button>
+            Base:{" "}
+            {painelClinico.totalRegistros > 0
+              ? `${painelClinico.totalRegistros} registro(s)`
+              : "Sem dados"}
           </div>
         </div>
 
-        {erro && <p style={{ color: "red" }}>{erro}</p>}
+        <div
+          style={{
+            marginTop: 14,
+            padding: 14,
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.85)",
+            border: "1px solid #e5e7eb",
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              lineHeight: 1.7,
+              fontSize: 15,
+              color: "#1f2937",
+            }}
+          >
+            {resumoClinico}
+          </p>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 20,
+          border: "1px solid #ddd",
+          borderRadius: 14,
+          padding: 16,
+          background: "white",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Painel Clínico Inteligente</h3>
 
         <div
           style={{
-            marginTop: 20,
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
             gap: 12,
@@ -684,619 +877,455 @@ export default function Paciente() {
         >
           <div
             style={{
-              border: "1px solid #ddd",
+              border: "1px solid #e5e7eb",
               borderRadius: 12,
-              padding: 16,
-              background: "white",
+              padding: 14,
+              background: "#ffffff",
             }}
           >
-            <div style={{ fontSize: 13, opacity: 0.75 }}>Intervenções</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-              {totalIntervencoes}
-            </div>
-          </div>
-
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 12,
-              padding: 16,
-              background: "white",
-            }}
-          >
-            <div style={{ fontSize: 13, opacity: 0.75 }}>Registros diários</div>
-            <div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>
-              {totalRegistros}
-            </div>
-          </div>
-
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 12,
-              padding: 16,
-              background: "white",
-            }}
-          >
-            <div style={{ fontSize: 13, opacity: 0.75 }}>Último evento</div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>
-              {ultimoEvento
-                ? ultimoEvento.tipo_evento === "INTERVENCAO"
-                  ? "Intervenção"
-                  : "Registro diário"
-                : "-"}
-            </div>
-            <div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>
-              {ultimoEvento ? formatarData(ultimoEvento.data) : "-"}
-            </div>
-          </div>
-
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 12,
-              padding: 16,
-              background: "white",
-            }}
-          >
-            <div style={{ fontSize: 13, opacity: 0.75 }}>Resumo recente</div>
-            <div style={{ fontSize: 14, fontWeight: 600, marginTop: 6 }}>
-              {ultimoEvento ? resumirTexto(ultimoEvento.descricao, 70) : "-"}
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            marginTop: 20,
-            border: `1px solid ${leituraClinica.borda}`,
-            borderRadius: 16,
-            padding: 18,
-            background: `linear-gradient(180deg, ${leituraClinica.corFundo} 0%, #ffffff 100%)`,
-            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 12,
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: 0.4,
-                  textTransform: "uppercase",
-                  color: leituraClinica.corTexto,
-                }}
-              >
-                Inteligência clínica
-              </div>
-
-              <h3 style={{ marginTop: 6, marginBottom: 6 }}>
-                Resumo clínico automático
-              </h3>
-
-              <div style={{ color: leituraClinica.corTexto, fontWeight: 700 }}>
-                {leituraClinica.titulo}
-              </div>
-
-              <div style={{ marginTop: 6, color: "#4b5563", maxWidth: 760 }}>
-                {leituraClinica.subtitulo}
-              </div>
-            </div>
-
+            <div style={{ fontSize: 13, opacity: 0.75 }}>Sono</div>
             <div
               style={{
-                padding: "8px 12px",
-                borderRadius: 999,
-                background: "#ffffff",
-                border: "1px solid #e5e7eb",
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#374151",
+                marginTop: 8,
+                fontSize: 20,
+                fontWeight: 800,
+                color: corScore(painelClinico.sono),
               }}
             >
-              Base:{" "}
+              {labelScore(painelClinico.sono)}
+            </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+              Score médio dos registros recentes
+            </div>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 14,
+              background: "#ffffff",
+            }}
+          >
+            <div style={{ fontSize: 13, opacity: 0.75 }}>Irritabilidade</div>
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 20,
+                fontWeight: 800,
+                color: corScore(painelClinico.irritabilidade),
+              }}
+            >
+              {labelScore(painelClinico.irritabilidade)}
+            </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+              Tendência observada nos registros
+            </div>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 14,
+              background: "#ffffff",
+            }}
+          >
+            <div style={{ fontSize: 13, opacity: 0.75 }}>Crise sensorial</div>
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 20,
+                fontWeight: 800,
+                color: corScore(painelClinico.crise),
+              }}
+            >
+              {labelScore(painelClinico.crise)}
+            </div>
+            <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+              Frequência/gravidade observada
+            </div>
+          </div>
+
+          <div
+            style={{
+              border: "1px solid #e5e7eb",
+              borderRadius: 12,
+              padding: 14,
+              background: "#ffffff",
+            }}
+          >
+            <div style={{ fontSize: 13, opacity: 0.75 }}>Base clínica</div>
+            <div
+              style={{
+                marginTop: 8,
+                fontSize: 20,
+                fontWeight: 800,
+                color:
+                  painelClinico.totalRegistros > 0 ? "#111827" : "#9ca3af",
+              }}
+            >
               {painelClinico.totalRegistros > 0
                 ? `${painelClinico.totalRegistros} registro(s)`
                 : "Sem dados"}
             </div>
-          </div>
 
-          <div
-            style={{
-              marginTop: 14,
-              padding: 14,
-              borderRadius: 12,
-              background: "rgba(255,255,255,0.85)",
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <p
-              style={{
-                margin: 0,
-                lineHeight: 1.7,
-                fontSize: 15,
-                color: "#1f2937",
-              }}
-            >
-              {resumoClinico}
-            </p>
+            <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
+              Quantidade de registros usados no painel
+            </div>
           </div>
         </div>
+      </div>
 
+      <div
+        style={{
+          marginTop: 18,
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+          padding: 16,
+          background: "white",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Evolução clínica</h3>
         <div
           style={{
-            marginTop: 20,
+            marginTop: 4,
+            marginBottom: 14,
+            fontSize: 13,
+            color: "#6b7280",
+          }}
+        >
+          Visualiza a trajetória clínica do paciente a partir dos registros
+          diários.
+        </div>
+
+        {evolucaoClinica.length === 0 ? (
+          <p>Nenhum dado suficiente para exibir evolução clínica.</p>
+        ) : (
+          <div style={{ width: "100%", height: 320 }}>
+            <ResponsiveContainer>
+              <LineChart data={evolucaoClinica}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="data" />
+                <YAxis domain={[0, 5]} allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="sono"
+                  name="Sono"
+                  stroke="#22c55e"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="irritabilidade"
+                  name="Irritabilidade"
+                  stroke="#eab308"
+                  strokeWidth={2}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="crise"
+                  name="Crise sensorial"
+                  stroke="#ef4444"
+                  strokeWidth={2}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+      <div
+        style={{
+          marginTop: 18,
+          border: "1px solid #e5e7eb",
+          borderRadius: 12,
+          padding: 16,
+          background: "white",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Linha de regressão clínica</h3>
+        <div
+          style={{
+            marginTop: 4,
+            marginBottom: 14,
+            fontSize: 13,
+            color: "#6b7280",
+          }}
+        >
+          Mostra a variação da pontuação de risco ao longo do tempo.
+        </div>
+
+        {serieRiscoClinico.length === 0 ? (
+          <p>Nenhum dado suficiente para exibir regressão clínica.</p>
+        ) : (
+          <div style={{ width: "100%", height: 320 }}>
+            <ResponsiveContainer>
+              <LineChart data={serieRiscoClinico}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="data" />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="risco"
+                  name="Pontuação de risco"
+                  stroke="#2563eb"
+                  strokeWidth={3}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        <div style={{ marginTop: 10, fontSize: 12, color: "#6b7280" }}>
+          Quanto menor a pontuação, melhor o quadro clínico. Quanto maior,
+          maior o risco.
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 20,
+          display: "grid",
+          gridTemplateColumns: "1.4fr 1fr",
+          gap: 16,
+        }}
+      >
+        <div
+          style={{
             border: "1px solid #ddd",
-            borderRadius: 14,
-            padding: 16,
-            background: "white",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Painel Clínico Inteligente</h3>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 12,
-            }}
-          >
-            <div
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 14,
-                background: "#ffffff",
-              }}
-            >
-              <div style={{ fontSize: 13, opacity: 0.75 }}>Sono</div>
-              <div
-                style={{
-                  marginTop: 8,
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: corScore(painelClinico.sono),
-                }}
-              >
-                {labelScore(painelClinico.sono)}
-              </div>
-              <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-                Score médio dos registros recentes
-              </div>
-            </div>
-
-            <div
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 14,
-                background: "#ffffff",
-              }}
-            >
-              <div style={{ fontSize: 13, opacity: 0.75 }}>Irritabilidade</div>
-              <div
-                style={{
-                  marginTop: 8,
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: corScore(painelClinico.irritabilidade),
-                }}
-              >
-                {labelScore(painelClinico.irritabilidade)}
-              </div>
-              <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-                Tendência observada nos registros
-              </div>
-            </div>
-
-            <div
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 14,
-                background: "#ffffff",
-              }}
-            >
-              <div style={{ fontSize: 13, opacity: 0.75 }}>Crise sensorial</div>
-              <div
-                style={{
-                  marginTop: 8,
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color: corScore(painelClinico.crise),
-                }}
-              >
-                {labelScore(painelClinico.crise)}
-              </div>
-              <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-                Frequência/gravidade observada
-              </div>
-            </div>
-
-            <div
-              style={{
-                border: "1px solid #e5e7eb",
-                borderRadius: 12,
-                padding: 14,
-                background: "#ffffff",
-              }}
-            >
-              <div style={{ fontSize: 13, opacity: 0.75 }}>Base clínica</div>
-              <div
-                style={{
-                  marginTop: 8,
-                  fontSize: 20,
-                  fontWeight: 800,
-                  color:
-                    painelClinico.totalRegistros > 0 ? "#111827" : "#9ca3af",
-                }}
-              >
-                {painelClinico.totalRegistros > 0
-                  ? `${painelClinico.totalRegistros} registro(s)`
-                  : "Sem dados"}
-              </div>
-
-              <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-                Quantidade de registros usados no painel
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            marginTop: 18,
-            border: "1px solid #e5e7eb",
             borderRadius: 12,
             padding: 16,
             background: "white",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
           }}
         >
-          <h3 style={{ marginTop: 0 }}>Evolução clínica</h3>
-          <div
-            style={{
-              marginTop: 4,
-              marginBottom: 14,
-              fontSize: 13,
-              color: "#6b7280",
-            }}
-          >
-            Visualiza a trajetória clínica do paciente a partir dos registros
-            diários.
-          </div>
+          <h3 style={{ marginTop: 0 }}>Eventos por data</h3>
 
-          {evolucaoClinica.length === 0 ? (
-            <p>Nenhum dado suficiente para exibir evolução clínica.</p>
+          {graficoEventosPorData.length === 0 ? (
+            <p>Nenhum dado disponível.</p>
           ) : (
-            <div style={{ width: "100%", height: 320 }}>
+            <div style={{ width: "100%", height: 280 }}>
               <ResponsiveContainer>
-                <LineChart data={evolucaoClinica}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="data" />
-                  <YAxis domain={[0, 5]} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="sono"
-                    name="Sono"
-                    stroke="#22c55e"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="irritabilidade"
-                    name="Irritabilidade"
-                    stroke="#eab308"
-                    strokeWidth={2}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="crise"
-                    name="Crise sensorial"
-                    stroke="#ef4444"
-                    strokeWidth={2}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
-
-        <div
-          style={{
-            marginTop: 18,
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            padding: 16,
-            background: "white",
-          }}
-        >
-          <h3 style={{ marginTop: 0 }}>Linha de regressão clínica</h3>
-          <div
-            style={{
-              marginTop: 4,
-              marginBottom: 14,
-              fontSize: 13,
-              color: "#6b7280",
-            }}
-          >
-            Mostra a variação da pontuação de risco ao longo do tempo.
-          </div>
-
-          {serieRiscoClinico.length === 0 ? (
-            <p>Nenhum dado suficiente para exibir regressão clínica.</p>
-          ) : (
-            <div style={{ width: "100%", height: 320 }}>
-              <ResponsiveContainer>
-                <LineChart data={serieRiscoClinico}>
+                <BarChart data={graficoEventosPorData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="data" />
                   <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="risco"
-                    name="Pontuação de risco"
-                    stroke="#2563eb"
-                    strokeWidth={3}
+                  <Bar
+                    dataKey="intervencoes"
+                    fill="#2563eb"
+                    name="Intervenções"
                   />
-                </LineChart>
+                  <Bar
+                    dataKey="registros"
+                    fill="#22c55e"
+                    name="Registros"
+                  />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           )}
-
-          <div style={{ marginTop: 10, fontSize: 12, color: "#6b7280" }}>
-            Quanto menor a pontuação, melhor o quadro clínico. Quanto maior,
-            maior o risco.
-          </div>
         </div>
 
         <div
           style={{
-            marginTop: 20,
-            display: "grid",
-            gridTemplateColumns: "1.4fr 1fr",
-            gap: 16,
+            border: "1px solid #ddd",
+            borderRadius: 12,
+            padding: 16,
+            background: "white",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
           }}
         >
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 12,
-              padding: 16,
-              background: "white",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Eventos por data</h3>
+          <h3 style={{ marginTop: 0 }}>Distribuição dos eventos</h3>
 
-            {graficoEventosPorData.length === 0 ? (
-              <p>Nenhum dado disponível.</p>
-            ) : (
-              <div style={{ width: "100%", height: 280 }}>
-                <ResponsiveContainer>
-                  <BarChart data={graficoEventosPorData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="data" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip />
-                    <Bar
-                      dataKey="intervencoes"
-                      fill="#2563eb"
-                      name="Intervenções"
-                    />
-                    <Bar
-                      dataKey="registros"
-                      fill="#22c55e"
-                      name="Registros"
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-
-          <div
-            style={{
-              border: "1px solid #ddd",
-              borderRadius: 12,
-              padding: 16,
-              background: "white",
-            }}
-          >
-            <h3 style={{ marginTop: 0 }}>Distribuição dos eventos</h3>
-
-            {totalIntervencoes === 0 && totalRegistros === 0 ? (
-              <p>Nenhum dado disponível.</p>
-            ) : (
-              <div style={{ width: "100%", height: 280 }}>
-                <ResponsiveContainer>
-                  <PieChart>
-                    <Pie
-                      data={graficoDistribuicao}
-                      dataKey="value"
-                      nameKey="name"
-                      outerRadius={90}
-                      label
-                    >
-                      <Cell fill="#2563eb" />
-                      <Cell fill="#22c55e" />
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
+          {totalIntervencoes === 0 && totalRegistros === 0 ? (
+            <p>Nenhum dado disponível.</p>
+          ) : (
+            <div style={{ width: "100%", height: 280 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={graficoDistribuicao}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={90}
+                    label
+                  >
+                    <Cell fill="#2563eb" />
+                    <Cell fill="#22c55e" />
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
+      </div>
 
-        <hr style={{ margin: "16px 0" }} />
+      <hr style={{ margin: "16px 0" }} />
 
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
+        <h3 style={{ margin: 0 }}>Timeline Clínica</h3>
+
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Button variant="secondary" onClick={() => setFiltro("TODOS")}>
+            Todos
+          </Button>
+
+          <Button variant="secondary" onClick={() => setFiltro("INTERVENCAO")}>
+            Intervenções
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={() => setFiltro("REGISTRO_DIARIO")}
+          >
+            Registros Diários
+          </Button>
+        </div>
+      </div>
+
+      {ordenados.length === 0 ? (
+        <p style={{ marginTop: 16 }}>Nenhum evento encontrado para este filtro.</p>
+      ) : (
         <div
           style={{
+            marginTop: 16,
             display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
+            flexDirection: "column",
             gap: 12,
-            flexWrap: "wrap",
           }}
         >
-          <h3 style={{ margin: 0 }}>Timeline Clínica</h3>
+          {ordenados.map((item) => {
+            const isIntervencao = item.tipo_evento === "INTERVENCAO";
+            const origem =
+              item.origem || (isIntervencao ? "PROFISSIONAL" : "PROFISSIONAL");
 
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            const badgeStyle = {
+              padding: "4px 10px",
+              borderRadius: 999,
+              fontSize: 12,
+              fontWeight: 700,
+              display: "inline-block",
+              marginBottom: 8,
+              background: origem === "RESPONSAVEL" ? "#dcfce7" : "#dbeafe",
+              color: origem === "RESPONSAVEL" ? "#166534" : "#1d4ed8",
+              border:
+                origem === "RESPONSAVEL"
+                  ? "1px solid #86efac"
+                  : "1px solid #93c5fd",
+            };
 
-            <button
-              variant="secondary" onClick={() => setFiltro("TODOS")}
-            >
-              Todos
-            </button>
-
-            <button
-              variant="secondary" onClick={() => setFiltro("INTERVENCAO")}
-            >
-              Intervenções
-            </button>
-
-            <button
-              variant="secondary" onClick={() => setFiltro("REGISTRO_DIARIO")}
-            >
-              Registros Diários
-            </button>
-          </div>
-        </div>
-
-        {ordenados.length === 0 ? (
-          <p style={{ marginTop: 16 }}>Nenhum evento encontrado para este filtro.</p>
-        ) : (
-          <div
-            style={{
-              marginTop: 16,
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-            }}
-          >
-            {ordenados.map((item) => {
-              const isIntervencao = item.tipo_evento === "INTERVENCAO";
-              const origem =
-                item.origem || (isIntervencao ? "PROFISSIONAL" : "PROFISSIONAL");
-
-              const badgeStyle = {
-                padding: "4px 10px",
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 700,
-                display: "inline-block",
-                marginBottom: 8,
-                background: origem === "RESPONSAVEL" ? "#dcfce7" : "#dbeafe",
-                color: origem === "RESPONSAVEL" ? "#166534" : "#1d4ed8",
-                border:
-                  origem === "RESPONSAVEL"
-                    ? "1px solid #86efac"
-                    : "1px solid #93c5fd",
-              };
-
-              return (
+            return (
+              <div
+                key={`${item.tipo_evento}-${item.id}`}
+                style={{
+                  border: "1px solid #ddd",
+                  borderRadius: 10,
+                  padding: 12,
+                  background: isIntervencao ? "#f5f9ff" : "#f9fff5",
+                }}
+              >
                 <div
-                  key={`${item.tipo_evento}-${item.id}`}
                   style={{
-                    border: "1px solid #ddd",
-                    borderRadius: 10,
-                    padding: 12,
-                    background: isIntervencao ? "#f5f9ff" : "#f9fff5",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    alignItems: "flex-start",
+                    flexWrap: "wrap",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: 16,
-                      alignItems: "flex-start",
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <span style={badgeStyle}>
-                        {origem === "RESPONSAVEL" ? "Responsável" : "Profissional"}
-                      </span>
+                  <div style={{ flex: 1, minWidth: 280 }}>
+                    <span style={badgeStyle}>
+                      {origem === "RESPONSAVEL" ? "Responsável" : "Profissional"}
+                    </span>
 
-                      <div style={{ marginTop: 6 }}>
-                        <b>{isIntervencao ? "🧠 Intervenção" : "📋 Registro Diário"}</b>
-                      </div>
-
-                      {origem === "RESPONSAVEL" && (
-                        <div
-                          style={{
-                            fontSize: 12,
-                            color: "#64748b",
-                            marginTop: 4,
-                          }}
-                        >
-                          Dados reportados pela família
-                        </div>
-                      )}
-
-                      <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>
-                        {item.descricao}
-                      </div>
+                    <div style={{ marginTop: 6 }}>
+                      <b>{isIntervencao ? "🧠 Intervenção" : "📋 Registro Diário"}</b>
                     </div>
 
-                    <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      <small>{formatarData(item.data)}</small>
-
+                    {origem === "RESPONSAVEL" && (
                       <div
                         style={{
-                          marginTop: 8,
-                          display: "flex",
-                          gap: 8,
-                          justifyContent: "flex-end",
-                          flexWrap: "wrap",
+                          fontSize: 12,
+                          color: "#64748b",
+                          marginTop: 4,
                         }}
                       >
-                        {item.tipo_evento === "REGISTRO_DIARIO" && (
-                          <button
-                            variant="secondary" onClick={() =>
-                              navigate(`/pacientes/${pacienteId}/registros/${item.id}/editar`)
-                            }
-                          >
-                            Editar
-                          </button>
-                        )}
-
-                        {item.tipo_evento === "INTERVENCAO" && (
-                          <button
-                            variant="secondary" onClick={() =>
-                              navigate(
-                                `/pacientes/${pacienteId}/intervencoes/${item.id}/editar`
-                              )
-                            }
-                          >
-                            Editar
-                          </button>
-                        )}
-
-                        <button
-                          variant="secondary" onClick={() => onExcluirEvento(item)}
-                        >
-                          Excluir
-                        </button>
+                        Dados reportados pela família
                       </div>
+                    )}
+
+                    <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>
+                      {item.descricao}
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                    <small>{formatarData(item.data)}</small>
+
+                    <div
+                      style={{
+                        marginTop: 8,
+                        display: "flex",
+                        gap: 8,
+                        justifyContent: "flex-end",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      {item.tipo_evento === "REGISTRO_DIARIO" && (
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            navigate(`/pacientes/${pacienteId}/registros/${item.id}/editar`)
+                          }
+                        >
+                          Editar
+                        </Button>
+                      )}
+
+                      {item.tipo_evento === "INTERVENCAO" && (
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            navigate(
+                              `/pacientes/${pacienteId}/intervencoes/${item.id}/editar`
+                            )
+                          }
+                        >
+                          Editar
+                        </Button>
+                      )}
+
+                      <Button
+                        variant="secondary"
+                        onClick={() => onExcluirEvento(item)}
+                      >
+                        Excluir
+                      </Button>
                     </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

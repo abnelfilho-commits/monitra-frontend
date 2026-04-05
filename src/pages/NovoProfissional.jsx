@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { criarProfissional } from "../services/profissionais";
 import { listarClinicas } from "../services/clinicas";
 import { useAuth } from "../context/AuthContext";
+import Button from "../components/ui/Button";
 
 function getPerfil(user) {
   return String(user?.perfil || "").trim().toUpperCase();
@@ -106,60 +107,164 @@ export default function NovoProfissional() {
     }
   }
 
-  if (loading) return <div>Carregando...</div>;
+  if (loading) {
+    return (
+      <div style={{ padding: 24 }}>
+        <p>Carregando...</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: 24, maxWidth: 720, margin: "0 auto" }}>
-      <h2>Novo Profissional</h2>
-
-      <form onSubmit={onSubmit}>
-        <input
-          placeholder="Nome"
-          value={form.nome}
-          onChange={(e) => setField("nome", e.target.value)}
-        />
-
-        <input
-          placeholder="Email"
-          value={form.email}
-          onChange={(e) => setField("email", e.target.value)}
-        />
-
-        <input
-          placeholder="Especialidade"
-          value={form.especialidade}
-          onChange={(e) => setField("especialidade", e.target.value)}
-        />
-
+      {/* HEADER PADRÃO */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 20,
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
-          <label>Clínica</label>
-
-          {admin ? (
-            <select
-              value={form.clinica_id}
-              onChange={(e) => setField("clinica_id", e.target.value)}
-            >
-              <option value="">Selecione</option>
-              {clinicas.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              value={`Clínica ID ${user?.clinica_id}`}
-              disabled
-            />
-          )}
+          <h2 style={{ margin: 0 }}>Novo Profissional</h2>
+          <div style={{ fontSize: 13, color: "#6b7280", marginTop: 4 }}>
+            Cadastro de profissional de saúde
+          </div>
         </div>
 
-        {erro && <p style={{ color: "red" }}>{erro}</p>}
+        <Button variant="secondary" onClick={() => navigate("/profissionais")}>
+          ← Voltar
+        </Button>
+      </div>
 
-        <button type="submit">
-          {saving ? "Salvando..." : "Salvar"}
-        </button>
-      </form>
+      {/* CARD FORM */}
+      <div
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 16,
+          padding: 20,
+          background: "white",
+          boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
+        }}
+      >
+        <form onSubmit={onSubmit}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+            }}
+          >
+            <input
+              placeholder="Nome"
+              value={form.nome}
+              onChange={(e) => setField("nome", e.target.value)}
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Email"
+              value={form.email}
+              onChange={(e) => setField("email", e.target.value)}
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Especialidade"
+              value={form.especialidade}
+              onChange={(e) => setField("especialidade", e.target.value)}
+              style={{ ...inputStyle, gridColumn: "span 2" }}
+            />
+
+            <div style={{ gridColumn: "span 2" }}>
+              <label style={labelStyle}>Clínica</label>
+
+              {admin ? (
+                <select
+                  value={form.clinica_id}
+                  onChange={(e) => setField("clinica_id", e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="">Selecione</option>
+                  {clinicas.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  value={`Clínica ID ${user?.clinica_id}`}
+                  disabled
+                  style={{ ...inputStyle, background: "#f3f4f6" }}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* ERRO */}
+          {erro && (
+            <div
+              style={{
+                marginTop: 14,
+                padding: 12,
+                borderRadius: 10,
+                background: "#fee2e2",
+                border: "1px solid #fecaca",
+                color: "#991b1b",
+              }}
+            >
+              {erro}
+            </div>
+          )}
+
+          {/* AÇÕES */}
+          <div
+            style={{
+              marginTop: 18,
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 10,
+            }}
+          >
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => navigate("/profissionais")}
+            >
+              Cancelar
+            </Button>
+
+            <Button type="submit">
+              {saving ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
+
+/* ===================== */
+/* 🎨 ESTILO PADRÃO INPUT */
+/* ===================== */
+
+const inputStyle = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: 10,
+  border: "1px solid #d1d5db",
+  fontSize: 14,
+  outline: "none",
+};
+
+const labelStyle = {
+  display: "block",
+  fontSize: 12,
+  fontWeight: 600,
+  marginBottom: 6,
+  color: "#374151",
+};

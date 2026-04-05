@@ -819,36 +819,59 @@ export default function Dashboard() {
                         justifyContent: "space-between",
                         gap: 12,
                         alignItems: "center",
-                        flexWrap: "wrap",
+                        flexWrap: "nowrap",
                       }}
                     >
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{p.nome || `Paciente #${p.id}`}</div>
-                        <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
-                          Intervenções: {p.totalIntervencoes} | Registros: {p.totalRegistros}
-                        </div>
+                    
+                     <div style={{ flex: 1, minWidth: 0 }}>
+                       <div
+                          style={{
+                          fontWeight: 700,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                         }}
+                        title={p.nome || `Paciente #${p.id}`}
+                      >
+                        {resumirNome(p.nome || `Paciente #${p.id}`, 26)}
                       </div>
 
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: 999,
-                            background: corStatus(p.status),
-                            color: "#111",
-                            fontSize: 12,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {labelStatus(p.status)}
-                        </span>
+                      <div style={{ fontSize: 12, opacity: 0.8, marginTop: 4 }}>
+                         Intervenções: {p.totalIntervencoes} | Registros: {p.totalRegistros}
+                      </div>
+                    </div>
 
-                        <Button
-                          variant="secondary"
-                          onClick={() => navigate(`/pacientes/${p.id}`)}
-                        >
-                          Abrir
-                        </Button>
+                    <div
+                       style={{
+                       display: "flex",
+                       alignItems: "center",
+                       gap: 10,
+                       flexWrap: "nowrap",
+                       flexShrink: 0,
+                     }}
+                    >
+                     <span
+                        style={{
+                        padding: "4px 10px",
+                        borderRadius: 999,
+                        background: corStatus(p.status),
+                        color: "#111",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        whiteSpace: "nowrap",
+                      }}
+                     >
+                        {labelStatus(p.status)}
+                     </span>
+
+                     <Button
+                        variant="secondary"
+                        onClick={() => navigate(`/pacientes/${p.id}`)}
+                        style={{ whiteSpace: "nowrap" }}
+                      >
+                        Abrir
+                      </Button>
+
                       </div>
                     </div>
                   </div>
