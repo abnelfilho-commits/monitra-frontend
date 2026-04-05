@@ -4,6 +4,8 @@ import { criarClinica } from "../services/clinicas";
 import Button from "../components/ui/Button";
 
 export default function NovaClinica() {
+  const navigate = useNavigate();
+
   function mascararCNPJ(valor) {
     const numeros = String(valor || "").replace(/\D/g, "").slice(0, 14);
 
@@ -28,8 +30,6 @@ export default function NovaClinica() {
       .replace(/(\d{5})(\d)/, "$1-$2");
   }
 
-  const navigate = useNavigate();
-
   const [form, setForm] = useState({
     nome: "",
     cnpj: "",
@@ -47,6 +47,12 @@ export default function NovaClinica() {
   async function onSubmit(e) {
     e.preventDefault();
     setErro("");
+
+    if (!form.nome.trim()) {
+      setErro("Informe o nome da clínica.");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -70,119 +76,152 @@ export default function NovaClinica() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 720, margin: "0 auto" }}>
-      <div style={headerStyle}>
-        <div>
-          <h2 style={{ margin: 0 }}>Nova Clínica</h2>
-          <small style={{ color: "#6b7280" }}>Cadastro de clínica</small>
+    <div style={{ padding: 24 }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+            marginBottom: 18,
+          }}
+        >
+          <div>
+            <h2 style={{ margin: 0 }}>Nova Clínica</h2>
+            <div style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>
+              Cadastro de clínica
+            </div>
+          </div>
+
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/clinicas")}
+          >
+            ← Voltar
+          </Button>
         </div>
 
-        <Button variant="secondary" onClick={() => navigate("/clinicas")}>
-          ← Voltar
-        </Button>
-      </div>
-
-      <div style={cardStyle}>
-        <form onSubmit={onSubmit}>
-          <div style={gridStyle}>
-            <input
-              placeholder="Nome"
-              value={form.nome}
-              onChange={(e) => setField("nome", e.target.value)}
-              required
-              style={{ ...inputStyle, gridColumn: "span 2" }}
-            />
-
-            <input
-              placeholder="CNPJ"
-              value={form.cnpj}
-              onChange={(e) => setField("cnpj", mascararCNPJ(e.target.value))}
-              style={inputStyle}
-            />
-
-            <input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={(e) => setField("email", e.target.value)}
-              style={inputStyle}
-            />
-
-            <input
-              placeholder="Telefone"
-              value={form.telefone}
-              onChange={(e) => setField("telefone", mascararTelefone(e.target.value))}
-              style={{ ...inputStyle, gridColumn: "span 2" }}
-            />
-          </div>
-
-          {erro && <div style={erroStyle}>{erro}</div>}
-
-          <div style={actionsStyle}>
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={() => navigate("/clinicas")}
-              disabled={saving}
+        <div
+          style={{
+            border: "1px solid #e5e7eb",
+            borderRadius: 16,
+            padding: 24,
+            background: "#fff",
+            boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
+          }}
+        >
+          <form onSubmit={onSubmit}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 14,
+              }}
             >
-              Cancelar
-            </Button>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={labelStyle}>Nome</label>
+                <input
+                  placeholder="Nome da clínica"
+                  value={form.nome}
+                  onChange={(e) => setField("nome", e.target.value)}
+                  required
+                  style={inputStyle}
+                />
+              </div>
 
-            <Button type="submit" disabled={saving}>
-              {saving ? "Salvando..." : "Criar Clínica"}
-            </Button>
-          </div>
-        </form>
+              <div>
+                <label style={labelStyle}>CNPJ</label>
+                <input
+                  placeholder="00.000.000/0000-00"
+                  value={form.cnpj}
+                  onChange={(e) => setField("cnpj", mascararCNPJ(e.target.value))}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Telefone</label>
+                <input
+                  placeholder="(00) 00000-0000"
+                  value={form.telefone}
+                  onChange={(e) => setField("telefone", mascararTelefone(e.target.value))}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div style={{ gridColumn: "1 / -1" }}>
+                <label style={labelStyle}>Email</label>
+                <input
+                  type="email"
+                  placeholder="email@clinica.com"
+                  value={form.email}
+                  onChange={(e) => setField("email", e.target.value)}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {erro && (
+              <div
+                style={{
+                  marginTop: 14,
+                  padding: 12,
+                  borderRadius: 10,
+                  background: "#fee2e2",
+                  border: "1px solid #fecaca",
+                  color: "#991b1b",
+                }}
+              >
+                {erro}
+              </div>
+            )}
+
+            <div
+              style={{
+                marginTop: 20,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                flexWrap: "wrap",
+              }}
+            >
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={() => navigate("/clinicas")}
+                disabled={saving}
+              >
+                Cancelar
+              </Button>
+
+              <Button type="submit" disabled={saving}>
+                {saving ? "Salvando..." : "Criar Clínica"}
+              </Button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
 }
 
-const headerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 20,
-  gap: 12,
-  flexWrap: "wrap",
-};
-
-const cardStyle = {
-  border: "1px solid #e5e7eb",
-  borderRadius: 16,
-  padding: 20,
-  background: "white",
-  boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
-};
-
-const gridStyle = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 12,
-};
-
 const inputStyle = {
   width: "100%",
-  padding: "10px 12px",
-  borderRadius: 10,
+  padding: "12px 14px",
+  borderRadius: 12,
   border: "1px solid #d1d5db",
   fontSize: 14,
   outline: "none",
+  background: "#fff",
+  boxSizing: "border-box",
 };
 
-const erroStyle = {
-  marginTop: 12,
-  padding: 12,
-  background: "#fee2e2",
-  border: "1px solid #fecaca",
-  borderRadius: 10,
-  color: "#991b1b",
-};
-
-const actionsStyle = {
-  marginTop: 16,
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: 10,
-  flexWrap: "wrap",
+const labelStyle = {
+  display: "block",
+  fontSize: 13,
+  fontWeight: 600,
+  marginBottom: 6,
+  color: "#374151",
 };
