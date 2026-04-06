@@ -221,7 +221,7 @@ export default function ClinicaDetalhe() {
             <b>Telefone:</b> {clinica?.telefone || "-"}
           </p>
         </div>
- 
+
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Button
             variant="secondary"
@@ -264,7 +264,6 @@ export default function ClinicaDetalhe() {
             Mapa de Risco
           </Button>
         </div>
-
       </div>
 
       {erro && <p style={{ color: "red" }}>{erro}</p>}
@@ -385,6 +384,7 @@ export default function ClinicaDetalhe() {
                       justifyContent: "space-between",
                       gap: 12,
                       alignItems: "center",
+                      flexWrap: "wrap",
                     }}
                   >
                     <div>
@@ -408,9 +408,12 @@ export default function ClinicaDetalhe() {
                         {labelStatus(p.status)}
                       </span>
 
-                      <button onClick={() => navigate(`/pacientes/${p.id}`)}>
+                      <Button
+                        variant="secondary"
+                        onClick={() => navigate(`/pacientes/${p.id}`)}
+                      >
                         Abrir
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
