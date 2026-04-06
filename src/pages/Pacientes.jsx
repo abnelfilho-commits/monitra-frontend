@@ -140,6 +140,7 @@ export default function Pacientes() {
           borderRadius: 14,
           padding: 12,
           boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+          boxSizing: "border-box",
         }}
       >
         <input
@@ -154,6 +155,8 @@ export default function Pacientes() {
             borderRadius: 10,
             outline: "none",
             fontSize: 14,
+            boxSizing: "border-box",
+            display: "block",
           }}
         />
       </div>

@@ -218,16 +218,15 @@ export default function Responsaveis() {
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button
+          <Button
             onClick={() => setMostrarNovoResponsavel((prev) => !prev)}
-            style={buttonPrimaryStyle}
           >
             + Novo Responsável
-          </button>
+          </Button>
 
-          <button variant="secondary" onClick={load}>
+          <Button variant="secondary" onClick={load}>
             ↻ Atualizar
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -337,9 +336,9 @@ export default function Responsaveis() {
             </label>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <button type="submit">
+              <Button type="submit">
                 Salvar Responsável
-              </button>
+              </Button>
 
               <button
                 type="button"
@@ -469,9 +468,9 @@ export default function Responsaveis() {
           </label>
 
           <div>
-            <button type="submit" style={buttonPrimaryStyle}>
+            <Button type="submit">
               Vincular Paciente
-            </button>
+            </Button>
           </div>
         </form>
       </div>

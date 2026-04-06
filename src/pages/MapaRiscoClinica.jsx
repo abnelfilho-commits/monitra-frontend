@@ -1,4 +1,4 @@
-
+import Button from "../components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { obterMapaRiscoClinica } from "../services/analytics";
@@ -126,16 +126,7 @@ function CardPacienteRisco({ paciente, navigate }) {
           </div>
           
           <button
-            style={{
-              marginTop: 8,
-              minWidth: 150,
-
-              padding: "8px 12px",
-              borderRadius: 8,
-              border: "1px solid #d1d5db",
-              background: "white",
-              cursor: "pointer",
-            }}
+            variant="secondary"
             onClick={() => navigate(`/pacientes/${paciente.paciente_id}`)}
           >
             Abrir prontuário
@@ -242,10 +233,13 @@ export default function MapaRiscoClinica() {
         </div>   
           
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={() => navigate(`/clinicas/${clinicaId}`)}>
-            Voltar para clínica
+          <button
+            variant="secondary"
+            onClick={() => navigate(`/clinicas/${clinicaId}`)}
+          >
+            ← Voltar
           </button>
-          <button onClick={load}>↻ Atualizar</button>
+          <button variant="secondary" onClick={load}>↻ Atualizar</button>
         </div>
       </div>
     
@@ -514,15 +508,7 @@ export default function MapaRiscoClinica() {
                     </div>
                
                     <button
-                      style={{
-                        marginTop: 8,
-                        minWidth: 150,
-                        padding: "8px 12px",
-                        borderRadius: 8, 
-                        border: "1px solid #d1d5db",
-                        background: "white",
-                        cursor: "pointer",
-                      }}
+                      variant="secondary"
                       onClick={() => navigate(`/pacientes/${p.paciente_id}`)}
                     >
                       Abrir prontuário

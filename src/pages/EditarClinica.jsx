@@ -1,3 +1,4 @@
+import Button from "../components/ui/Button";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { obterClinica, atualizarClinica } from "../services/clinicas";
@@ -133,10 +134,19 @@ export default function EditarClinica() {
 
         {erro && <p style={{ color: "red" }}>{erro}</p>}
 
-        <div style={{ marginTop: 16 }}>
-          <button disabled={saving}>
-            {saving ? "Salvando..." : "Salvar"}
-          </button>
+        <div style={{ marginTop: 20, display: "flex", gap: 12 }}>
+          <Button
+          variant="secondary"
+          type="button"
+          onClick={() => navigate(-1)}
+          disabled={saving}
+          >
+            ← Voltar
+          </Button>
+
+          <Button type="submit" disabled={saving}>
+            {saving ? "Salvando..." : "Salvar alterações"}
+          </Button>
         </div>
       </form>
     </div>

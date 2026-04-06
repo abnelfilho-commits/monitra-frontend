@@ -174,13 +174,20 @@ export default function EditarProfissional() {
         {erro && <p style={{ color: "red", marginTop: 12 }}>{erro}</p>}
 
         <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-          <button type="button" onClick={() => navigate(-1)} disabled={saving}>
-            Voltar
-          </button>
+          
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => navigate(-1)}
+            disabled={saving}
+          >
+            ← Voltar
+          </Button>
 
-          <button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving}>
             {saving ? "Salvando..." : "Salvar alterações"}
-          </button>
+          </Button>
+
         </div>
       </form>
     </div>
