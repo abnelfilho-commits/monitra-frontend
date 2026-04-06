@@ -240,7 +240,11 @@ export default function MapaRiscoClinica() {
           >
             ← Voltar
           </Button>
-          <Button variant="secondary" onClick={load}>↻ AtualizaBB<utton>
+          <Button variant="secondary" onClick={load}>
+            ↻Atualizar
+
+          <Button>
+
         </div>
       </div>
     
