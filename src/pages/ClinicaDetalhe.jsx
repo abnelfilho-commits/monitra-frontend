@@ -1,3 +1,4 @@
+import Button from "../components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { obterClinica } from "../services/clinicas";
@@ -220,19 +221,50 @@ export default function ClinicaDetalhe() {
             <b>Telefone:</b> {clinica?.telefone || "-"}
           </p>
         </div>
-
+ 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button onClick={() => navigate("/clinicas")}>Voltar</button>
-          <button onClick={() => navigate(`/clinicas/${clinicaId}/editar`)}>
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/clinicas")}
+          >
+            ← Voltar
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={() => navigate(`/clinicas/${clinicaId}/editar`)}
+          >
             Editar Clínica
-          </button>
-          <button onClick={() => navigate("/profissionais")}>Profissionais</button>
-          <button onClick={() => navigate("/pacientes")}>Pacientes</button>
-          <button onClick={load}>↻ Atualizar</button>
-          <button onClick={() => navigate(`/clinicas/${clinicaId}/mapa-risco`)}>
-            Mapa de risco
-          </button>
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/profissionais")}
+          >
+            Profissionais
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/pacientes")}
+          >
+            Pacientes
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={load}
+          >
+            ↻ Atualizar
+          </Button>
+
+          <Button
+            onClick={() => navigate(`/clinicas/${clinicaId}/mapa-risco`)}
+          >
+            Mapa de Risco
+          </Button>
         </div>
+
       </div>
 
       {erro && <p style={{ color: "red" }}>{erro}</p>}

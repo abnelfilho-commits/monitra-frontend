@@ -1,3 +1,4 @@
+import Button from "../components/ui/Button";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { criarIntervencao } from "../services/intervencoes";
@@ -98,15 +99,21 @@ export default function NovaIntervencao() {
 
         {erro && <p style={{ color: "red", marginTop: 12 }}>{erro}</p>}
 
-        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-          <button type="button" onClick={() => navigate(-1)} disabled={saving}>
-            Voltar
-          </button>
+        <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => navigate(-1)}
+            disabled={saving}
+          >
+            ← Voltar
+          </Button>
 
-          <button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving}>
             {saving ? "Salvando..." : "Salvar intervenção"}
-          </button>
+          </Button>
         </div>
+
       </form>
     </div>
   );

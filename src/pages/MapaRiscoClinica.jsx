@@ -125,12 +125,13 @@ function CardPacienteRisco({ paciente, navigate }) {
             Tendência: <b>{labelTendencia(paciente.tendencia)}</b>
           </div>
           
-          <button
+          <Button
             variant="secondary"
+            style={{ marginTop: 8, minWidth: 150 }}
             onClick={() => navigate(`/pacientes/${paciente.paciente_id}`)}
           >
             Abrir prontuário
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -233,13 +234,13 @@ export default function MapaRiscoClinica() {
         </div>   
           
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button
+          <Button
             variant="secondary"
             onClick={() => navigate(`/clinicas/${clinicaId}`)}
           >
             ← Voltar
-          </button>
-          <button variant="secondary" onClick={load}>↻ Atualizar</button>
+          </Button>
+          <Button variant="secondary" onClick={load}>↻ Atualizar<Bbutton>
         </div>
       </div>
     
@@ -507,12 +508,13 @@ export default function MapaRiscoClinica() {
                       Score: <b>{p.pontuacao_risco}</b>
                     </div>
                
-                    <button
+                    <Button
                       variant="secondary"
+                      style={{ marginTop: 8, minWidth: 150 }}
                       onClick={() => navigate(`/pacientes/${p.paciente_id}`)}
                     >
                       Abrir prontuário
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

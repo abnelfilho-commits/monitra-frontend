@@ -1,3 +1,4 @@
+import Button from "../components/ui/Button";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -173,8 +174,7 @@ export default function EditarProfissional() {
 
         {erro && <p style={{ color: "red", marginTop: 12 }}>{erro}</p>}
 
-        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-          
+        <div style={{ marginTop: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Button
             variant="secondary"
             type="button"
