@@ -16,29 +16,73 @@ import {
   Cell,
 } from "recharts";
 
+function normalizarTexto(texto = "") {
+  return String(texto)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
 function classificarStatusPaciente(eventos) {
   if (!eventos || eventos.length === 0) return "sem_dados";
 
   const registros = eventos.filter((e) => e.tipo_evento === "REGISTRO_DIARIO");
   if (registros.length === 0) return "sem_dados";
 
-  let score = 0;
+  const textos = registros
+    .map((r) => normalizarTexto(r.descricao || ""))
+    .filter(Boolean);
 
-  registros.forEach((r) => {
-    const texto = (r.descricao || "").toLowerCase();
+  if (textos.length === 0) return "sem_dados";
 
-    if (texto.includes("sono: muito bom") || texto.includes("sono: bom")) score += 1;
-    if (texto.includes("irritabilidade: nenhuma") || texto.includes("irritabilidade: leve")) score += 1;
-    if (texto.includes("crise sensorial: não") || texto.includes("crise sensorial: nao")) score += 1;
+  const texto = textos.join(" | ");
 
-    if (texto.includes("sono: ruim") || texto.includes("sono: muito ruim")) score -= 1;
-    if (texto.includes("irritabilidade: alta") || texto.includes("irritabilidade: muito alta")) score -= 1;
-    if (texto.includes("crise sensorial: alta")) score -= 1;
-  });
+  let scoreAlto = 0;
+  let scoreAlerta = 0;
+  let scoreEstavel = 0;
 
-  if (score >= 2) return "verde";
-  if (score <= -2) return "vermelho";
-  return "amarelo";
+  // 🔴 ALTO RISCO
+  if (
+    texto.includes("piora importante") ||
+    texto.includes("piora clinica importante") ||
+    texto.includes("desregulacao importante") ||
+    texto.includes("crises frequentes") ||
+    texto.includes("crises sensoriais frequentes") ||
+    texto.includes("monitoramento intensivo") ||
+    texto.includes("agravamento")
+  ) {
+    scoreAlto += 3;
+  }
+
+  // 🟡 ALERTA
+  if (
+    texto.includes("piora") ||
+    texto.includes("instabilidade") ||
+    texto.includes("desregulacao") ||
+    texto.includes("crise sensorial") ||
+    texto.includes("oscilacao") ||
+    texto.includes("em piora")
+  ) {
+    scoreAlerta += 2;
+  }
+
+  // 🟢 ESTÁVEL
+  if (
+    texto.includes("evolucao favoravel") ||
+    texto.includes("melhora") ||
+    texto.includes("quadro estavel") ||
+    texto.includes("sem intercorrencias") ||
+    texto.includes("bom controle")
+  ) {
+    scoreEstavel += 2;
+  }
+
+  // 🎯 Regras finais
+  if (scoreAlto >= 3) return "vermelho";
+  if (scoreAlerta >= 2) return "amarelo";
+  if (scoreEstavel >= 2) return "verde";
+
+  return "sem_dados";
 }
 
 function corStatus(status) {
