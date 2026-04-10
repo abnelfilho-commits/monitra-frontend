@@ -64,7 +64,7 @@ function normalizarTexto(texto = "") {
 function extrairIndicadoresNarrativosDoTexto(textoOriginal = "") {
   const texto = normalizarTexto(textoOriginal);
 
-  let sono = 0;
+  let sono = null;
   let irritabilidade = 0;
   let crise = 0;
 
@@ -412,7 +412,7 @@ function extrairSerieEvolucaoClinica(items) {
 
     return {
       data: formatarSoData(r.data),
-      sono: indicadores.sono,
+      sono: indicadores.sono ?? undefined,
       irritabilidade: indicadores.irritabilidade,
       crise: indicadores.crise,
     };
