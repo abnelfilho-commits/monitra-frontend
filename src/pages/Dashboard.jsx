@@ -110,9 +110,9 @@ function prioridadeNumerica(risco) {
 }
 
 function labelTendencia(tendencia) {
-  if (tendencia === "piora") return "Em piora";
-  if (tendencia === "estavel") return "Estável";
-  if (tendencia === "melhora") return "Em melhora";
+  if (tendencia === "piora") return "Tendência de piora";
+  if (tendencia === "estavel") return "Tendência estável";
+  if (tendencia === "melhora") return "Tendência de melhora";
   return "Sem leitura";
 }
 
@@ -275,7 +275,7 @@ export default function Dashboard() {
         }))
       )
       .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
-      .slice(0, 8);
+      .slice(0, 10);
 
     const graficoIntervencoes = pacientesComEventos.map((p) => ({
       nome: resumirNome(p.nome),
@@ -623,13 +623,24 @@ export default function Dashboard() {
                             style={{
                               padding: "4px 10px",
                               borderRadius: 999,
-                              background: "#f3f4f6",
-                              color: "#374151",
+
+                              background:
+                                p.risco?.tendencia === "piora"
+                                  ? "#fee2e2"
+                                  : p.risco?.tendencia === "melhora"
+                                  ? "#dcfce7"
+                                  : "#f3f4f6",
+                              color:
+                                p.risco?.tendencia === "piora"
+                                  ? "#991b1b"
+                                  : p.risco?.tendencia === "melhora"
+                                  ? "#166534"
+                                  : "#374151",
                               fontSize: 12,
                               fontWeight: 700,
                             }}
                           >
-                            {labelTendencia(p.risco?.tendencia)}
+                            📊 {labelTendencia(p.risco?.tendencia)}
                           </span>
                         </div>
 
@@ -803,7 +814,9 @@ export default function Dashboard() {
               <p>Nenhum paciente encontrado.</p>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {analitico.pacientesComEventos.map((p) => (
+                {analitico.pacientesComEventos
+                   .slice(0, 10)
+                   .map((p) => (
                   <div
                     key={p.id}
                     style={{
