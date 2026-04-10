@@ -53,43 +53,230 @@ function formatarGenero(genero) {
   return genero;
 }
 
+function normalizarTexto(texto = "") {
+  return String(texto)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function extrairIndicadoresNarrativosDoTexto(textoOriginal = "") {
+  const texto = normalizarTexto(textoOriginal);
+
+  let sono = 0;
+  let irritabilidade = 0;
+  let crise = 0;
+
+  // SONO
+  if (
+    texto.includes("sono muito bom") ||
+    texto.includes("sono adequado") ||
+    texto.includes("dormiu bem") ||
+    texto.includes("boa qualidade de sono")
+  ) {
+    sono = 5;
+  } else if (
+    texto.includes("sono bom") ||
+    texto.includes("sono satisfatorio")
+  ) {
+    sono = 4;
+  } else if (
+    texto.includes("sono regular") ||
+    texto.includes("oscilacao do sono")
+  ) {
+    sono = 3;
+  } else if (
+    texto.includes("sono ruim") ||
+    texto.includes("baixa qualidade de sono") ||
+    texto.includes("sono de baixa qualidade")
+  ) {
+    sono = 2;
+  } else if (
+    texto.includes("sono muito ruim") ||
+    texto.includes("grande prejuizo do sono") ||
+    texto.includes("importante prejuizo do sono")
+  ) {
+    sono = 1;
+  }
+
+  // IRRITABILIDADE
+  if (
+    texto.includes("irritabilidade nenhuma") ||
+    texto.includes("sem irritabilidade") ||
+    texto.includes("irritabilidade ausente")
+  ) {
+    irritabilidade = 5;
+  } else if (
+    texto.includes("irritabilidade leve") ||
+    texto.includes("leve irritabilidade")
+  ) {
+    irritabilidade = 4;
+  } else if (
+    texto.includes("irritabilidade moderada") ||
+    texto.includes("irritabilidade oscilante")
+  ) {
+    irritabilidade = 3;
+  } else if (
+    texto.includes("irritabilidade alta") ||
+    texto.includes("irritabilidade elevada")
+  ) {
+    irritabilidade = 2;
+  } else if (
+    texto.includes("irritabilidade muito alta") ||
+    texto.includes("irritabilidade intensa") ||
+    texto.includes("desregulacao importante") ||
+    texto.includes("desregulacao intensa")
+  ) {
+    irritabilidade = 1;
+  }
+
+  // CRISE SENSORIAL
+  if (
+    texto.includes("crise sensorial: nao") ||
+    texto.includes("crise sensorial: não") ||
+    texto.includes("sem crise sensorial") ||
+    texto.includes("sem crises sensoriais")
+  ) {
+    crise = 5;
+  } else if (
+    texto.includes("crise sensorial leve") ||
+    texto.includes("episodios leves")
+  ) {
+    crise = 4;
+  } else if (
+    texto.includes("crise sensorial") ||
+    texto.includes("crises ocasionais") ||
+    texto.includes("crise moderada")
+  ) {
+    crise = 3;
+  } else if (
+    texto.includes("crise sensorial moderada") ||
+    texto.includes("crises recorrentes")
+  ) {
+    crise = 2;
+  } else if (
+    texto.includes("crise sensorial alta") ||
+    texto.includes("crises frequentes") ||
+    texto.includes("crises sensoriais frequentes") ||
+    texto.includes("alta frequencia de crises")
+  ) {
+    crise = 1;
+  }
+
+  return { sono, irritabilidade, crise };
+}
+
+function consolidarIndicadoresNarrativos(registros) {
+  let scoreSono = 0;
+  let scoreIrritabilidade = 0;
+  let scoreCrise = 0;
+  let quantidadeSono = 0;
+  let quantidadeIrritabilidade = 0;
+  let quantidadeCrise = 0;
+
+  registros.forEach((r) => {
+    const { sono, irritabilidade, crise } = extrairIndicadoresNarrativosDoTexto(
+      r.descricao || ""
+    );
+
+    if (sono > 0) {
+      scoreSono += sono;
+      quantidadeSono += 1;
+    }
+
+    if (irritabilidade > 0) {
+      scoreIrritabilidade += irritabilidade;
+      quantidadeIrritabilidade += 1;
+    }
+
+    if (crise > 0) {
+      scoreCrise += crise;
+      quantidadeCrise += 1;
+    }
+  });
+
+  return {
+    sono:
+      quantidadeSono > 0 ? Math.round(scoreSono / quantidadeSono) : 0,
+    irritabilidade:
+      quantidadeIrritabilidade > 0
+        ? Math.round(scoreIrritabilidade / quantidadeIrritabilidade)
+        : 0,
+    crise:
+      quantidadeCrise > 0 ? Math.round(scoreCrise / quantidadeCrise) : 0,
+  };
+}
+
 function classificarStatusPaciente(eventos) {
   if (!eventos || eventos.length === 0) return "sem_dados";
 
   const registros = eventos.filter((e) => e.tipo_evento === "REGISTRO_DIARIO");
   if (registros.length === 0) return "sem_dados";
 
-  let score = 0;
+  const textoCompleto = normalizarTexto(
+    registros.map((r) => r.descricao || "").join(" | ")
+  );
 
-  registros.forEach((r) => {
-    const texto = (r.descricao || "").toLowerCase();
+  if (
+    textoCompleto.includes("piora clinica importante") ||
+    textoCompleto.includes("piora importante") ||
+    textoCompleto.includes("agravamento importante") ||
+    textoCompleto.includes("desregulacao importante") ||
+    textoCompleto.includes("desregulacao intensa") ||
+    textoCompleto.includes("crises sensoriais frequentes") ||
+    textoCompleto.includes("crises frequentes") ||
+    textoCompleto.includes("monitoramento intensivo")
+  ) {
+    return "vermelho";
+  }
 
-    if (texto.includes("sono: muito bom") || texto.includes("sono: bom")) score += 1;
-    if (
-      texto.includes("irritabilidade: nenhuma") ||
-      texto.includes("irritabilidade: leve")
-    ) {
-      score += 1;
-    }
-    if (
-      texto.includes("crise sensorial: não") ||
-      texto.includes("crise sensorial: nao")
-    ) {
-      score += 1;
-    }
+  if (
+    textoCompleto.includes("piora clinica") ||
+    textoCompleto.includes("instabilidade") ||
+    textoCompleto.includes("desregulacao") ||
+    textoCompleto.includes("crise sensorial") ||
+    textoCompleto.includes("oscilacao") ||
+    textoCompleto.includes("em piora")
+  ) {
+    return "amarelo";
+  }
 
-    if (texto.includes("sono: ruim") || texto.includes("sono: muito ruim")) score -= 1;
-    if (
-      texto.includes("irritabilidade: alta") ||
-      texto.includes("irritabilidade: muito alta")
-    ) {
-      score -= 1;
-    }
-    if (texto.includes("crise sensorial: alta")) score -= 1;
-  });
+  if (
+    textoCompleto.includes("evolucao favoravel") ||
+    textoCompleto.includes("boa evolucao") ||
+    textoCompleto.includes("quadro estavel") ||
+    textoCompleto.includes("sem intercorrencias") ||
+    textoCompleto.includes("bom controle")
+  ) {
+    return "verde";
+  }
 
-  if (score >= 2) return "verde";
-  if (score <= -2) return "vermelho";
+  const painel = extrairScoreClinicoDosRegistros(eventos);
+
+  if (
+    painel.sono === 0 &&
+    painel.irritabilidade === 0 &&
+    painel.crise === 0
+  ) {
+    return "sem_dados";
+  }
+
+  if (
+    (painel.sono > 0 && painel.sono <= 2) ||
+    (painel.irritabilidade > 0 && painel.irritabilidade <= 2) ||
+    (painel.crise > 0 && painel.crise <= 2)
+  ) {
+    return "vermelho";
+  }
+
+  if (
+    painel.sono >= 4 &&
+    painel.irritabilidade >= 4 &&
+    painel.crise >= 4
+  ) {
+    return "verde";
+  }
 
   return "amarelo";
 }
@@ -124,42 +311,7 @@ function resumirTexto(texto, max = 70) {
 function extrairScoreClinicoDosRegistros(items) {
   const registros = items.filter((item) => item.tipo_evento === "REGISTRO_DIARIO");
 
-  let scoreSono = 0;
-  let scoreIrritabilidade = 0;
-  let scoreCrise = 0;
-  let quantidade = 0;
-
-  registros.forEach((r) => {
-    const texto = (r.descricao || "").toLowerCase();
-    quantidade += 1;
-
-    if (texto.includes("sono: muito bom")) scoreSono += 5;
-    else if (texto.includes("sono: bom")) scoreSono += 4;
-    else if (texto.includes("sono: regular")) scoreSono += 3;
-    else if (texto.includes("sono: ruim")) scoreSono += 2;
-    else if (texto.includes("sono: muito ruim")) scoreSono += 1;
-
-    if (texto.includes("irritabilidade: nenhuma")) scoreIrritabilidade += 5;
-    else if (texto.includes("irritabilidade: leve")) scoreIrritabilidade += 4;
-    else if (texto.includes("irritabilidade: moderada")) scoreIrritabilidade += 3;
-    else if (texto.includes("irritabilidade: alta")) scoreIrritabilidade += 2;
-    else if (texto.includes("irritabilidade: muito alta")) scoreIrritabilidade += 1;
-
-    if (
-      texto.includes("crise sensorial: não") ||
-      texto.includes("crise sensorial: nao")
-    ) {
-      scoreCrise += 5;
-    } else if (texto.includes("crise sensorial: sim")) {
-      scoreCrise += 3;
-    } else if (texto.includes("crise sensorial: moderada")) {
-      scoreCrise += 2;
-    } else if (texto.includes("crise sensorial: alta")) {
-      scoreCrise += 1;
-    }
-  });
-
-  if (quantidade === 0) {
+  if (registros.length === 0) {
     return {
       sono: 0,
       irritabilidade: 0,
@@ -168,16 +320,18 @@ function extrairScoreClinicoDosRegistros(items) {
     };
   }
 
+  const consolidado = consolidarIndicadoresNarrativos(registros);
+
   return {
-    sono: Math.round(scoreSono / quantidade),
-    irritabilidade: Math.round(scoreIrritabilidade / quantidade),
-    crise: Math.round(scoreCrise / quantidade),
-    totalRegistros: quantidade,
+    sono: consolidado.sono,
+    irritabilidade: consolidado.irritabilidade,
+    crise: consolidado.crise,
+    totalRegistros: registros.length,
   };
 }
 
 function labelScore(score) {
-  if (score >= 4) return "Ótimo";
+  if (score >= 4) return "Bom";
   if (score === 3) return "Regular";
   if (score >= 1) return "Atenção";
   return "Sem dados";
@@ -202,32 +356,46 @@ function gerarResumoClinico(painel) {
 
   const sono =
     painel.sono >= 4
-      ? "sono predominantemente bom"
+      ? "sono predominantemente adequado"
       : painel.sono === 3
-      ? "sono regular"
-      : "sono de baixa qualidade";
+      ? "sono com alguma oscilação"
+      : painel.sono >= 1
+      ? "sono de baixa qualidade"
+      : "sono sem informação suficiente";
 
   const irrit =
     painel.irritabilidade >= 4
       ? "irritabilidade baixa"
       : painel.irritabilidade === 3
       ? "irritabilidade moderada"
-      : "irritabilidade elevada";
+      : painel.irritabilidade >= 1
+      ? "irritabilidade elevada"
+      : "irritabilidade sem informação suficiente";
 
   const crise =
     painel.crise >= 4
       ? "baixa ocorrência de crises sensoriais"
       : painel.crise === 3
-      ? "crises sensoriais ocasionais"
-      : "crises sensoriais frequentes";
+      ? "ocorrência ocasional de crises sensoriais"
+      : painel.crise >= 1
+      ? "crises sensoriais frequentes"
+      : "crises sensoriais sem informação suficiente";
 
-  let conclusao = "estabilidade clínica";
+  let conclusao = "estabilidade clínica relativa";
 
-  if (painel.sono <= 2 || painel.irritabilidade <= 2 || painel.crise <= 2) {
+  if (
+    (painel.sono > 0 && painel.sono <= 2) ||
+    (painel.irritabilidade > 0 && painel.irritabilidade <= 2) ||
+    (painel.crise > 0 && painel.crise <= 2)
+  ) {
     conclusao = "necessidade de atenção clínica";
   }
 
-  if (painel.sono >= 4 && painel.irritabilidade >= 4 && painel.crise >= 4) {
+  if (
+    painel.sono >= 4 &&
+    painel.irritabilidade >= 4 &&
+    painel.crise >= 4
+  ) {
     conclusao = "boa evolução clínica";
   }
 
@@ -240,42 +408,13 @@ function extrairSerieEvolucaoClinica(items) {
     .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
 
   return registros.map((r) => {
-    const texto = (r.descricao || "").toLowerCase();
-
-    let sono = 0;
-    let irritabilidade = 0;
-    let crise = 0;
-
-    if (texto.includes("sono: muito bom")) sono = 5;
-    else if (texto.includes("sono: bom")) sono = 4;
-    else if (texto.includes("sono: regular")) sono = 3;
-    else if (texto.includes("sono: ruim")) sono = 2;
-    else if (texto.includes("sono: muito ruim")) sono = 1;
-
-    if (texto.includes("irritabilidade: nenhuma")) irritabilidade = 5;
-    else if (texto.includes("irritabilidade: leve")) irritabilidade = 4;
-    else if (texto.includes("irritabilidade: moderada")) irritabilidade = 3;
-    else if (texto.includes("irritabilidade: alta")) irritabilidade = 2;
-    else if (texto.includes("irritabilidade: muito alta")) irritabilidade = 1;
-
-    if (
-      texto.includes("crise sensorial: não") ||
-      texto.includes("crise sensorial: nao")
-    ) {
-      crise = 5;
-    } else if (texto.includes("crise sensorial: sim")) {
-      crise = 3;
-    } else if (texto.includes("crise sensorial: moderada")) {
-      crise = 2;
-    } else if (texto.includes("crise sensorial: alta")) {
-      crise = 1;
-    }
+    const indicadores = extrairIndicadoresNarrativosDoTexto(r.descricao || "");
 
     return {
       data: formatarSoData(r.data),
-      sono,
-      irritabilidade,
-      crise,
+      sono: indicadores.sono,
+      irritabilidade: indicadores.irritabilidade,
+      crise: indicadores.crise,
     };
   });
 }
@@ -298,7 +437,11 @@ function classificarMomentoClinico(painel) {
     };
   }
 
-  if (painel.sono >= 4 && painel.irritabilidade >= 4 && painel.crise >= 4) {
+  if (
+    painel.sono >= 4 &&
+    painel.irritabilidade >= 4 &&
+    painel.crise >= 4
+  ) {
     return {
       titulo: "Boa evolução clínica",
       subtitulo: "Indicadores recentes sugerem estabilidade favorável do quadro.",
@@ -308,7 +451,11 @@ function classificarMomentoClinico(painel) {
     };
   }
 
-  if (painel.sono <= 2 || painel.irritabilidade <= 2 || painel.crise <= 2) {
+  if (
+    (painel.sono > 0 && painel.sono <= 2) ||
+    (painel.irritabilidade > 0 && painel.irritabilidade <= 2) ||
+    (painel.crise > 0 && painel.crise <= 2)
+  ) {
     return {
       titulo: "Atenção clínica recomendada",
       subtitulo: "Há sinais recentes que justificam monitoramento mais próximo.",
