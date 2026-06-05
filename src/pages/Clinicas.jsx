@@ -1,3 +1,4 @@
+import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listarClinicas } from "../services/clinicas";
@@ -9,6 +10,17 @@ export default function Clinicas() {
   const [clinicas, setClinicas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
+
+  const { user } = useAuth();
+  const isSuporte = user?.perfil === "SUPORTE";
+  const isAdminClinica = user?.perfil === "ADMIN_CLINICA";
+  const isAdminGlobal = user?.perfil === "ADMIN";
+  const podeGerenciarClinicas =
+    isAdminGlobal;
+
+  const clinicasFiltradas = isAdminClinica
+    ? clinicas.filter((c) => c.id === user?.clinica_id)
+    : clinicas;
 
   async function load() {
     setErro("");
@@ -75,9 +87,11 @@ export default function Clinicas() {
               justifyContent: "flex-end",
             }}
           >
-            <Button onClick={() => navigate("/clinicas/nova")}>
-              + Nova Clínica
-            </Button>
+            {podeGerenciarClinicas && (
+              <Button onClick={() => navigate("/clinicas/nova")}>
+                + Nova Clínica
+              </Button>
+            )}
 
             <Button variant="secondary" onClick={load}>
               ↻ Atualizar
@@ -125,7 +139,7 @@ export default function Clinicas() {
       )}
 
       {/* VAZIO */}
-      {!loading && !erro && clinicas.length === 0 && (
+      {!loading && !erro && clinicasFiltradas.length > 0 && (
         <div
           style={{
             marginTop: 16,
@@ -150,7 +164,7 @@ export default function Clinicas() {
             gap: 14,
           }}
         >
-          {clinicas.map((c) => (
+          {clinicasFiltradas.map((c) => (
             <div
               key={c.id}
               style={{
@@ -186,12 +200,14 @@ export default function Clinicas() {
                   Abrir
                 </Button>
 
-                <Button
-                  variant="secondary"
-                  onClick={() => navigate(`/clinicas/${c.id}/editar`)}
-                >
-                  Editar
-                </Button>
+                {podeGerenciarClinicas && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => navigate(`/clinicas/${c.id}/editar`)}
+                  >
+                    Editar
+                  </Button>
+                )}
 
                 <Button
                   onClick={() => navigate(`/clinicas/${c.id}/mapa-risco`)}

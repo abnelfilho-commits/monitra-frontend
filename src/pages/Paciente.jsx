@@ -61,6 +61,27 @@ function normalizarTexto(texto = "") {
     .trim();
 }
 
+function montarPainelAPartirDoStatusClinico(statusClinico, totalRegistros = 0) {
+  const bases = statusClinico?.base_sustentacao || [];
+  const eixo = statusClinico?.eixo_dominante;
+  const texto = bases.join(" ").toLowerCase();
+
+  let sono = 0;
+  let irritabilidade = 0;
+  let crise = 0;
+
+  if (texto.includes("sono")) sono = 2;
+  if (texto.includes("irritabilidade")) irritabilidade = 2;
+  if (texto.includes("crise") || texto.includes("sensorial") || eixo === "sensorial") crise = 2;
+
+  return {
+    sono,
+    irritabilidade,
+    crise,
+    totalRegistros,
+  };
+}
+
 function extrairIndicadoresNarrativosDoTexto(textoOriginal = "") {
   const texto = normalizarTexto(textoOriginal);
 
@@ -70,6 +91,7 @@ function extrairIndicadoresNarrativosDoTexto(textoOriginal = "") {
 
   // SONO
   if (
+    texto.includes("sono: muito bom") ||
     texto.includes("sono muito bom") ||
     texto.includes("sono adequado") ||
     texto.includes("dormiu bem") ||
@@ -77,22 +99,26 @@ function extrairIndicadoresNarrativosDoTexto(textoOriginal = "") {
   ) {
     sono = 5;
   } else if (
+    texto.includes("sono: bom") ||
     texto.includes("sono bom") ||
     texto.includes("sono satisfatorio")
   ) {
     sono = 4;
   } else if (
+    texto.includes("sono: regular") ||
     texto.includes("sono regular") ||
     texto.includes("oscilacao do sono")
   ) {
     sono = 3;
   } else if (
+    texto.includes("sono: ruim") ||
     texto.includes("sono ruim") ||
     texto.includes("baixa qualidade de sono") ||
     texto.includes("sono de baixa qualidade")
   ) {
     sono = 2;
   } else if (
+    texto.includes("sono: muito ruim") ||
     texto.includes("sono muito ruim") ||
     texto.includes("grande prejuizo do sono") ||
     texto.includes("importante prejuizo do sono")
@@ -102,27 +128,32 @@ function extrairIndicadoresNarrativosDoTexto(textoOriginal = "") {
 
   // IRRITABILIDADE
   if (
+    texto.includes("irritabilidade: nenhuma") ||
     texto.includes("irritabilidade nenhuma") ||
     texto.includes("sem irritabilidade") ||
     texto.includes("irritabilidade ausente")
   ) {
     irritabilidade = 5;
   } else if (
+    texto.includes("irritabilidade: leve") ||
     texto.includes("irritabilidade leve") ||
     texto.includes("leve irritabilidade")
   ) {
     irritabilidade = 4;
   } else if (
+    texto.includes("irritabilidade: moderada") ||
     texto.includes("irritabilidade moderada") ||
     texto.includes("irritabilidade oscilante")
   ) {
     irritabilidade = 3;
   } else if (
+    texto.includes("irritabilidade: alta") ||
     texto.includes("irritabilidade alta") ||
     texto.includes("irritabilidade elevada")
   ) {
     irritabilidade = 2;
   } else if (
+    texto.includes("irritabilidade: muito alta") ||
     texto.includes("irritabilidade muito alta") ||
     texto.includes("irritabilidade intensa") ||
     texto.includes("desregulacao importante") ||
@@ -135,27 +166,32 @@ function extrairIndicadoresNarrativosDoTexto(textoOriginal = "") {
   if (
     texto.includes("crise sensorial: nao") ||
     texto.includes("crise sensorial: não") ||
+    texto.includes("crise sensorial nao") ||
+    texto.includes("crise sensorial não") ||
     texto.includes("sem crise sensorial") ||
     texto.includes("sem crises sensoriais")
   ) {
     crise = 5;
   } else if (
+    texto.includes("crise sensorial: leve") ||
     texto.includes("crise sensorial leve") ||
     texto.includes("episodios leves")
   ) {
     crise = 4;
   } else if (
-    texto.includes("crise sensorial") ||
+    texto.includes("crise sensorial: moderada") ||
+    texto.includes("crise sensorial moderada") ||
     texto.includes("crises ocasionais") ||
     texto.includes("crise moderada")
   ) {
     crise = 3;
   } else if (
-    texto.includes("crise sensorial moderada") ||
-    texto.includes("crises recorrentes")
+    texto.includes("crises recorrentes") ||
+    texto.includes("crise sensorial recorrente")
   ) {
     crise = 2;
   } else if (
+    texto.includes("crise sensorial: alta") ||
     texto.includes("crise sensorial alta") ||
     texto.includes("crises frequentes") ||
     texto.includes("crises sensoriais frequentes") ||
@@ -171,141 +207,75 @@ function consolidarIndicadoresNarrativos(registros) {
   let scoreSono = 0;
   let scoreIrritabilidade = 0;
   let scoreCrise = 0;
+
   let quantidadeSono = 0;
   let quantidadeIrritabilidade = 0;
   let quantidadeCrise = 0;
 
   registros.forEach((r) => {
-    const { sono, irritabilidade, crise } = extrairIndicadoresNarrativosDoTexto(
-      r.descricao || ""
-    );
 
-    if (sono > 0) {
-      scoreSono += sono;
+    // PRIORIZA DADOS ESTRUTURADOS
+    if (r.sono_qualidade != null) {
+      scoreSono += Number(r.sono_qualidade);
       quantidadeSono += 1;
     }
 
-    if (irritabilidade > 0) {
-      scoreIrritabilidade += irritabilidade;
+    if (r.irritabilidade != null) {
+      scoreIrritabilidade += Number(r.irritabilidade);
       quantidadeIrritabilidade += 1;
     }
 
-    if (crise > 0) {
-      scoreCrise += crise;
+    if (r.crise_sensorial != null) {
+      scoreCrise += Number(r.crise_sensorial);
       quantidadeCrise += 1;
+    }
+
+    // FALLBACK NARRATIVO
+    else {
+      const {
+        sono,
+        irritabilidade,
+        crise,
+      } = extrairIndicadoresNarrativosDoTexto(
+        r.descricao || ""
+      );
+
+      if (sono > 0) {
+        scoreSono += sono;
+        quantidadeSono += 1;
+      }
+
+      if (irritabilidade > 0) {
+        scoreIrritabilidade += irritabilidade;
+        quantidadeIrritabilidade += 1;
+      }
+
+      if (crise > 0) {
+        scoreCrise += crise;
+        quantidadeCrise += 1;
+      }
     }
   });
 
   return {
     sono:
-      quantidadeSono > 0 ? Math.round(scoreSono / quantidadeSono) : 0,
+      quantidadeSono > 0
+        ? Math.round(scoreSono / quantidadeSono)
+        : 0,
+
     irritabilidade:
       quantidadeIrritabilidade > 0
-        ? Math.round(scoreIrritabilidade / quantidadeIrritabilidade)
+        ? Math.round(
+            scoreIrritabilidade /
+              quantidadeIrritabilidade
+          )
         : 0,
+
     crise:
-      quantidadeCrise > 0 ? Math.round(scoreCrise / quantidadeCrise) : 0,
+      quantidadeCrise > 0
+        ? Math.round(scoreCrise / quantidadeCrise)
+        : 0,
   };
-}
-
-function classificarStatusPaciente(eventos) {
-  if (!eventos || eventos.length === 0) return "sem_dados";
-
-  const registros = eventos.filter((e) => e.tipo_evento === "REGISTRO_DIARIO");
-  if (registros.length === 0) return "sem_dados";
-
-  const textoCompleto = normalizarTexto(
-    registros.map((r) => r.descricao || "").join(" | ")
-  );
-
-  if (
-    textoCompleto.includes("piora clinica importante") ||
-    textoCompleto.includes("piora importante") ||
-    textoCompleto.includes("agravamento importante") ||
-    textoCompleto.includes("desregulacao importante") ||
-    textoCompleto.includes("desregulacao intensa") ||
-    textoCompleto.includes("crises sensoriais frequentes") ||
-    textoCompleto.includes("crises frequentes") ||
-    textoCompleto.includes("monitoramento intensivo")
-  ) {
-    return "vermelho";
-  }
-
-  if (
-    textoCompleto.includes("piora clinica") ||
-    textoCompleto.includes("instabilidade") ||
-    textoCompleto.includes("desregulacao") ||
-    textoCompleto.includes("crise sensorial") ||
-    textoCompleto.includes("oscilacao") ||
-    textoCompleto.includes("em piora")
-  ) {
-    return "amarelo";
-  }
-
-  if (
-    textoCompleto.includes("evolucao favoravel") ||
-    textoCompleto.includes("boa evolucao") ||
-    textoCompleto.includes("quadro estavel") ||
-    textoCompleto.includes("sem intercorrencias") ||
-    textoCompleto.includes("bom controle")
-  ) {
-    return "verde";
-  }
-
-  const painel = extrairScoreClinicoDosRegistros(eventos);
-
-  if (
-    painel.sono === 0 &&
-    painel.irritabilidade === 0 &&
-    painel.crise === 0
-  ) {
-    return "sem_dados";
-  }
-
-  if (
-    (painel.sono > 0 && painel.sono <= 2) ||
-    (painel.irritabilidade > 0 && painel.irritabilidade <= 2) ||
-    (painel.crise > 0 && painel.crise <= 2)
-  ) {
-    return "vermelho";
-  }
-
-  if (
-    painel.sono >= 4 &&
-    painel.irritabilidade >= 4 &&
-    painel.crise >= 4
-  ) {
-    return "verde";
-  }
-
-  return "amarelo";
-}
-
-function corStatus(status) {
-  if (status === "verde") return "#22c55e";
-  if (status === "amarelo") return "#eab308";
-  if (status === "vermelho") return "#ef4444";
-
-  return "#9ca3af";
-}
-
-function corStatusSuave(status) {
-  if (status === "verde") return "#f0fdf4";
-  if (status === "amarelo") return "#fefce8";
-  if (status === "vermelho") return "#fef2f2";
-  return "#f3f4f6";
-}
-
-function labelStatus(status) {
-  if (status === "verde") return "Ótimo";
-  if (status === "amarelo") return "Alerta";
-  if (status === "vermelho") return "Piorou";
-  return "Sem dados clínicos";
-}
-
-function resumirTexto(texto, max = 70) {
-  if (!texto) return "-";
-  return texto.length > max ? `${texto.slice(0, max)}...` : texto;
 }
 
 function extrairScoreClinicoDosRegistros(items) {
@@ -328,6 +298,85 @@ function extrairScoreClinicoDosRegistros(items) {
     crise: consolidado.crise,
     totalRegistros: registros.length,
   };
+
+}
+
+function classificarStatusPaciente(eventos) {
+  if (!eventos || eventos.length === 0) return "sem_dados";
+
+  const registros = eventos
+    .filter((e) => e.tipo_evento === "REGISTRO_DIARIO")
+    .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+
+  if (registros.length === 0) return "sem_dados";
+
+  const registrosRecentes = registros
+    .filter(
+      (r) => r.tipo_evento !== "REGISTRO_CARDIO"
+    )
+    .slice(0, 5);
+
+  const painel = extrairScoreClinicoDosRegistros(registrosRecentes);
+
+  if (
+    painel.sono === 0 &&
+    painel.irritabilidade === 0 &&
+    painel.crise === 0
+  ) {
+    return "sem_dados";
+  }
+
+  const indicadoresCriticos = [
+    painel.sono,
+    painel.irritabilidade,
+    painel.crise,
+  ].filter((v) => v > 0 && v <= 2).length;
+
+  const indicadoresBons = [
+    painel.sono,
+    painel.irritabilidade,
+    painel.crise,
+  ].filter((v) => v >= 4).length;
+
+  // 🔴 CRÍTICO → precisa ter peso real (>=2 indicadores ruins)
+  if (indicadoresCriticos >= 2) {
+    return "vermelho";
+  }
+
+  // 🟢 ESTÁVEL → maioria boa e nenhum crítico
+  if (indicadoresBons >= 2 && indicadoresCriticos === 0) {
+    return "verde";
+  }
+
+  // 🟡 ALERTA → intermediário
+  return "amarelo";
+}
+
+function corStatus(status) {
+  if (status === "verde") return "#22c55e";
+  if (status === "amarelo") return "#eab308";
+  if (status === "vermelho") return "#ef4444";
+
+  return "#9ca3af";
+}
+
+function corStatusSuave(status) {
+  if (status === "verde") return "#f0fdf4";
+  if (status === "amarelo") return "#fefce8";
+  if (status === "vermelho") return "#fef2f2";
+  return "#f3f4f6";
+}
+
+function labelStatus(status) {
+  if (status === "verde") return "Estável";
+  if (status === "amarelo") return "Alerta";
+  if (status === "vermelho") return "Crítico";
+  return "Sem dados clínicos";
+}
+
+function resumirTexto(texto, max = 70) {
+  if (!texto) return "-";
+  return texto.length > max ? `${texto.slice(0, max)}...` : texto;
 }
 
 function labelScore(score) {
@@ -347,6 +396,56 @@ function labelRisco(risco) {
   if (risco === "atencao") return "Atenção";
   if (risco === "alto_risco") return "Alto risco";
   return "Sem dados";
+}
+
+function obterTemaEixo(eixo) {
+  if (eixo === "intestinal") {
+    return {
+      fundo: "#eff6ff",
+      borda: "#bfdbfe",
+      titulo: "#1d4ed8",
+      badgeBg: "#dbeafe",
+      badgeText: "#1e40af",
+    };
+  }
+
+  if (eixo === "sensorial") {
+    return {
+      fundo: "#faf5ff",
+      borda: "#e9d5ff",
+      titulo: "#7c3aed",
+      badgeBg: "#f3e8ff",
+      badgeText: "#6d28d9",
+    };
+  }
+
+  if (eixo === "sono") {
+    return {
+      fundo: "#f0fdf4",
+      borda: "#bbf7d0",
+      titulo: "#15803d",
+      badgeBg: "#dcfce7",
+      badgeText: "#166534",
+    };
+  }
+
+  if (eixo === "comportamental") {
+    return {
+      fundo: "#fff7ed",
+      borda: "#fed7aa",
+      titulo: "#c2410c",
+      badgeBg: "#ffedd5",
+      badgeText: "#9a3412",
+    };
+  }
+
+  return {
+    fundo: "#f8fafc",
+    borda: "#e5e7eb",
+    titulo: "#475569",
+    badgeBg: "#f1f5f9",
+    badgeText: "#334155",
+  };
 }
 
 function gerarResumoClinico(painel) {
@@ -405,16 +504,30 @@ function gerarResumoClinico(painel) {
 function extrairSerieEvolucaoClinica(items) {
   const registros = items
     .filter((item) => item.tipo_evento === "REGISTRO_DIARIO")
-    .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime());
+    .sort(
+      (a, b) =>
+        new Date(a.data).getTime() -
+        new Date(b.data).getTime()
+    );
 
   return registros.map((r) => {
-    const indicadores = extrairIndicadoresNarrativosDoTexto(r.descricao || "");
-
     return {
       data: formatarSoData(r.data),
-      sono: indicadores.sono ?? undefined,
-      irritabilidade: indicadores.irritabilidade,
-      crise: indicadores.crise,
+
+      sono:
+        r.sono_qualidade != null
+          ? Number(r.sono_qualidade)
+          : undefined,
+
+      irritabilidade:
+        r.irritabilidade != null
+          ? Number(r.irritabilidade)
+          : undefined,
+
+      crise:
+        r.crise_sensorial != null
+          ? Number(r.crise_sensorial)
+          : undefined,
     };
   });
 }
@@ -426,7 +539,7 @@ function corScore(score) {
   return "#9ca3af";
 }
 
-function classificarMomentoClinico(painel) {
+function classificarMomentoClinico(painel, statusPaciente) {
   if (!painel || painel.totalRegistros === 0) {
     return {
       titulo: "Sem leitura clínica",
@@ -437,37 +550,45 @@ function classificarMomentoClinico(painel) {
     };
   }
 
-  if (
-    painel.sono >= 4 &&
-    painel.irritabilidade >= 4 &&
-    painel.crise >= 4
-  ) {
+  if (statusPaciente === "sem_dados") {
     return {
-      titulo: "Boa evolução clínica",
-      subtitulo: "Indicadores recentes sugerem estabilidade favorável do quadro.",
-      corFundo: "#f0fdf4",
-      corTexto: "#166534",
-      borda: "#bbf7d0",
-    };
+      titulo: "Sem leitura clínica",
+      subtitulo: "Ainda não há indicadores clínicos estruturados suficientes para interpretação automática.",
+      corFundo: "#f3f4f6",
+      corTexto: "#4b5563",
+      borda: "#d1d5db",
+    }; 
   }
 
-  if (
-    (painel.sono > 0 && painel.sono <= 2) ||
-    (painel.irritabilidade > 0 && painel.irritabilidade <= 2) ||
-    (painel.crise > 0 && painel.crise <= 2)
-  ) {
+  // 🔴 CRÍTICO
+  if (statusPaciente === "vermelho") {
     return {
-      titulo: "Atenção clínica recomendada",
-      subtitulo: "Há sinais recentes que justificam monitoramento mais próximo.",
+      titulo: "Atenção clínica intensificada",
+      subtitulo:
+        "Há sinais recentes que indicam desregulação clínica e exigem acompanhamento mais próximo.",
       corFundo: "#fef2f2",
       corTexto: "#991b1b",
       borda: "#fecaca",
     };
   }
 
+  // 🟢 ESTÁVEL
+  if (statusPaciente === "verde") {
+    return {
+      titulo: "Estabilidade clínica",
+      subtitulo:
+        "Os registros recentes sugerem um quadro globalmente estável, com boa resposta clínica.",
+      corFundo: "#f0fdf4",
+      corTexto: "#166534",
+      borda: "#bbf7d0",
+    };
+  }
+
+  // 🟡 ALERTA
   return {
-    titulo: "Estabilidade clínica",
-    subtitulo: "Os registros recentes sugerem um quadro relativamente estável.",
+    titulo: "Alerta clínico",
+    subtitulo:
+      "O quadro geral sugere atenção clínica, com sinais intermediários que merecem acompanhamento.",
     corFundo: "#fefce8",
     corTexto: "#92400e",
     borda: "#fde68a",
@@ -597,6 +718,13 @@ export default function Paciente() {
     [items]
   );
 
+  const registrosRecentesClinicos = useMemo(() => {
+    return items
+      .filter((item) => item.tipo_evento === "REGISTRO_DIARIO")
+      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+      .slice(0, 5);
+  }, [items]);
+
   const ultimoEvento = useMemo(() => {
     if (!items.length) return null;
     return [...items].sort(
@@ -659,12 +787,34 @@ export default function Paciente() {
   }, [items, filtro]);
 
   const statusPaciente = useMemo(() => {
-    return classificarStatusPaciente(items);
-  }, [items]);
+    const confianca = paciente?.status_clinico?.confianca_eixo;
+    const bases = paciente?.status_clinico?.base_sustentacao || [];
+
+    if (bases.length > 0) {
+      if (confianca === "alta") return "vermelho";
+      if (confianca === "media") return "amarelo";
+      return "verde";
+    }
+      return classificarStatusPaciente(items);
+    }, [paciente, items]);
 
   const painelClinico = useMemo(() => {
-    return extrairScoreClinicoDosRegistros(items);
-  }, [items]);
+    const painel = extrairScoreClinicoDosRegistros(registrosRecentesClinicos);
+
+    const semIndicadores =
+      painel.sono === 0 &&
+      painel.irritabilidade === 0 &&
+      painel.crise === 0;
+
+    if (semIndicadores && paciente?.status_clinico) {
+      return montarPainelAPartirDoStatusClinico(
+        paciente.status_clinico,
+        registrosRecentesClinicos.length
+      );
+    }
+
+    return painel;
+  }, [registrosRecentesClinicos, paciente]);
 
   const resumoClinico = useMemo(() => {
     return gerarResumoClinico(painelClinico);
@@ -683,8 +833,12 @@ export default function Paciente() {
   }, [evolucaoRisco]);
 
   const leituraClinica = useMemo(() => {
-    return classificarMomentoClinico(painelClinico);
-  }, [painelClinico]);
+    return classificarMomentoClinico(painelClinico, statusPaciente);
+  }, [painelClinico, statusPaciente]);
+
+  const temaEixo = useMemo(() => {
+    return obterTemaEixo(paciente?.status_clinico?.eixo_dominante);
+  }, [paciente]);
 
   if (loading) {
     return (
@@ -775,6 +929,102 @@ export default function Paciente() {
           >
             Status clínico atual: {labelStatus(statusPaciente)}
           </div>
+
+          {paciente?.status_clinico?.eixo_dominante && (
+            <div
+              style={{
+                marginTop: 12,
+                padding: "14px 16px",
+                borderRadius: 14,
+                background: `linear-gradient(180deg, ${temaEixo.fundo} 0%, #ffffff 100%)`,
+                border: `1px solid ${temaEixo.borda}`,
+                boxShadow: "0 6px 18px rgba(15, 23, 42, 0.04)",
+                maxWidth: 640,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: temaEixo.titulo,
+                  letterSpacing: 0.3,
+                  textTransform: "uppercase",
+                }}
+              >
+                Leitura observacional por eixo
+              </div>
+
+              <div
+                style={{
+                  marginTop: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  flexWrap: "wrap",
+                }}
+              >
+                <span style={{ fontSize: 14, color: "#334155", fontWeight: 700 }}>
+                  Eixo dominante observado:
+                </span>
+
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "6px 12px",
+                    borderRadius: 999,
+                    background: temaEixo.badgeBg,
+                    color: temaEixo.badgeText,
+                    fontSize: 13,
+                    fontWeight: 800,
+                    border: `1px solid ${temaEixo.borda}`,
+                  }}
+                >
+                  {paciente.status_clinico.eixo_dominante_label}
+                </span>
+              </div>
+
+              <div style={{ fontSize: 12, marginTop: 8, color: "#64748b", fontWeight: 600 }}>
+                Confiança da leitura:{" "}
+                {paciente.status_clinico.confianca_eixo === "alta"
+                  ? "Alta evidência nos registros recentes"
+                  : paciente.status_clinico.confianca_eixo === "media"
+                  ? "Evidência moderada nos registros recentes"
+                  : "Baixa evidência nos registros recentes"}
+              </div>
+
+              {paciente.status_clinico.base_sustentacao?.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      letterSpacing: 0.3,
+                      textTransform: "uppercase",
+                      color: "#64748b",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Base de sustentação
+                  </div>
+
+                  {paciente.status_clinico.base_sustentacao.map((item, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        fontSize: 13,
+                        color: "#334155",
+                        lineHeight: 1.5,
+                        marginTop: i === 0 ? 0 : 4,
+                      }}
+                    >
+                      • {item}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div

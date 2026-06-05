@@ -19,3 +19,8 @@ export async function listarPacientes() {
   const res = await api.get("/pacientes/");
   return res.data;
 }
+
+export async function listarVinculos() {
+  const res = await api.get("/responsaveis/vinculos");
+  return res.data;
+}

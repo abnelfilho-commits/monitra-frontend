@@ -12,8 +12,6 @@ export default function NovoPaciente() {
     nome: "",
     data_nascimento: "",
     genero: "",
-    responsavel_nome: "",
-    responsavel_email: "",
     clinica_id: "",
     profissional_id: "",
   });
@@ -107,8 +105,6 @@ export default function NovoPaciente() {
         nome: form.nome.trim(),
         data_nascimento: form.data_nascimento,
         genero: form.genero || null,
-        responsavel_nome: form.responsavel_nome?.trim() || null,
-        responsavel_email: form.responsavel_email?.trim() || null,
         clinica_id: Number(form.clinica_id),
         profissional_id: Number(form.profissional_id),
       };
@@ -249,27 +245,6 @@ export default function NovoPaciente() {
                     </option>
                   ))}
                 </select>
-              </div>
-
-              <div>
-                <label style={labelStyle}>Responsável</label>
-                <input
-                  placeholder="Nome do responsável"
-                  value={form.responsavel_nome}
-                  onChange={(e) => setField("responsavel_nome", e.target.value)}
-                  style={inputStyle}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Email do responsável</label>
-                <input
-                  type="email"
-                  placeholder="Email do responsável"
-                  value={form.responsavel_email}
-                  onChange={(e) => setField("responsavel_email", e.target.value)}
-                  style={inputStyle}
-                />
               </div>
             </div>
 

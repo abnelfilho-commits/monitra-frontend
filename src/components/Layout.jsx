@@ -1,5 +1,6 @@
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Button from "../components/ui/Button";
+import { useAuth } from "../context/AuthContext";
 
 function ItemMenu({ label, to, active, onClick }) {
   return (
@@ -40,10 +41,21 @@ export default function Layout() {
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("clinica_id");
+    localStorage.removeItem("perfil");
     navigate("/login");
   }
 
   const pathname = location.pathname;
+  const isCardio =
+    pathname.startsWith("/cardiometabolico");
+
+  const perfil = localStorage.getItem("perfil");
+  const { user } = useAuth();
+
+  const isAdmin =
+    user?.perfil === "ADMIN_CLINICA";
+  const isSuporte = user?.perfil === "SUPORTE";
+  const isAdminGlobal = user?.perfil === "ADMIN";
 
   return (
     <div
@@ -94,13 +106,47 @@ export default function Layout() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <ItemMenu
-              label="Dashboard"
-              to="/dashboard"
-              active={pathname === "/dashboard"}
-              onClick={go}
-            />
+            {isCardio ? (
+              <>
+                <ItemMenu
+                  label="❤️ Dashboard Cardio"
+                  to="/cardiometabolico"
+                  active={pathname === "/cardiometabolico"}
+                  onClick={go}
+                />
 
+                <ItemMenu
+                  label="❤️ Pacientes"
+                  to="/cardiometabolico/pacientes"
+                  active={pathname.startsWith("/cardiometabolico/pacientes")}
+                  onClick={go}
+                />
+              </>
+            ) : (
+              <>
+                <ItemMenu
+                  label="🧠 Dashboard Neuro"
+                  to="/dashboard"
+                  active={pathname === "/dashboard"}
+                  onClick={go}
+                />
+
+                <ItemMenu
+                  label="🧠 Pacientes"
+                  to="/pacientes"
+                  active={pathname.startsWith("/pacientes")}
+                  onClick={go}
+                />
+              </>
+            )}
+            {isAdmin && (
+              <ItemMenu
+                label="Usuários"
+                to="/usuarios"
+                active={pathname.startsWith("/usuarios")}
+                onClick={go}
+              />
+            )}
             <ItemMenu
               label="Clínicas"
               to="/clinicas"
@@ -116,18 +162,26 @@ export default function Layout() {
             />
 
             <ItemMenu
-              label="Pacientes"
-              to="/pacientes"
-              active={pathname.startsWith("/pacientes")}
-              onClick={go}
-            />
-
-            <ItemMenu
               label="Responsáveis"
               to="/responsaveis"
               active={pathname.startsWith("/responsaveis")}
               onClick={go}
             />
+            <ItemMenu
+              label={
+                isCardio
+                  ? "🧠 Ir para Neuro"
+                  : "❤️ Ir para Cardio"
+              }
+              to={
+                isCardio
+                  ? "/dashboard"
+                  : "/cardiometabolico"
+              }
+              active={false}
+              onClick={go}
+            />
+
           </div>
 
           <div
@@ -137,42 +191,43 @@ export default function Layout() {
             }}
           />
 
-          <div>
-            <div
-              style={{
-                fontSize: 12,
-                color: "#6b7280",
-                marginBottom: 8,
-                fontWeight: 600,
-              }}
-            >
-              Ações rápidas
-            </div>
+          {isAdminGlobal && (
+              <div>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#6b7280",
+                    marginBottom: 8,
+                    fontWeight: 600,
+                  }}
+                >
+                  Ações rápidas
+                </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <ItemMenu
-                label="+ Nova Clínica"
-                to="/clinicas/nova"
-                active={pathname === "/clinicas/nova"}
-                onClick={go}
-              />
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <ItemMenu
+                    label="+ Nova Clínica"
+                    to="/clinicas/nova"
+                    active={pathname === "/clinicas/nova"}
+                    onClick={go}
+                  />
 
-              <ItemMenu
-                label="+ Novo Profissional"
-                to="/profissionais/novo"
-                active={pathname === "/profissionais/novo"}
-                onClick={go}
-              />
+                  <ItemMenu
+                    label="+ Novo Profissional"
+                    to="/profissionais/novo"
+                    active={pathname === "/profissionais/novo"}
+                    onClick={go}
+                  />
 
-              <ItemMenu
-                label="+ Novo Paciente"
-                to="/pacientes/novo"
-                active={pathname === "/pacientes/novo"}
-                onClick={go}
-              />
-            </div>
-          </div>
-
+                  <ItemMenu
+                    label="+ Novo Paciente"
+                    to="/pacientes/novo"
+                    active={pathname === "/pacientes/novo"}
+                    onClick={go}
+                  />
+                </div>
+              </div>
+          )}
           <div
             style={{
               height: 1,

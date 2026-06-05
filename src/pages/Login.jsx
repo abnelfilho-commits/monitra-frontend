@@ -18,7 +18,7 @@ export default function Login() {
 
     try {
       await login(email, senha);
-      navigate("/dashboard");
+      navigate("/plataforma");
     } catch (e) {
       const msg =
         e?.response?.data?.detail ||

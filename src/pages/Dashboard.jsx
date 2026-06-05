@@ -1,3 +1,4 @@
+import { useAuth } from "../context/AuthContext";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { listarPacientes } from "../services/pacientes";
@@ -183,7 +184,9 @@ function TituloSecao({ children }) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-
+  const { user } = useAuth();
+  const isSuporte =
+    user?.perfil === "SUPORTE";
   const [pacientes, setPacientes] = useState([]);
   const [timelinesPorPaciente, setTimelinesPorPaciente] = useState({});
   const [riscosPorPaciente, setRiscosPorPaciente] = useState({});
@@ -295,7 +298,10 @@ export default function Dashboard() {
       semDados: p.totalRegistros === 0,
     }));
 
-    const totalVerde = pacientesComEventos.filter((p) => p.status === "verde").length;
+    const totalVerde = pacientesComEventos.filter(
+      (p) =>
+        p.risco?.tendencia === "estavel"
+    ).length;
     const totalAmarelo = pacientesComEventos.filter((p) => p.status === "amarelo").length;
     const totalVermelho = pacientesComEventos.filter((p) => p.status === "vermelho").length;
     const totalSemDados = pacientesComEventos.filter((p) => p.status === "sem_dados").length;
@@ -425,13 +431,17 @@ export default function Dashboard() {
               🧠 Mapa de Risco
             </Button>
 
-            <Button onClick={() => navigate("/pacientes/novo")}>
-              + Novo Paciente
-            </Button>
+            {!isSuporte && (
+              <Button onClick={() => navigate("/pacientes/novo")}>
+                + Novo Paciente
+              </Button>
+            )}
 
-            <Button onClick={() => navigate("/profissionais/novo")}>
-              + Novo Profissional
-            </Button>
+            {!isSuporte && (
+              <Button onClick={() => navigate("/profissionais/novo")}>
+                + Novo Profissional
+              </Button>
+            )}
 
             <Button variant="secondary" onClick={loadDashboard}>
               ↻ Atualizar

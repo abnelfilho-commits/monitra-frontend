@@ -1,0 +1,117 @@
+.plataforma-page {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding: 40px 32px;
+}
+
+.plataforma-container {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.plataforma-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.plataforma-logo {
+  width: 140px;
+  height: auto;
+  object-fit: contain;
+}
+
+.plataforma-subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin: 0 0 6px 0;
+}
+
+.plataforma-title {
+  font-size: 34px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  max-width: 760px;
+  line-height: 1.15;
+}
+
+.modulos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px;
+}
+
+.modulo-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.modulo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.modulo-label {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.modulo-label.blue {
+  color: #2563eb;
+}
+
+.modulo-label.green {
+  color: #059669;
+}
+
+.modulo-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.modulo-description {
+  color: #475569;
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.modulo-button {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.modulo-button.blue {
+  background: #2563eb;
+}
+
+.modulo-button.green {
+  background: #059669;
+}
+
+@media (max-width: 768px) {
+  .modulos-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .plataforma-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
