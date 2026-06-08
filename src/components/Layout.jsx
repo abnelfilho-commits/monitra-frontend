@@ -49,8 +49,11 @@ export default function Layout() {
   }
 
   const pathname = location.pathname;
+  const searchParams = new URLSearchParams(location.search);
+
   const isCardio =
-    pathname.startsWith("/cardiometabolico");
+    pathname.startsWith("/cardiometabolico") ||
+    searchParams.get("modulo") === "cardiometabolico";
 
   const perfil = localStorage.getItem("perfil");
   const { user } = useAuth();
