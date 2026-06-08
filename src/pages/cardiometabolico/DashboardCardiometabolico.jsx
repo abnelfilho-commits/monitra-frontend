@@ -287,7 +287,7 @@ export default function DashboardCardiometabolico() {
 
           <Button
             onClick={() =>
-              navigate("/cardiometabolico/pacientes/novo")
+              navigate("/pacientes/novo")
             }
           >
             + Novo Paciente
