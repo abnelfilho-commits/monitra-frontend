@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { criarPaciente } from "../services/pacientes";
 import { listarClinicas } from "../services/clinicas";
 import { listarProfissionaisPorClinica } from "../services/profissionais";
@@ -7,7 +7,9 @@ import Button from "../components/ui/Button";
 
 export default function NovoPaciente() {
   const navigate = useNavigate();
-
+  const [searchParams] = useSearchParams();
+  const modulo = searchParams.get("modulo");
+  const isCardio = modulo === "cardiometabolico";
   const [form, setForm] = useState({
     nome: "",
     data_nascimento: "",
@@ -110,7 +112,11 @@ export default function NovoPaciente() {
       };
 
       const novo = await criarPaciente(payload);
-      navigate(`/pacientes/${novo.id}`);
+      if (isCardio) {
+        navigate(`/cardiometabolico/pacientes/${novo.id}`);
+      } else {
+        navigate(`/pacientes/${novo.id}`);
+      }
     } catch (e2) {
       const msg =
         e2?.response?.data?.detail ||
