@@ -143,7 +143,7 @@ export default function PacientesCardiometabolico() {
                 navigate("/cardiometabolico")
               }
             >
-              ← Voltar
+              ← Voltarr
             </Button>
 
             <div>
