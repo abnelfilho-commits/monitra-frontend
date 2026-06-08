@@ -34,6 +34,9 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const ambiente = import.meta.env.VITE_AMBIENTE;
+  const isHml = ambiente === "HML";
+
   function go(to) {
     navigate(to);
   }
@@ -64,8 +67,31 @@ export default function Layout() {
         gridTemplateColumns: "260px 1fr",
         minHeight: "100vh",
         background: "#f8fafc",
+        paddingTop: isHml ? 30 : 0,
       }}
     >
+
+      {isHml && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 9999,
+            background: "#f97316",
+            color: "white",
+            textAlign: "center",
+            fontWeight: 800,
+            fontSize: 13,
+            padding: "6px 10px",
+            letterSpacing: 1,
+          }}
+        >
+          AMBIENTE DE HOMOLOGAÇÃO — NÃO USAR COMO PRODUÇÃO
+        </div>
+      )}
+
       <aside
         style={{
           borderRight: "1px solid #e5e7eb",

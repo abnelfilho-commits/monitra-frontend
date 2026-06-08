@@ -11,6 +11,9 @@ export default function Login() {
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const ambiente = import.meta.env.VITE_AMBIENTE;
+  const isHml = ambiente === "HML";
+
   async function onSubmit(e) {
     e.preventDefault();
     setErro("");
@@ -66,6 +69,24 @@ export default function Login() {
             Inteligência clínica em tempo real
           </p>
         </div>
+
+        {isHml && (
+          <div
+            style={{
+              background: "#ffedd5",
+              color: "#9a3412",
+              border: "1px solid #fdba74",
+              borderRadius: 999,
+              padding: "6px 12px",
+              fontSize: 12,
+              fontWeight: 800,
+              marginBottom: 12,
+              display: "inline-block",
+            }}
+          >
+            HOMOLOGAÇÃO
+          </div>
+        )}
 
         <form onSubmit={onSubmit}>
           <div style={{ marginBottom: 14 }}>
