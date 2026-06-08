@@ -139,11 +139,12 @@ export default function PacientesCardiometabolico() {
 
             <Button
               variant="secondary"
-              onClick={() =>
-                navigate("/cardiometabolico")
-              }
+              onClick={() => {
+                console.log("CARDIO");
+                navigate("/pacientes/novo?modulo=cardiometabolico");
+              }}
             >
-              ← Voltarr
+              ← Voltar
             </Button>
 
             <div>
