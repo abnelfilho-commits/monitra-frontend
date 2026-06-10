@@ -198,9 +198,7 @@ export default function NovoPaciente() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Altura
-                </label>
+                <label style={labelStyle}>Altura</label>
                 <input
                   type="number"
                   step="0.01"
@@ -208,7 +206,7 @@ export default function NovoPaciente() {
                   value={form.altura}
                   onChange={(e) => setField("altura", e.target.value)}
                   placeholder="Ex.: 1.70"
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
+                  style={inputStyle}
                 />
               </div>
 
