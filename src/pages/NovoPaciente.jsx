@@ -14,6 +14,7 @@ export default function NovoPaciente() {
     nome: "",
     data_nascimento: "",
     genero: "",
+    altura: "",
     clinica_id: "",
     profissional_id: "",
   });
@@ -107,6 +108,7 @@ export default function NovoPaciente() {
         nome: form.nome.trim(),
         data_nascimento: form.data_nascimento,
         genero: form.genero || null,
+        altura: form.altura ? Number(form.altura) : null,
         clinica_id: Number(form.clinica_id),
         profissional_id: Number(form.profissional_id),
       };
@@ -192,6 +194,21 @@ export default function NovoPaciente() {
                   onChange={(e) => setField("data_nascimento", e.target.value)}
                   required
                   style={inputStyle}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Altura
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.altura}
+                  onChange={(e) => setField("altura", e.target.value)}
+                  placeholder="Ex.: 1.70"
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
                 />
               </div>
 

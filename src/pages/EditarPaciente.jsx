@@ -14,6 +14,7 @@ export default function EditarPaciente() {
     nome: "",
     data_nascimento: "",
     genero: "",
+    altura: "",
     responsavel_nome: "",
     responsavel_email: "",
     clinica_id: "",
@@ -50,6 +51,7 @@ export default function EditarPaciente() {
         nome: p?.nome || "",
         data_nascimento: p?.data_nascimento || "",
         genero: p?.genero || "",
+        altura: p?.altura || "",
         responsavel_nome: p?.responsavel_nome || "",
         responsavel_email: p?.responsavel_email || "",
         clinica_id: clinicaIdInicial,
@@ -129,6 +131,7 @@ export default function EditarPaciente() {
         nome: form.nome.trim(),
         data_nascimento: form.data_nascimento,
         genero: form.genero || null,
+        altura: form.altura ? Number(form.altura) : null,
         responsavel_nome: form.responsavel_nome?.trim() || null,
         responsavel_email: form.responsavel_email?.trim() || null,
         clinica_id: Number(form.clinica_id),
@@ -174,6 +177,21 @@ export default function EditarPaciente() {
             onChange={(e) => setField("data_nascimento", e.target.value)}
             required
             style={{ width: "100%", padding: 10 }}
+          />
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Altura
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            value={form.altura}
+            onChange={(e) => setField("altura", e.target.value)}
+            placeholder="Ex.: 1.70"
+            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2"
           />
         </div>
 
