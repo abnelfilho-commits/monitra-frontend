@@ -139,7 +139,7 @@ export default function Clinicas() {
       )}
 
       {/* VAZIO */}
-      {!loading && !erro && clinicasFiltradas.length > 0 && (
+      {!loading && !erro && clinicasFiltradas.length === 0 && (
         <div
           style={{
             marginTop: 16,
