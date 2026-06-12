@@ -210,12 +210,6 @@ export default function DashboardCardiometabolico() {
               gap: 10,
             }}
           >
-            <img
-              src="/icon-monitra.png"
-              alt="Monitra"
-              style={{ width: 38, height: 38 }}
-            />
-
             <div>
               <h2 style={{ margin: 0 }}>
                 Dashboard Cardiometabólico
@@ -227,7 +221,7 @@ export default function DashboardCardiometabolico() {
                   color: "#4b5563",
                 }}
               >
-                Visão executiva cardiometabólica longitudinal.
+                Visão executiva longitudinal para monitoramento, priorização e tomada de decisão clínica.
               </p>
             </div>
           </div>
@@ -252,7 +246,7 @@ export default function DashboardCardiometabolico() {
           <Button
             variant="secondary"
             onClick={() =>
-              navigate("/profissionais")
+              navigate("/profissionais?modulo=cardiometabolico")
             }
           >
             Profissionais
@@ -261,7 +255,7 @@ export default function DashboardCardiometabolico() {
           <Button
             variant="secondary"
             onClick={() =>
-              navigate("/clinicas")
+              navigate("/clinicas?modulo=cardiometabolico")
             }
           >
             Clínicas
@@ -270,7 +264,7 @@ export default function DashboardCardiometabolico() {
           <Button
             variant="secondary"
             onClick={() =>
-              navigate("/responsaveis")
+              navigate("/responsaveis?modulo=cardiometabolico")
             }
           >
             Responsáveis
@@ -295,7 +289,7 @@ export default function DashboardCardiometabolico() {
 
           <Button
             onClick={() =>
-              navigate("/profissionais/novo")
+              navigate("/profissionais/novo?modulo=cardiometabolico")
             }
           >
             + Novo Profissional

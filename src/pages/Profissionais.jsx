@@ -80,7 +80,7 @@ export default function Profissionais() {
               flexWrap: "wrap",
             }}
           >
-            <Button variant="secondary" onClick={() => navigate("/dashboard")}>
+            <Button variant="secondary" onClick={() => navigate(-1)}>
               ← Voltar
             </Button>
 

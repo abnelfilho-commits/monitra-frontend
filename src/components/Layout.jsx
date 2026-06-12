@@ -55,6 +55,8 @@ export default function Layout() {
     pathname.startsWith("/cardiometabolico") ||
     searchParams.get("modulo") === "cardiometabolico";
 
+  const moduloQuery = isCardio ? "?modulo=cardiometabolico" : "";
+
   const perfil = localStorage.getItem("perfil");
   const { user } = useAuth();
 
@@ -62,6 +64,8 @@ export default function Layout() {
     user?.perfil === "ADMIN_CLINICA";
   const isSuporte = user?.perfil === "SUPORTE";
   const isAdminGlobal = user?.perfil === "ADMIN";
+
+  const isProfissional = user?.perfil === "PROFISSIONAL";
 
   return (
     <div
@@ -138,14 +142,14 @@ export default function Layout() {
             {isCardio ? (
               <>
                 <ItemMenu
-                  label="❤️ Dashboard Cardio"
+                  label="Dashboard Cardio"
                   to="/cardiometabolico"
                   active={pathname === "/cardiometabolico"}
                   onClick={go}
                 />
 
                 <ItemMenu
-                  label="❤️ Pacientes"
+                  label="Pacientes"
                   to="/cardiometabolico/pacientes"
                   active={pathname.startsWith("/cardiometabolico/pacientes")}
                   onClick={go}
@@ -154,14 +158,14 @@ export default function Layout() {
             ) : (
               <>
                 <ItemMenu
-                  label="🧠 Dashboard Neuro"
+                  label="Dashboard Neuro"
                   to="/dashboard"
                   active={pathname === "/dashboard"}
                   onClick={go}
                 />
 
                 <ItemMenu
-                  label="🧠 Pacientes"
+                  label="Pacientes"
                   to="/pacientes"
                   active={pathname.startsWith("/pacientes")}
                   onClick={go}
@@ -171,46 +175,35 @@ export default function Layout() {
             {isAdmin && (
               <ItemMenu
                 label="Usuários"
-                to="/usuarios"
+                to={`/usuarios${moduloQuery}`}
                 active={pathname.startsWith("/usuarios")}
                 onClick={go}
               />
             )}
-            <ItemMenu
-              label="Clínicas"
-              to="/clinicas"
-              active={pathname.startsWith("/clinicas")}
-              onClick={go}
-            />
+            {!isProfissional && (
+              <ItemMenu
+                label="Clínicas"
+                to={`/clinicas${moduloQuery}`}
+                active={pathname.startsWith("/clinicas")}
+                onClick={go}
+              />
+            )}
 
-            <ItemMenu
-              label="Profissionais"
-              to="/profissionais"
-              active={pathname.startsWith("/profissionais")}
-              onClick={go}
-            />
+            {!isProfissional && (
+              <ItemMenu
+                label="Profissionais"
+                to={`/profissionais${moduloQuery}`}
+                active={pathname.startsWith("/profissionais")}
+                onClick={go}
+              />
+            )}
 
             <ItemMenu
               label="Responsáveis"
-              to="/responsaveis"
+              to={`/responsaveis${moduloQuery}`}
               active={pathname.startsWith("/responsaveis")}
               onClick={go}
             />
-            <ItemMenu
-              label={
-                isCardio
-                  ? "🧠 Ir para Neuro"
-                  : "❤️ Ir para Cardio"
-              }
-              to={
-                isCardio
-                  ? "/dashboard"
-                  : "/cardiometabolico"
-              }
-              active={false}
-              onClick={go}
-            />
-
           </div>
 
           <div
@@ -236,21 +229,21 @@ export default function Layout() {
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   <ItemMenu
                     label="+ Nova Clínica"
-                    to="/clinicas/nova"
+                    to={`/clinicas/nova${moduloQuery}`}
                     active={pathname === "/clinicas/nova"}
                     onClick={go}
                   />
 
                   <ItemMenu
                     label="+ Novo Profissional"
-                    to="/profissionais/novo"
+                    to={`/profissionais/novo${moduloQuery}`}
                     active={pathname === "/profissionais/novo"}
                     onClick={go}
                   />
 
                   <ItemMenu
                     label="+ Novo Paciente"
-                    to="/pacientes/novo"
+                    to={isCardio ? "/pacientes/novo?modulo=cardiometabolico" : "/pacientes/novo"}
                     active={pathname === "/pacientes/novo"}
                     onClick={go}
                   />

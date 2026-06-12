@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { criarPaciente } from "../services/pacientes";
 import { listarClinicas } from "../services/clinicas";
 import { listarProfissionaisPorClinica } from "../services/profissionais";
@@ -7,9 +7,14 @@ import Button from "../components/ui/Button";
 
 export default function NovoPaciente() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const modulo = searchParams.get("modulo");
-  const isCardio = modulo === "cardiometabolico";
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+
+  const isCardio =
+    location.pathname.startsWith("/cardiometabolico") ||
+    searchParams.get("modulo") === "cardiometabolico";
+
   const [form, setForm] = useState({
     nome: "",
     data_nascimento: "",
@@ -152,7 +157,9 @@ export default function NovoPaciente() {
 
           <Button
             variant="secondary"
-            onClick={() => navigate("/pacientes")}
+            onClick={() =>
+              navigate(isCardio ? "/cardiometabolico/pacientes" : "/pacientes")
+            }
           >
             ← Voltar
           </Button>
@@ -296,7 +303,9 @@ export default function NovoPaciente() {
               <Button
                 variant="secondary"
                 type="button"
-                onClick={() => navigate("/pacientes")}
+                onClick={() =>
+                  navigate(isCardio ? "/cardiometabolico/pacientes" : "/pacientes")
+                }
                 disabled={saving}
               >
                 Cancelar

@@ -98,7 +98,7 @@ export default function Pacientes() {
       >
         <div style={{ flex: "1 1 320px", minWidth: 280 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-            <Button variant="secondary" onClick={() => navigate("/dashboard")}>
+            <Button variant="secondary" onClick={() => navigate(-1)}>
               ← Voltar
             </Button>
 

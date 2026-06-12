@@ -372,81 +372,58 @@ export default function Dashboard() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1220, margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 16,
-          flexWrap: "wrap",
-          alignItems: "flex-start",
-          marginBottom: 8,
-        }}
-      >
-        <div style={{ flex: "1 1 320px", minWidth: 280 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img
-              src="/icon-monitra.png"
-              alt="Monitra"
-              style={{ width: 38, height: 38 }}
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-            <div>
-              <h2 style={{ margin: 0 }}>Dashboard</h2>
-              <p style={{ marginTop: 4, color: "#4b5563" }}>
-                Visão executiva da operação clínica, com foco em risco, priorização e tomada de decisão.
-              </p>
-            </div>
-          </div>
-        </div>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{ margin: 0 }}>
+          Dashboard Neurodesenvolvimento
+        </h2>
 
-        <div style={{ flex: "1 1 520px", minWidth: 320 }}>
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              flexWrap: "wrap",
-              justifyContent: "flex-end",
-              alignItems: "center",
-            }}
-          >
-            <Button variant="secondary" onClick={() => navigate("/pacientes")}>
-              Pacientes
+        <p style={{ marginTop: 8, marginBottom: 24, color: "#4b5563" }}>
+          Visão executiva longitudinal para monitoramento, priorização e tomada de decisão clínica.
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            gap: 8,
+            flexWrap: "wrap",
+            alignItems: "center",
+          }}
+        >
+          <Button variant="secondary" onClick={() => navigate("/pacientes")}>
+            Pacientes
+          </Button>
+
+          <Button variant="secondary" onClick={() => navigate("/profissionais")}>
+            Profissionais
+          </Button>
+
+          <Button variant="secondary" onClick={() => navigate("/clinicas")}>
+            Clínicas
+          </Button>
+
+          <Button variant="secondary" onClick={() => navigate("/responsaveis")}>
+            Responsáveis
+          </Button>
+
+          <Button variant="secondary" onClick={() => navigate(`/clinicas/1/mapa-risco`)}>
+            🧠 Mapa de Risco
+          </Button>
+
+          {!isSuporte && (
+            <Button onClick={() => navigate("/pacientes/novo")}>
+              + Novo Paciente
             </Button>
+          )}
 
-            <Button variant="secondary" onClick={() => navigate("/profissionais")}>
-              Profissionais
+          {!isSuporte && (
+            <Button onClick={() => navigate("/profissionais/novo")}>
+              + Novo Profissional
             </Button>
+          )}
 
-            <Button variant="secondary" onClick={() => navigate("/clinicas")}>
-              Clínicas
-            </Button>
-
-            <Button variant="secondary" onClick={() => navigate("/responsaveis")}>
-              Responsáveis
-            </Button>
-
-            <Button variant="secondary" onClick={() => navigate(`/clinicas/1/mapa-risco`)}>
-              🧠 Mapa de Risco
-            </Button>
-
-            {!isSuporte && (
-              <Button onClick={() => navigate("/pacientes/novo")}>
-                + Novo Paciente
-              </Button>
-            )}
-
-            {!isSuporte && (
-              <Button onClick={() => navigate("/profissionais/novo")}>
-                + Novo Profissional
-              </Button>
-            )}
-
-            <Button variant="secondary" onClick={loadDashboard}>
-              ↻ Atualizar
-            </Button>
-          </div>
+          <Button variant="secondary" onClick={loadDashboard}>
+            ↻ Atualizar
+          </Button>
         </div>
       </div>
 

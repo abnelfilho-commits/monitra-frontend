@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { criarProfissional } from "../services/profissionais";
 import { listarClinicas } from "../services/clinicas";
 import { useAuth } from "../context/AuthContext";
@@ -15,6 +15,13 @@ function isAdmin(user) {
 
 export default function NovoProfissional() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+
+  const isCardio =
+    searchParams.get("modulo") === "cardiometabolico";
+
   const { user, loading } = useAuth();
 
   const admin = useMemo(() => isAdmin(user), [user]);
@@ -96,7 +103,11 @@ export default function NovoProfissional() {
         clinica_id: Number(clinicaIdFinal),
       });
 
-      navigate("/profissionais");
+      navigate(
+        isCardio
+          ? "/profissionais?modulo=cardiometabolico"
+          : "/profissionais"
+      );
     } catch (e2) {
       const msg =
         e2?.response?.data?.detail || "Falha ao criar profissional.";
@@ -136,7 +147,13 @@ export default function NovoProfissional() {
 
           <Button
             variant="secondary"
-            onClick={() => navigate("/profissionais")}
+            onClick={() =>
+              navigate(
+                isCardio
+                  ? "/profissionais?modulo=cardiometabolico"
+                  : "/profissionais"
+              )
+            }
           >
             ← Voltar
           </Button>
@@ -245,7 +262,13 @@ export default function NovoProfissional() {
               <Button
                 variant="secondary"
                 type="button"
-                onClick={() => navigate("/profissionais")}
+                onClick={() =>
+                  navigate(
+                    isCardio
+                      ? "/profissionais?modulo=cardiometabolico"
+                      : "/profissionais"
+                  )
+                }
               >
                 Cancelar
               </Button>
