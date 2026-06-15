@@ -139,9 +139,22 @@ export default function Usuarios() {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button onClick={abrirNovo}>+ Novo Usuário</Button>
-          <Button variant="secondary" onClick={load} disabled={loading}>↻ Atualizar</Button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <Button
+            onClick={abrirNovo}
+            style={{ padding: "8px 12px", fontSize: 14 }}
+          >
+            + Novo Usuário
+          </Button>
+
+          <Button
+            variant="secondary"
+            onClick={load}
+            disabled={loading}
+            style={{ padding: "8px 12px", fontSize: 14 }}
+          >
+            ↻ Atualizar
+          </Button>
         </div>
       </div>
 
