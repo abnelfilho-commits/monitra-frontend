@@ -172,7 +172,8 @@ export default function Layout() {
                 />
               </>
             )}
-            {isAdmin && (
+
+            {isAdminGlobal && (
               <ItemMenu
                 label="Usuários"
                 to={`/usuarios${moduloQuery}`}
@@ -180,6 +181,7 @@ export default function Layout() {
                 onClick={go}
               />
             )}
+
             {!isProfissional && (
               <ItemMenu
                 label="Clínicas"
