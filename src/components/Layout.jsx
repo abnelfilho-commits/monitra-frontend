@@ -116,10 +116,10 @@ export default function Layout() {
           <div>
             <div style={{ display: "flex", justifyContent: "center" }}>
               <img
-                src="/logo-monitra.png"
-                alt="Monitra"
+                src="/logo-integracare.png"
+                alt="Integra Care"
                 style={{
-                  width: 140,
+                  width: 260,
                   height: "auto",
                   objectFit: "contain",
                 }}
@@ -129,7 +129,7 @@ export default function Layout() {
             <div
               style={{
                 fontSize: 12,
-                color: "#6b7280",
+                color: "#000001",
                 marginTop: 8,
                 textAlign: "center",
               }}
@@ -200,12 +200,31 @@ export default function Layout() {
               />
             )}
 
+            {!isProfissional && (
+              <ItemMenu
+                label="Atividades Terapêuticas"
+                to={`/atividades-terapeuticas${moduloQuery}`}
+                active={pathname.startsWith("/atividades-terapeuticas")}
+                onClick={go}
+              />
+            )}
+
             <ItemMenu
               label="Responsáveis"
               to={`/responsaveis${moduloQuery}`}
               active={pathname.startsWith("/responsaveis")}
               onClick={go}
             />
+
+            {!isProfissional && (
+              <ItemMenu
+                label="Dimensionamento"
+                to={`/dimensionamento${moduloQuery}`}
+                active={pathname.startsWith("/dimensionamento")}
+                onClick={go}
+              />
+            )}
+
           </div>
 
           <div

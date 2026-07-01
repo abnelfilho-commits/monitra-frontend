@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  obterRegistroDiario,
-  atualizarRegistroDiario,
-} from "../services/registros";
+  obterRegistroLongitudinal,
+  atualizarRegistroLongitudinal,
+} from "../services/registros"; "../services/registros";
 
 const OPCOES_SONO = [
   { value: 1, label: "1 - Muito ruim" },
@@ -50,7 +50,9 @@ export default function EditarRegistroDiario() {
     consistencia_fezes: "",
     irritabilidade: "",
     crise_sensorial: "",
-    alimentacao: "",
+    tempo_tela: "",
+    seletividade_alimentar: "",
+    aceitou_alimento_novo: false,
     observacao: "",
   });
 
@@ -66,17 +68,20 @@ export default function EditarRegistroDiario() {
     setErro("");
     setLoading(true);
     try {
-      const r = await obterRegistroDiario(registroId);
+      const r = await obterRegistroLongitudinal(registroId);
+      const respostas = r.respostas || {};
 
       setForm({
-        data: r?.data || "",
-        sono_qualidade: r?.sono_qualidade ?? "",
-        evacuacao: r?.evacuacao ?? false,
-        consistencia_fezes: r?.consistencia_fezes ?? "",
-        irritabilidade: r?.irritabilidade ?? "",
-        crise_sensorial: r?.crise_sensorial ?? "",
-        alimentacao: r?.alimentacao || "",
-        observacao: r?.observacao || "",
+        data: r?.data_registro || "",
+        sono_qualidade: respostas.sono_qualidade ?? "",
+        evacuacao: respostas.evacuacao ?? false,
+        consistencia_fezes: respostas.consistencia_fezes ?? "",
+        irritabilidade: respostas.irritabilidade ?? "",
+        crise_sensorial: respostas.crise_sensorial ?? "",
+        tempo_tela: respostas.tempo_tela ?? "",
+        seletividade_alimentar: respostas.seletividade_alimentar ?? "",
+        aceitou_alimento_novo: respostas.aceitou_alimento_novo ?? false,
+        observacao: respostas.observacao ?? "",
       });
     } catch (e) {
       const msg =
@@ -100,19 +105,36 @@ export default function EditarRegistroDiario() {
     setSaving(true);
 
     try {
-      await atualizarRegistroDiario(registroId, {
+      await atualizarRegistroLongitudinal(registroId, {
         paciente_id: pacienteId,
-        data: form.data,
-        sono_qualidade: form.sono_qualidade === "" ? null : Number(form.sono_qualidade),
-        evacuacao: form.evacuacao,
-        consistencia_fezes:
-          form.consistencia_fezes === "" ? null : Number(form.consistencia_fezes),
-        irritabilidade: form.irritabilidade === "" ? null : Number(form.irritabilidade),
-        crise_sensorial:
-          form.crise_sensorial === "" ? null : Number(form.crise_sensorial),
-        alimentacao: form.alimentacao?.trim() || null,
-        observacao: form.observacao?.trim() || null,
+        modulo_id: 1,
+        formulario_id: 2,
+        data_registro: form.data,
+        origem: "PROFISSIONAL",
+        respostas: [
+          { campo_id: 34, valor: form.sono_qualidade === "" ? null : Number(form.sono_qualidade) },
+
+          { campo_id: 41, valor: form.evacuacao },
+
+          { campo_id: 42, valor: form.consistencia_fezes === "" ? null : Number(form.consistencia_fezes) },
+
+          { campo_id: 35, valor: form.irritabilidade === "" ? null : Number(form.irritabilidade) },
+
+          { campo_id: 36, valor: form.crise_sensorial === "" ? null : Number(form.crise_sensorial) },
+
+          { campo_id: 37, valor: form.tempo_tela || null },
+
+          { campo_id: 38, valor: form.seletividade_alimentar || null },
+
+          { campo_id: 39, valor: form.aceitou_alimento_novo },
+
+          { campo_id: 40, valor: form.observacao?.trim() || null },
+        ]
       });
+
+      console.log("PAYLOAD PATCH:", payload);
+
+      await atualizarRegistroLongitudinal(registroId, payload);
 
       navigate(`/pacientes/${pacienteId}`);
     } catch (e2) {
@@ -235,19 +257,43 @@ export default function EditarRegistroDiario() {
           </select>
         </div>
 
-        <div style={{ marginTop: 12 }}>
-          <label>Tipo de alimentação</label>
-          <textarea
-            value={form.alimentacao}
-            onChange={(e) => setField("alimentacao", e.target.value)}
-            rows={3}
-            placeholder="Ex.: Retirada de glúten e leite nas últimas 48h"
-            style={{ width: "100%", padding: 10 }}
+        <label>Tempo de tela</label>
+        <select
+          value={form.tempo_tela}
+          onChange={(e) => setField("tempo_tela", e.target.value)}
+          style={{ width: "100%", padding: 10 }}
+        >
+          <option value="">Selecione</option>
+          <option value="MENOS_1H">Menos de 1 hora</option>
+          <option value="1_2H">1 a 2 horas</option>
+          <option value="2_4H">2 a 4 horas</option>
+          <option value="MAIS_4H">Mais de 4 horas</option>
+        </select>
+
+        <label>Seletividade alimentar</label>
+        <select
+          value={form.seletividade_alimentar}
+          onChange={(e) => setField("seletividade_alimentar", e.target.value)}
+          style={{ width: "100%", padding: 10 }}
+        >
+          <option value="">Selecione</option>
+          <option value="NENHUMA">Nenhuma</option>
+          <option value="LEVE">Leve</option>
+          <option value="MODERADA">Moderada</option>
+          <option value="GRAVE">Grave</option>
+        </select>
+
+        <label>
+          <input
+            type="checkbox"
+            checked={form.aceitou_alimento_novo}
+            onChange={(e) => setField("aceitou_alimento_novo", e.target.checked)}
           />
-        </div>
+          Aceitou novo alimento
+        </label>
 
         <div style={{ marginTop: 12 }}>
-          <label>Observação</label>
+          <label>Observações clínicas (opcional)</label>
           <textarea
             value={form.observacao}
             onChange={(e) => setField("observacao", e.target.value)}
@@ -258,12 +304,36 @@ export default function EditarRegistroDiario() {
 
         {erro && <p style={{ color: "red", marginTop: 12 }}>{erro}</p>}
 
-        <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
-          <button type="button" onClick={() => navigate(-1)} disabled={saving}>
-            Voltar
+        <div style={{ marginTop: 24, display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            disabled={saving}
+            style={{
+              padding: "10px 18px",
+              borderRadius: 8,
+              border: "1px solid #ddd",
+              background: "#fff",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
+            ← Voltar
           </button>
 
-          <button type="submit" disabled={saving}>
+          <button
+            type="submit"
+            disabled={saving}
+            style={{
+              padding: "10px 18px",
+              borderRadius: 8,
+              border: "none",
+              background: "#2563eb",
+              color: "#fff",
+              cursor: "pointer",
+              fontWeight: 600,
+            }}
+          >
             {saving ? "Salvando..." : "Salvar alterações"}
           </button>
         </div>

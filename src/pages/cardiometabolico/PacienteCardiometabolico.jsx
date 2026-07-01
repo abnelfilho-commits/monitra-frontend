@@ -247,6 +247,12 @@ export default function PacienteCardiometabolico() {
             </button>
 
             <button
+              onClick={() => navigate(`/cardiometabolico/pacientes/${id}/pts`)}
+            >
+              PTS
+            </button>
+
+            <button
               onClick={() =>
                 navigate(
                   `/cardiometabolico/pacientes/${id}/intervencao`

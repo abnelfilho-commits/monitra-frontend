@@ -34,6 +34,15 @@ import MapaRiscoClinica from "./pages/MapaRiscoClinica";
 
 import Responsaveis from "./pages/Responsaveis";
 
+import ProntuarioLongitudinal from "./pages/ProntuarioLongitudinal";
+
+/* PTS */
+import PTS from "./pages/PTS";
+import AtividadesTerapeuticas from "./pages/AtividadesTerapeuticas";
+import NovaAtividadeTerapeutica from "./pages/NovaAtividadeTerapeutica";
+import NovaOcupacaoProfissional from "./pages/NovaOcupacaoProfissional";
+import DimensionamentoEquipe from "./pages/DimensionamentoEquipe";
+
 /* Login */
 import Login from "./pages/Login";
 
@@ -47,6 +56,8 @@ import MapaRiscoCardiometabolico
 from "./pages/cardiometabolico/MapaRiscoCardiometabolico";
 import IntervencaoCardiometabolica
 from "./pages/cardiometabolico/IntervencaoCardiometabolica";
+
+import AssessmentPage from "./pages/assessments/AssessmentPage";
 
 export default function App() {
   return (
@@ -137,6 +148,35 @@ export default function App() {
                 element={<Usuarios />}
               />
 
+              <Route 
+                path="/pacientes/:id/pts" 
+                element={<PTS />}
+              />
+
+              <Route
+                path="/atividades-terapeuticas"
+                element={<AtividadesTerapeuticas />}
+              />
+
+              <Route
+                path="/atividades-terapeuticas/nova"
+                element={<NovaAtividadeTerapeutica />}
+              />
+
+              <Route
+                path="/ocupacoes-profissionais/nova"
+                element={<NovaOcupacaoProfissional />}
+              />
+
+              <Route
+                path="/dimensionamento"
+                element={<DimensionamentoEquipe />}
+              />
+              <Route
+                path="/prontuario/evento/:tipo/:id"
+                element={<ProntuarioLongitudinal />}
+              />
+
             </Route>
 
             {/* Cardiometabólico */}
@@ -177,6 +217,33 @@ export default function App() {
                 element={<IntervencaoCardiometabolica />}
               />              
 
+              <Route 
+                path="/cardiometabolico/pacientes/:id/pts" 
+                element={<PTS />}
+              />
+
+              <Route
+                path="/atividades-terapeuticas"
+                element={<AtividadesTerapeuticas />}
+              />
+
+              <Route
+                path="/atividades-terapeuticas/nova"
+                element={<NovaAtividadeTerapeutica />}
+              />
+
+              <Route
+                path="/ocupacoes-profissionais/nova"
+                element={<NovaOcupacaoProfissional />}
+              />
+              <Route
+                path="/dimensionamento"
+                element={<DimensionamentoEquipe />}
+              />
+              <Route
+                path="/prontuario/evento/:tipo/:id"
+                element={<ProntuarioLongitudinal />}
+              />
             </Route>
 
           </Route>
@@ -185,6 +252,11 @@ export default function App() {
           <Route
             path="*"
             element={<Navigate to="/" replace />}
+          />
+
+          <Route
+            path="/avaliacoes/:codigo"
+            element={<AssessmentPage />}
           />
 
         </Routes>

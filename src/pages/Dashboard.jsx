@@ -247,8 +247,17 @@ export default function Dashboard() {
 
       const intervencoes = eventos.filter((ev) => ev.tipo_evento === "INTERVENCAO").length;
       const registros = eventos.filter((ev) => ev.tipo_evento === "REGISTRO_DIARIO").length;
-      const status = classificarStatusPaciente(eventos);
+     
       const risco = riscosPorPaciente[p.id] || null;
+
+      const status =
+        risco?.momento_clinico?.status === "CRITICO"
+          ? "vermelho"
+          : risco?.momento_clinico?.status === "ATENCAO"
+          ? "amarelo"
+          : risco?.momento_clinico?.status === "ESTAVEL"
+          ? "verde"
+          : classificarStatusPaciente(eventos);
 
       return {
         ...p,

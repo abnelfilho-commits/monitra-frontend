@@ -56,16 +56,24 @@ export default function Login() {
       >
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <img
-            src="/logo-monitra.png"
-            alt="Monitra"
+            src="/logo-integracare.png"
+            alt="Integra Care"
             style={{
-              width: 170,
+              width: 300,
               height: "auto",
-              marginBottom: 10,
+              marginBottom: 16,
               objectFit: "contain",
             }}
           />
-          <p style={{ marginTop: 0, fontSize: 14, color: "#6b7280" }}>
+
+          <p
+            style={{
+              marginTop: 0,
+              fontSize: 16,
+              color: "#6b7280",
+              fontWeight: 500,
+            }}
+          >
             Inteligência clínica em tempo real
           </p>
         </div>
@@ -180,7 +188,7 @@ export default function Login() {
             color: "#6b7280",
           }}
         >
-          Plataforma clínica Monitra
+          Plataforma clínica Integra Care
         </div>
       </div>
     </div>

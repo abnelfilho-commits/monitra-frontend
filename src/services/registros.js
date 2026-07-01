@@ -19,3 +19,13 @@ export async function atualizarRegistroDiario(id, payload) {
   const res = await api.put(`/registros/${id}`, payload);
   return res.data;
 }
+
+export async function obterRegistroLongitudinal(id) {
+  const { data } = await api.get(`/registros-longitudinais/${id}`);
+  return data;
+}
+
+export async function atualizarRegistroLongitudinal(id, payload) {
+  const { data } = await api.patch(`/registros-longitudinais/${id}`, payload);
+  return data;
+}

@@ -12,8 +12,8 @@ export default function LayoutCardiometabolico() {
       <aside className="cardio-sidebar">
 
         <img
-          src="/logo-monitra.png"
-          alt="Monitra"
+          src="/logo-integracare.png"
+          alt="Integra Care"
           className="cardio-logo"
         />
 

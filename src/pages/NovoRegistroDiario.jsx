@@ -1,7 +1,21 @@
 import Button from "../components/ui/Button";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { criarRegistroDiario } from "../services/registros";
+import api from "../services/api";
+
+const FORMULARIO_NEURO_ID = 2;
+
+const CAMPOS_NEURO = {
+  sono_qualidade: 34,
+  evacuacao: 41,
+  consistencia_fezes: 42,
+  irritabilidade: 35,
+  crise_sensorial: 36,
+  tempo_tela: 37,
+  seletividade_alimentar: 38,
+  aceitou_alimento_novo: 39,
+  observacao: 40,
+};
 
 const OPCOES_SONO = [
   { value: 1, label: "1 - Muito ruim" },
@@ -56,7 +70,9 @@ export default function NovoRegistroDiario() {
     consistencia_fezes: "",
     irritabilidade: "",
     crise_sensorial: "",
-    alimentacao: "",
+    tempo_tela: "",
+    seletividade_alimentar: "",
+    aceitou_alimento_novo: false,
     observacao: "",
   });
 
@@ -67,26 +83,63 @@ export default function NovoRegistroDiario() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
+  function montarRespostas() {
+    return [
+      {
+        campo_id: CAMPOS_NEURO.sono_qualidade,
+        valor: form.sono_qualidade === "" ? null : Number(form.sono_qualidade),
+      },
+      {
+        campo_id: CAMPOS_NEURO.evacuacao,
+        valor: form.evacuacao,
+      },
+      {
+        campo_id: CAMPOS_NEURO.consistencia_fezes,
+        valor:
+          form.consistencia_fezes === ""
+            ? null
+            : Number(form.consistencia_fezes),
+      },
+      {
+        campo_id: CAMPOS_NEURO.irritabilidade,
+        valor: form.irritabilidade === "" ? null : Number(form.irritabilidade),
+      },
+      {
+        campo_id: CAMPOS_NEURO.crise_sensorial,
+        valor: form.crise_sensorial === "" ? null : Number(form.crise_sensorial),
+      },
+      {
+        campo_id: CAMPOS_NEURO.tempo_tela,
+        valor: form.tempo_tela || null,
+      },
+      {
+        campo_id: CAMPOS_NEURO.seletividade_alimentar,
+        valor: form.seletividade_alimentar || null,
+      },
+      {
+        campo_id: CAMPOS_NEURO.aceitou_alimento_novo,
+        valor: Boolean(form.aceitou_alimento_novo),
+      },
+      {
+        campo_id: CAMPOS_NEURO.observacao,
+        valor: form.observacao?.trim() || null,
+      },
+    ];
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
     setErro("");
     setSaving(true);
 
     try {
-      await criarRegistroDiario({
+      await api.post("/registros-longitudinais/", {
         paciente_id: pacienteId,
-        data: form.data,
-        sono_qualidade:
-          form.sono_qualidade === "" ? null : Number(form.sono_qualidade),
-        evacuacao: form.evacuacao,
-        consistencia_fezes:
-          form.consistencia_fezes === "" ? null : Number(form.consistencia_fezes),
-        irritabilidade:
-          form.irritabilidade === "" ? null : Number(form.irritabilidade),
-        crise_sensorial:
-          form.crise_sensorial === "" ? null : Number(form.crise_sensorial),
-        alimentacao: form.alimentacao?.trim() || null,
-        observacao: form.observacao?.trim() || null,
+        modulo_id: 1,
+        formulario_id: FORMULARIO_NEURO_ID,
+        data_registro: form.data,
+        origem: "PROFISSIONAL",
+        respostas: montarRespostas(),
       });
 
       navigate(`/pacientes/${pacienteId}`);
@@ -207,23 +260,55 @@ export default function NovoRegistroDiario() {
         </div>
 
         <div style={{ marginTop: 12 }}>
-          <label>Tipo de alimentação</label>
-          <textarea
-            value={form.alimentacao}
-            onChange={(e) => setField("alimentacao", e.target.value)}
-            rows={3}
-            placeholder="Ex.: Retirada de glúten e leite nas últimas 48h"
+          <label>Tempo de tela</label>
+          <select
+            value={form.tempo_tela}
+            onChange={(e) => setField("tempo_tela", e.target.value)}
             style={{ width: "100%", padding: 10 }}
-          />
+          >
+            <option value="">Selecione</option>
+            <option value="MENOS_1H">Menos de 1 hora</option>
+            <option value="1_2H">1 a 2 horas</option>
+            <option value="2_4H">2 a 4 horas</option>
+            <option value="MAIS_4H">Mais de 4 horas</option>
+          </select>
         </div>
 
         <div style={{ marginTop: 12 }}>
-          <label>Observação</label>
+          <label>Seletividade alimentar</label>
+          <select
+            value={form.seletividade_alimentar}
+            onChange={(e) => setField("seletividade_alimentar", e.target.value)}
+            style={{ width: "100%", padding: 10 }}
+          >
+            <option value="">Selecione</option>
+            <option value="NENHUMA">Nenhuma</option>
+            <option value="LEVE">Leve</option>
+            <option value="MODERADA">Moderada</option>
+            <option value="GRAVE">Grave</option>
+          </select>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <input
+              type="checkbox"
+              checked={form.aceitou_alimento_novo}
+              onChange={(e) =>
+                setField("aceitou_alimento_novo", e.target.checked)
+              }
+            />
+            Aceitou novo alimento
+          </label>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          <label>Observações clínicas (opcional)</label>
           <textarea
             value={form.observacao}
             onChange={(e) => setField("observacao", e.target.value)}
             rows={4}
-            placeholder="Observações clínicas relevantes..."
+            placeholder="Descreva apenas informações relevantes que não foram contempladas nos campos acima..."
             style={{ width: "100%", padding: 10 }}
           />
         </div>
@@ -244,7 +329,6 @@ export default function NovoRegistroDiario() {
             {saving ? "Salvando..." : "Salvar registro"}
           </Button>
         </div>
-
       </form>
     </div>
   );

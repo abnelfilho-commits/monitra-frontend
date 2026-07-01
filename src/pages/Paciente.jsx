@@ -1,3 +1,5 @@
+import { getAssessmentLabel } from "../utils/assessmentLabels";
+import AssessmentHistory from "../components/assessments/AssessmentHistory";
 import Button from "../components/ui/Button";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -17,7 +19,11 @@ import {
   Legend,
 } from "recharts";
 
-import { obterEvolucaoPaciente } from "../services/analytics";
+import {
+  obterEvolucaoPaciente,
+  obterRiscoPaciente,
+} from "../services/analytics";
+
 import {
   baixarRelatorioPacientePdf,
   obterPaciente,
@@ -603,9 +609,21 @@ export default function Paciente() {
   const [paciente, setPaciente] = useState(null);
   const [items, setItems] = useState([]);
   const [evolucaoRisco, setEvolucaoRisco] = useState([]);
+  const [riscoPaciente, setRiscoPaciente] = useState(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
+
+  useEffect(() => {
+    const y = sessionStorage.getItem("timelineScrollY");
+
+    if (y) {
+      setTimeout(() => {
+        window.scrollTo(0, Number(y));
+        sessionStorage.removeItem("timelineScrollY");
+      }, 100);
+    }
+  }, []);
 
   if (!id || Number.isNaN(pacienteId) || pacienteId <= 0) {
     return (
@@ -623,15 +641,17 @@ export default function Paciente() {
     setLoading(true);
 
     try {
-      const [p, t, evolucao] = await Promise.all([
+      const [p, t, evolucao, risco] = await Promise.all([
         obterPaciente(pacienteId),
         listarTimelinePorPaciente(pacienteId),
         obterEvolucaoPaciente(pacienteId),
+        obterRiscoPaciente(pacienteId),
       ]);
 
       setPaciente(p);
       setItems(Array.isArray(t) ? t : []);
       setEvolucaoRisco(Array.isArray(evolucao?.serie) ? evolucao.serie : []);
+      setRiscoPaciente(risco || null);
     } catch (e) {
       const msg =
         e?.response?.data?.detail || e?.message || "Falha ao carregar paciente.";
@@ -639,6 +659,7 @@ export default function Paciente() {
     } finally {
       setLoading(false);
     }
+
   }
 
   async function onBaixarRelatorioPdf() {
@@ -779,10 +800,6 @@ export default function Paciente() {
       return base.filter((item) => item.tipo_evento === "INTERVENCAO");
     }
 
-    if (filtro === "REGISTRO_DIARIO") {
-      return base.filter((item) => item.tipo_evento === "REGISTRO_DIARIO");
-    }
-
     return base;
   }, [items, filtro]);
 
@@ -799,6 +816,17 @@ export default function Paciente() {
     }, [paciente, items]);
 
   const painelClinico = useMemo(() => {
+    if (riscoPaciente?.painel_clinico) {
+      return {
+        sono: riscoPaciente.painel_clinico.sono ?? 0,
+        irritabilidade: riscoPaciente.painel_clinico.irritabilidade ?? 0,
+        crise: riscoPaciente.painel_clinico.crise_sensorial ?? 0,
+        intestinal: riscoPaciente.painel_clinico.intestinal ?? 0,
+        alimentacao: riscoPaciente.painel_clinico.alimentacao ?? 0,
+        totalRegistros: riscoPaciente.painel_clinico.total_registros ?? 0,
+      };
+    }
+
     const painel = extrairScoreClinicoDosRegistros(registrosRecentesClinicos);
 
     const semIndicadores =
@@ -814,11 +842,14 @@ export default function Paciente() {
     }
 
     return painel;
-  }, [registrosRecentesClinicos, paciente]);
+  }, [riscoPaciente, registrosRecentesClinicos, paciente]);
 
   const resumoClinico = useMemo(() => {
-    return gerarResumoClinico(painelClinico);
-  }, [painelClinico]);
+    return (
+      riscoPaciente?.resumo_clinico ||
+      gerarResumoClinico(painelClinico)
+    );
+  }, [riscoPaciente, painelClinico]);
 
   const evolucaoClinica = useMemo(() => {
     return extrairSerieEvolucaoClinica(items);
@@ -833,8 +864,42 @@ export default function Paciente() {
   }, [evolucaoRisco]);
 
   const leituraClinica = useMemo(() => {
+    if (riscoPaciente?.momento_clinico) {
+      const status = riscoPaciente.momento_clinico.status;
+
+      if (status === "CRITICO") {
+        return {
+          titulo: riscoPaciente.momento_clinico.titulo,
+          subtitulo: riscoPaciente.momento_clinico.descricao,
+          corFundo: "#fef2f2",
+          corTexto: "#991b1b",
+          borda: "#fecaca",
+        };
+      }
+
+      if (status === "ESTAVEL") {
+        return {
+          titulo: riscoPaciente.momento_clinico.titulo,
+          subtitulo: riscoPaciente.momento_clinico.descricao,
+          corFundo: "#f0fdf4",
+          corTexto: "#166534",
+          borda: "#bbf7d0",
+        };
+      }
+
+      if (status === "ATENCAO") {
+        return {
+          titulo: riscoPaciente.momento_clinico.titulo,
+          subtitulo: riscoPaciente.momento_clinico.descricao,
+          corFundo: "#fefce8",
+          corTexto: "#92400e",
+          borda: "#fde68a",
+        };
+      }
+    }
+
     return classificarMomentoClinico(painelClinico, statusPaciente);
-  }, [painelClinico, statusPaciente]);
+  }, [riscoPaciente, painelClinico, statusPaciente]);
 
   const temaEixo = useMemo(() => {
     return obterTemaEixo(paciente?.status_clinico?.eixo_dominante);
@@ -1049,6 +1114,24 @@ export default function Paciente() {
             onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}
           >
             + Registro Diário
+          </Button>
+
+          <Button
+            onClick={() => navigate(`/avaliacoes/MCHAT?pacienteId=${pacienteId}`)}
+          >
+            🧩 M-CHAT
+          </Button>
+
+          <Button
+            onClick={() => navigate(`/avaliacoes/DENVER?pacienteId=${pacienteId}`)}
+          >
+            🧩 Denver II
+          </Button>
+
+          <Button
+            onClick={() => navigate(`/pacientes/${pacienteId}/pts`)}
+          >
+            PTS
           </Button>
 
           <Button
@@ -1567,7 +1650,7 @@ export default function Paciente() {
       </div>
 
       <hr style={{ margin: "16px 0" }} />
-
+      <AssessmentHistory pacienteId={pacienteId} />
       <div
         style={{
           display: "flex",
@@ -1610,24 +1693,46 @@ export default function Paciente() {
         >
           {ordenados.map((item) => {
             const isIntervencao = item.tipo_evento === "INTERVENCAO";
-            const origem =
-              item.origem || (isIntervencao ? "PROFISSIONAL" : "PROFISSIONAL");
+            const isAvaliacao = item.tipo_evento === "AVALIACAO_CLINICA";
+            const origem = item.tipo_evento === "AVALIACAO_CLINICA"
+              ? "FRAMEWORK"
+              : item.origem || "PROFISSIONAL";
 
             const badgeStyle = {
-              padding: "4px 10px",
-              borderRadius: 999,
-              fontSize: 12,
-              fontWeight: 700,
-              display: "inline-block",
-              marginBottom: 8,
-              background: origem === "RESPONSAVEL" ? "#dcfce7" : "#dbeafe",
-              color: origem === "RESPONSAVEL" ? "#166534" : "#1d4ed8",
-              border:
-                origem === "RESPONSAVEL"
-                  ? "1px solid #86efac"
-                  : "1px solid #93c5fd",
+            padding: "4px 10px",
+            borderRadius: 999,
+            fontSize: 12,
+            fontWeight: 700,
+            display: "inline-block",
+            marginBottom: 8,
+            background:
+              origem === "FRAMEWORK"
+                ? "#f3e8ff"
+                : origem === "RESPONSAVEL"
+                ? "#dcfce7"
+                : "#dbeafe",
+            color:
+              origem === "FRAMEWORK"
+                ? "#6d28d9"
+                : origem === "RESPONSAVEL"
+                ? "#166534"
+                : "#1d4ed8",
+            border:
+              origem === "FRAMEWORK"
+                ? "1px solid #d8b4fe"
+                : origem === "RESPONSAVEL"
+                ? "1px solid #86efac"
+                : "1px solid #93c5fd",
             };
+            const tipoVisualizacao = isAvaliacao
+              ? item.instrumento
+              : item.tipo_evento === "REGISTRO_DIARIO"
+              ? "REGISTRO"
+              : item.tipo_evento;
 
+            const idVisualizacao = isAvaliacao
+              ? item.avaliacao_id || item.id
+              : item.id;
             return (
               <div
                 key={`${item.tipo_evento}-${item.id}`}
@@ -1635,7 +1740,11 @@ export default function Paciente() {
                   border: "1px solid #ddd",
                   borderRadius: 10,
                   padding: 12,
-                  background: isIntervencao ? "#f5f9ff" : "#f9fff5",
+                  background: isAvaliacao
+                    ? "#faf5ff"
+                    : isIntervencao
+                    ? "#f5f9ff"
+                    : "#f9fff5",
                 }}
               >
                 <div
@@ -1649,11 +1758,21 @@ export default function Paciente() {
                 >
                   <div style={{ flex: 1, minWidth: 280 }}>
                     <span style={badgeStyle}>
-                      {origem === "RESPONSAVEL" ? "Responsável" : "Profissional"}
+                      {origem === "FRAMEWORK"
+                        ? "Framework"
+                        : origem === "RESPONSAVEL"
+                        ? "Responsável"
+                        : "Profissional"}
                     </span>
 
                     <div style={{ marginTop: 6 }}>
-                      <b>{isIntervencao ? "🧠 Intervenção" : "📋 Registro Diário"}</b>
+                      <b>
+                        {isAvaliacao
+                          ? `🧩 ${getAssessmentLabel(item.instrumento)}`
+                          : isIntervencao
+                          ? "🧠 Intervenção"
+                          : "📋 Registro Diário"}
+                      </b>
                     </div>
 
                     {origem === "RESPONSAVEL" && (
@@ -1669,7 +1788,45 @@ export default function Paciente() {
                     )}
 
                     <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>
-                      {item.descricao}
+                      {isAvaliacao ? (
+                        <div style={{ marginTop: 8 }}>
+                          <div style={{ marginTop: 6 }}>
+                            <strong>Score:</strong> {Number(item.score)}
+                          </div>
+
+                          <div style={{ marginTop: 4 }}>
+                            <strong>Classificação:</strong>{" "}
+                            <span
+                              style={{
+                                color:
+                                  item.classificacao === "Baixo risco" ||
+                                  item.classificacao === "Adequado"
+                                    ? "#16a34a"
+                                    : item.classificacao === "Risco moderado"
+                                    ? "#ca8a04"
+                                    : "#dc2626",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {item.classificacao}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <p
+                          style={{
+                            margin: "6px 0 0",
+                            color: "#475569",
+                            whiteSpace: "pre-line",
+                          }}
+                        >
+                          {item.tipo_evento === "REGISTRO_DIARIO"
+                            ? item.origem === "RESPONSAVEL"
+                              ? "Registro diário informado pelo responsável."
+                              : "Registro diário realizado pelo profissional."
+                            : item.descricao}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1685,36 +1842,17 @@ export default function Paciente() {
                         flexWrap: "wrap",
                       }}
                     >
-                      {item.tipo_evento === "REGISTRO_DIARIO" && (
-                        <Button
-                          variant="secondary"
-                          onClick={() =>
-                            navigate(`/pacientes/${pacienteId}/registros/${item.id}/editar`)
-                          }
-                        >
-                          Editar
-                        </Button>
-                      )}
-
-                      {item.tipo_evento === "INTERVENCAO" && (
-                        <Button
-                          variant="secondary"
-                          onClick={() =>
-                            navigate(
-                              `/pacientes/${pacienteId}/intervencoes/${item.id}/editar`
-                            )
-                          }
-                        >
-                          Editar
-                        </Button>
-                      )}
-
                       <Button
                         variant="secondary"
-                        onClick={() => onExcluirEvento(item)}
+                        onClick={() => {
+                          sessionStorage.setItem("timelineScrollY", String(window.scrollY));
+
+                          navigate(`/prontuario/evento/${tipoVisualizacao}/${idVisualizacao}`);
+                        }}
                       >
-                        Excluir
+                        👁 Visualizar
                       </Button>
+
                     </div>
                   </div>
                 </div>
