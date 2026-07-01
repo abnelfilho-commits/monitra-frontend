@@ -16,32 +16,40 @@ export default function DimensionamentoEquipe() {
 
   const carregarDados = async () => {
     try {
-        const moduloId = isCardio ? 2 : 1;
+      const moduloId = isCardio ? 2 : 1;
 
-        const dimensionamentoResponse = await api.get(
-          `/dimensionamento/ocupacoes?modulo_id=${moduloId}`
+      const dimensionamentoResponse = await api.get(
+        `/dimensionamento/ocupacoes?modulo_id=${moduloId}`
+      );
+
+      setDados(
+        Array.isArray(dimensionamentoResponse.data)
+          ? dimensionamentoResponse.data
+          : []
+      );
+
+      try {
+        const capacidadeResponse = await api.get(
+          `/capacidade-instalada/demanda-capacidade?modulo_id=${moduloId}`
         );
 
-        setDados(
-          Array.isArray(dimensionamentoResponse.data)
-            ? dimensionamentoResponse.data
+        setCapacidade(
+          Array.isArray(capacidadeResponse.data)
+            ? capacidadeResponse.data
             : []
         );
-
-        try {
-          const capacidadeResponse = await api.get(
-            `/capacidade-instalada/demanda-capacidade?modulo_id=${moduloId}`
-          );
-
-          setCapacidade(
-            Array.isArray(capacidadeResponse.data)
-              ? capacidadeResponse.data
-              : []
-          );
-        } catch (capacidadeError) {
-          console.warn("Capacidade instalada indisponível:", capacidadeError);
-          setCapacidade([]);
-        }
+      } catch (capacidadeError) {
+        console.warn("Capacidade instalada indisponível:", capacidadeError);
+        setCapacidade([]);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dimensionamento:", error);
+      setDados([]);
+      setCapacidade([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const totalPlanejamentos = dados.reduce(
     (acc, item) => acc + Number(item.total_planejamentos || 0),
