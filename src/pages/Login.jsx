@@ -27,6 +27,7 @@ export default function Login() {
         e?.response?.data?.detail ||
         e?.message ||
         "Falha ao realizar login.";
+
       setErro(String(msg));
     } finally {
       setLoading(false);
@@ -99,6 +100,7 @@ export default function Login() {
         <form onSubmit={onSubmit}>
           <div style={{ marginBottom: 14 }}>
             <label>Email</label>
+
             <input
               type="email"
               required
@@ -115,8 +117,9 @@ export default function Login() {
             />
           </div>
 
-          <div style={{ marginBottom: 10 }}>
+          <div style={{ marginBottom: 18 }}>
             <label>Senha</label>
+
             <input
               type="password"
               required
@@ -131,18 +134,6 @@ export default function Login() {
                 boxSizing: "border-box",
               }}
             />
-          </div>
-
-          <div style={{ textAlign: "right", marginBottom: 18, fontSize: 13 }}>
-            <a
-              href="#"
-              style={{
-                color: "#0f8f5b",
-                textDecoration: "none",
-              }}
-            >
-              Esqueceu a senha?
-            </a>
           </div>
 
           {erro && (
