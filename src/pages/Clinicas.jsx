@@ -72,7 +72,7 @@ export default function Clinicas() {
             <div>
               <h2 style={{ margin: 0 }}>Clínicas</h2>
               <p style={{ marginTop: 4, color: "#4b5563" }}>
-                Gestão das clínicas monitoradas pela plataforma Monitra.
+                Gestão das clínicas acompanhadas pela plataforma Integra Care.
               </p>
             </div>
           </div>

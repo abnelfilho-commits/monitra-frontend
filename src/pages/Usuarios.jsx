@@ -135,7 +135,7 @@ export default function Usuarios() {
         <div>
           <h2 style={{ margin: 0 }}>Usuários</h2>
           <p style={{ marginTop: 4, color: "#4b5563" }}>
-            Gestão de acessos da plataforma Monitra.
+            Gestão de acessos da plataforma Integra Care.
           </p>
         </div>
 
@@ -192,24 +192,70 @@ export default function Usuarios() {
 
       {modalAberto && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <form onSubmit={salvar} style={{ width: 520, maxWidth: "100%", background: "#fff", borderRadius: 14, padding: 20 }}>
+          <form
+            onSubmit={salvar}
+            autoComplete="off"
+            style={{ width: 520, maxWidth: "100%", background: "#fff", borderRadius: 14, padding: 20 }}
+          >
             <h3 style={{ marginTop: 0 }}>{editando ? "Editar Usuário" : "Novo Usuário"}</h3>
 
-            <input placeholder="Nome" required value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} style={inputStyle} />
-            <input placeholder="Email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} style={inputStyle} />
+            <label style={labelStyle}>
+              Nome
+              <input
+                name="novo-usuario-nome"
+                autoComplete="off"
+                placeholder="Digite o nome"
+                required
+                value={form.nome}
+                onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                style={inputStyle}
+              />
+            </label>
+
+            <label style={labelStyle}>
+              Email
+              <input
+                name="novo-usuario-email"
+                autoComplete="off"
+                placeholder="Digite o email"
+                type="email"
+                required
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                style={inputStyle}
+              />
+            </label>
 
             {!editando && (
-              <input placeholder="Senha" type="password" required value={form.senha} onChange={(e) => setForm({ ...form, senha: e.target.value })} style={inputStyle} />
+              <label style={labelStyle}>
+                Senha
+                <input
+                  name="nova-senha-usuario"
+                  autoComplete="new-password"
+                  placeholder="Digite a senha"
+                  type="password"
+                  required
+                  value={form.senha}
+                  onChange={(e) => setForm({ ...form, senha: e.target.value })}
+                  style={inputStyle}
+                />
+              </label>
             )}
 
-            <select value={form.perfil} onChange={(e) => setForm({ ...form, perfil: e.target.value })} style={inputStyle}>
-              {perfis.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
+            <label style={labelStyle}>
+              Perfil
+              <select value={form.perfil} onChange={(e) => setForm({ ...form, perfil: e.target.value })} style={inputStyle}>
+                {perfis.map((p) => <option key={p} value={p}>{p}</option>)}
+              </select>
+            </label>
 
-            <select value={form.clinica_id} onChange={(e) => setForm({ ...form, clinica_id: e.target.value })} style={inputStyle}>
-              <option value="">Sem clínica</option>
-              {clinicas.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
-            </select>
+            <label style={labelStyle}>
+              Clínica
+              <select value={form.clinica_id} onChange={(e) => setForm({ ...form, clinica_id: e.target.value })} style={inputStyle}>
+                <option value="">Sem clínica</option>
+                {clinicas.map((c) => <option key={c.id} value={c.id}>{c.nome}</option>)}
+              </select>
+            </label>
 
             <label style={{ display: "flex", gap: 8, marginTop: 10 }}>
               <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
@@ -234,4 +280,11 @@ const inputStyle = {
   border: "1px solid #d1d5db",
   marginTop: 10,
   boxSizing: "border-box",
+};
+
+const labelStyle = {
+  display: "block",
+  marginTop: 12,
+  fontWeight: 700,
+  color: "#344054",
 };
