@@ -3,7 +3,7 @@ import { listarUsuarios, criarUsuario, atualizarUsuario } from "../services/usua
 import { listarClinicas } from "../services/clinicas";
 import Button from "../components/ui/Button";
 
-const perfis = ["ADMIN", "ADMIN_CLINICA", "PROFISSIONAL", "SUPORTE"];
+const perfisNovoUsuario = ["ADMIN", "ADMIN_CLINICA", "SUPORTE"];
 
 export default function Usuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -18,7 +18,7 @@ export default function Usuarios() {
     nome: "",
     email: "",
     senha: "",
-    perfil: "PROFISSIONAL",
+    perfil: "ADMIN_CLINICA",
     clinica_id: "",
     ativo: true,
   });
@@ -58,7 +58,7 @@ export default function Usuarios() {
       nome: "",
       email: "",
       senha: "",
-      perfil: "PROFISSIONAL",
+      perfil: "ADMIN_CLINICA",
       clinica_id: "",
       ativo: true,
     });
@@ -242,10 +242,39 @@ export default function Usuarios() {
               </label>
             )}
 
+            {!editando && (
+              <div style={professionalNoticeStyle}>
+                <strong>Profissionais de saúde</strong>
+                <span>
+                  Para criar um acesso com perfil PROFISSIONAL, utilize o menu Profissionais.
+                  O cadastro integrado cria o profissional, o usuário de acesso e os módulos habilitados.
+                </span>
+              </div>
+            )}
+
+            {editando?.perfil === "PROFISSIONAL" && (
+              <div style={professionalNoticeStyle}>
+                <strong>Usuário profissional</strong>
+                <span>
+                  Este acesso está vinculado a um cadastro assistencial. Módulos e vínculo profissional
+                  devem ser administrados pelo menu Profissionais.
+                </span>
+              </div>
+            )}
+
             <label style={labelStyle}>
               Perfil
-              <select value={form.perfil} onChange={(e) => setForm({ ...form, perfil: e.target.value })} style={inputStyle}>
-                {perfis.map((p) => <option key={p} value={p}>{p}</option>)}
+              <select
+                value={form.perfil}
+                onChange={(e) => setForm({ ...form, perfil: e.target.value })}
+                style={inputStyle}
+                disabled={editando?.perfil === "PROFISSIONAL"}
+              >
+                {editando?.perfil === "PROFISSIONAL" ? (
+                  <option value="PROFISSIONAL">PROFISSIONAL</option>
+                ) : (
+                  perfisNovoUsuario.map((p) => <option key={p} value={p}>{p}</option>)
+                )}
               </select>
             </label>
 
@@ -287,4 +316,18 @@ const labelStyle = {
   marginTop: 12,
   fontWeight: 700,
   color: "#344054",
+};
+
+const professionalNoticeStyle = {
+  marginTop: 16,
+  padding: 12,
+  borderRadius: 10,
+  background: "#eff6ff",
+  border: "1px solid #bfdbfe",
+  color: "#1e3a5f",
+  display: "flex",
+  flexDirection: "column",
+  gap: 4,
+  fontSize: 13,
+  lineHeight: 1.45,
 };

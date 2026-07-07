@@ -5,6 +5,11 @@ import { listarClinicas } from "../services/clinicas";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/ui/Button";
 
+const MODULOS = [
+  { id: 1, nome: "Neurodesenvolvimento", descricao: "Módulo Neuro" },
+  { id: 2, nome: "Cardiometabólico", descricao: "Módulo Cardiometabólico" },
+];
+
 function getPerfil(user) {
   return String(user?.perfil || "").trim().toUpperCase();
 }
@@ -18,12 +23,10 @@ export default function NovoProfissional() {
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);
-
-  const isCardio =
-    searchParams.get("modulo") === "cardiometabolico";
+  const isCardio = searchParams.get("modulo") === "cardiometabolico";
+  const moduloInicial = isCardio ? 2 : 1;
 
   const { user, loading } = useAuth();
-
   const admin = useMemo(() => isAdmin(user), [user]);
 
   const [form, setForm] = useState({
@@ -31,6 +34,8 @@ export default function NovoProfissional() {
     email: "",
     especialidade: "",
     clinica_id: "",
+    senha: "",
+    modulo_ids: [moduloInicial],
   });
 
   const [clinicas, setClinicas] = useState([]);
@@ -40,6 +45,18 @@ export default function NovoProfissional() {
 
   function setField(name, value) {
     setForm((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function toggleModulo(moduloId) {
+    setForm((prev) => {
+      const jaSelecionado = prev.modulo_ids.includes(moduloId);
+      return {
+        ...prev,
+        modulo_ids: jaSelecionado
+          ? prev.modulo_ids.filter((id) => id !== moduloId)
+          : [...prev.modulo_ids, moduloId],
+      };
+    });
   }
 
   useEffect(() => {
@@ -80,6 +97,26 @@ export default function NovoProfissional() {
       return;
     }
 
+    if (!form.email.trim()) {
+      setErro("Informe o email do profissional.");
+      return;
+    }
+
+    if (!form.senha.trim()) {
+      setErro("Informe a senha temporária de acesso.");
+      return;
+    }
+
+    if (form.senha.trim().length < 6) {
+      setErro("A senha temporária deve ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    if (!form.modulo_ids.length) {
+      setErro("Selecione pelo menos um módulo de acesso.");
+      return;
+    }
+
     const clinicaIdFinal = admin
       ? form.clinica_id
       : user?.clinica_id
@@ -87,9 +124,7 @@ export default function NovoProfissional() {
       : "";
 
     if (!clinicaIdFinal) {
-      setErro(
-        admin ? "Selecione a clínica." : "Usuário sem clínica vinculada."
-      );
+      setErro(admin ? "Selecione a clínica." : "Usuário sem clínica vinculada.");
       return;
     }
 
@@ -98,19 +133,16 @@ export default function NovoProfissional() {
     try {
       await criarProfissional({
         nome: form.nome.trim(),
-        email: form.email?.trim() || null,
+        email: form.email.trim(),
         especialidade: form.especialidade?.trim() || null,
         clinica_id: Number(clinicaIdFinal),
+        senha: form.senha,
+        modulo_ids: form.modulo_ids,
       });
 
-      navigate(
-        isCardio
-          ? "/profissionais?modulo=cardiometabolico"
-          : "/profissionais"
-      );
+      navigate(isCardio ? "/profissionais?modulo=cardiometabolico" : "/profissionais");
     } catch (e2) {
-      const msg =
-        e2?.response?.data?.detail || "Falha ao criar profissional.";
+      const msg = e2?.response?.data?.detail || "Falha ao criar profissional.";
       setErro(msg);
     } finally {
       setSaving(false);
@@ -127,7 +159,7 @@ export default function NovoProfissional() {
 
   return (
     <div style={{ padding: 24 }}>
-      <div style={{ maxWidth: 760, margin: "0 auto" }}>
+      <div style={{ maxWidth: 860, margin: "0 auto" }}>
         <div
           style={{
             display: "flex",
@@ -141,18 +173,14 @@ export default function NovoProfissional() {
           <div>
             <h2 style={{ margin: 0 }}>Novo Profissional</h2>
             <div style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>
-              Cadastro de profissional de saúde
+              Cadastro do profissional, acesso à plataforma e módulos habilitados
             </div>
           </div>
 
           <Button
             variant="secondary"
             onClick={() =>
-              navigate(
-                isCardio
-                  ? "/profissionais?modulo=cardiometabolico"
-                  : "/profissionais"
-              )
+              navigate(isCardio ? "/profissionais?modulo=cardiometabolico" : "/profissionais")
             }
           >
             ← Voltar
@@ -168,17 +196,18 @@ export default function NovoProfissional() {
             boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)",
           }}
         >
-          <form onSubmit={onSubmit}>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: 14,
-              }}
-            >
+          <form onSubmit={onSubmit} autoComplete="off">
+            <SectionTitle
+              title="Dados do profissional"
+              description="Informe a identidade assistencial do profissional."
+            />
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
               <div>
                 <label style={labelStyle}>Nome</label>
                 <input
+                  name="novo-profissional-nome"
+                  autoComplete="off"
                   placeholder="Nome do profissional"
                   value={form.nome}
                   onChange={(e) => setField("nome", e.target.value)}
@@ -189,8 +218,10 @@ export default function NovoProfissional() {
               <div>
                 <label style={labelStyle}>Email</label>
                 <input
+                  name="novo-profissional-email"
+                  autoComplete="off"
                   type="email"
-                  placeholder="Email"
+                  placeholder="Email de acesso"
                   value={form.email}
                   onChange={(e) => setField("email", e.target.value)}
                   style={inputStyle}
@@ -200,6 +231,8 @@ export default function NovoProfissional() {
               <div style={{ gridColumn: "1 / -1" }}>
                 <label style={labelStyle}>Especialidade</label>
                 <input
+                  name="novo-profissional-especialidade"
+                  autoComplete="off"
                   placeholder="Especialidade"
                   value={form.especialidade}
                   onChange={(e) => setField("especialidade", e.target.value)}
@@ -235,6 +268,77 @@ export default function NovoProfissional() {
               </div>
             </div>
 
+            <SectionTitle
+              title="Acesso à plataforma"
+              description="Será criado automaticamente um usuário PROFISSIONAL vinculado a este cadastro."
+            />
+
+            <div>
+              <label style={labelStyle}>Senha temporária</label>
+              <input
+                name="nova-senha-profissional"
+                autoComplete="new-password"
+                type="password"
+                placeholder="Senha temporária"
+                value={form.senha}
+                onChange={(e) => setField("senha", e.target.value)}
+                style={inputStyle}
+              />
+              <div style={helpTextStyle}>
+                Oriente o profissional a trocar a senha conforme o procedimento institucional.
+              </div>
+            </div>
+
+            <SectionTitle
+              title="Módulos habilitados"
+              description="Selecione as linhas de cuidado que este profissional poderá acessar."
+            />
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                gap: 12,
+              }}
+            >
+              {MODULOS.map((modulo) => {
+                const selecionado = form.modulo_ids.includes(modulo.id);
+
+                return (
+                  <label
+                    key={modulo.id}
+                    style={{
+                      border: selecionado ? "1px solid #0f8f5b" : "1px solid #e5e7eb",
+                      background: selecionado ? "#ecfdf3" : "#fff",
+                      borderRadius: 14,
+                      padding: 14,
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "flex-start",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selecionado}
+                      onChange={() => toggleModulo(modulo.id)}
+                      style={{ marginTop: 3 }}
+                    />
+
+                    <span>
+                      <span style={{ display: "block", fontWeight: 800, color: "#111827" }}>
+                        {modulo.nome}
+                      </span>
+
+                      <span style={{ display: "block", fontSize: 13, color: "#6b7280", marginTop: 4 }}>
+                        {modulo.descricao}
+                      </span>
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
             {erro && (
               <div
                 style={{
@@ -263,11 +367,7 @@ export default function NovoProfissional() {
                 variant="secondary"
                 type="button"
                 onClick={() =>
-                  navigate(
-                    isCardio
-                      ? "/profissionais?modulo=cardiometabolico"
-                      : "/profissionais"
-                  )
+                  navigate(isCardio ? "/profissionais?modulo=cardiometabolico" : "/profissionais")
                 }
               >
                 Cancelar
@@ -280,6 +380,15 @@ export default function NovoProfissional() {
           </form>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SectionTitle({ title, description }) {
+  return (
+    <div style={{ marginTop: 22, marginBottom: 14, paddingTop: 18, borderTop: "1px solid #eef2f7" }}>
+      <div style={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>{title}</div>
+      <div style={{ marginTop: 4, fontSize: 13, color: "#6b7280" }}>{description}</div>
     </div>
   );
 }
@@ -301,4 +410,10 @@ const labelStyle = {
   fontWeight: 600,
   marginBottom: 6,
   color: "#374151",
+};
+
+const helpTextStyle = {
+  marginTop: 6,
+  fontSize: 12,
+  color: "#6b7280",
 };
