@@ -191,11 +191,33 @@ export default function Usuarios() {
       )}
 
       {modalAberto && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1000,
+            background: "rgba(0,0,0,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            boxSizing: "border-box",
+            overflow: "hidden",
+          }}
+        >
           <form
             onSubmit={salvar}
             autoComplete="off"
-            style={{ width: 520, maxWidth: "100%", background: "#fff", borderRadius: 14, padding: 20 }}
+            style={{
+              width: 520,
+              maxWidth: "100%",
+              maxHeight: "calc(100vh - 64px)",
+              overflowY: "auto",
+              background: "#fff",
+              borderRadius: 14,
+              padding: 20,
+              boxSizing: "border-box",
+            }}
           >
             <h3 style={{ marginTop: 0 }}>{editando ? "Editar Usuário" : "Novo Usuário"}</h3>
 

@@ -293,9 +293,15 @@ export default function Responsaveis() {
             <label style={labelStyle}>
               Nome
               <input
-                name="nome"
+                name="novo-responsavel-nome"
+                autoComplete="off"
                 value={formResponsavel.nome}
-                onChange={atualizarCampoResponsavel}
+                onChange={(e) =>
+                  setFormResponsavel((prev) => ({
+                    ...prev,
+                    nome: e.target.value,
+                  }))
+                }
                 required
                 style={inputStyle}
               />
@@ -305,9 +311,15 @@ export default function Responsaveis() {
               E-mail
               <input
                 type="email"
-                name="email"
+                name="novo-responsavel-email"
+                autoComplete="off"
                 value={formResponsavel.email}
-                onChange={atualizarCampoResponsavel}
+                onChange={(e) =>
+                  setFormResponsavel((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                  }))
+                }
                 required
                 style={inputStyle}
               />
@@ -316,9 +328,15 @@ export default function Responsaveis() {
             <label style={labelStyle}>
               Telefone
               <input
-                name="telefone"
+                name="novo-responsavel-telefone"
+                autoComplete="off"
                 value={formResponsavel.telefone}
-                onChange={atualizarCampoResponsavel}
+                onChange={(e) =>
+                  setFormResponsavel((prev) => ({
+                    ...prev,
+                    telefone: e.target.value,
+                  }))
+                }
                 style={inputStyle}
               />
             </label>
@@ -327,9 +345,15 @@ export default function Responsaveis() {
               Senha
               <input
                 type="password"
-                name="senha"
+                name="nova-senha-responsavel"
+                autoComplete="new-password"
                 value={formResponsavel.senha}
-                onChange={atualizarCampoResponsavel}
+                onChange={(e) =>
+                  setFormResponsavel((prev) => ({
+                    ...prev,
+                    senha: e.target.value,
+                  }))
+                }
                 required
                 style={inputStyle}
               />
