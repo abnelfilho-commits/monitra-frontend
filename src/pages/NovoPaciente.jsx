@@ -116,6 +116,7 @@ export default function NovoPaciente() {
         altura: form.altura ? Number(form.altura) : null,
         clinica_id: Number(form.clinica_id),
         profissional_id: Number(form.profissional_id),
+        modulo_id: isCardio ? 2 : 1,
       };
 
       const novo = await criarPaciente(payload);
