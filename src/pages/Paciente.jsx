@@ -852,8 +852,35 @@ export default function Paciente() {
   }, [riscoPaciente, painelClinico]);
 
   const evolucaoClinica = useMemo(() => {
-    return extrairSerieEvolucaoClinica(items);
-  }, [items]);
+    return evolucaoRisco.map((item, index) => ({
+      id: `${item.data}-${index}`,
+      data: formatarDataSerie(item.data),
+
+      sono:
+        item.sono_qualidade != null
+          ? Number(item.sono_qualidade)
+          : null,
+
+      irritabilidade:
+        item.irritabilidade != null
+          ? Number(item.irritabilidade)
+          : null,
+
+      crise:
+        item.crise_sensorial != null
+          ? Number(item.crise_sensorial)
+          : null,
+
+      pontuacao_risco: item.pontuacao_risco,
+      risco: item.risco,
+
+      evacuacao: item.evacuacao,
+      consistencia_fezes: item.consistencia_fezes,
+      tempo_tela: item.tempo_tela,
+      seletividade_alimentar: item.seletividade_alimentar,
+      aceitou_alimento_novo: item.aceitou_alimento_novo,
+    }));
+  }, [evolucaoRisco]);
 
   const serieRiscoClinico = useMemo(() => {
     return evolucaoRisco.map((item) => ({
