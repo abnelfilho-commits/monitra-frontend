@@ -1,0 +1,61 @@
+.page-header{
+
+    margin-bottom:32px;
+
+}
+
+.page-header__content{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:flex-start;
+
+    gap:20px;
+
+}
+
+.page-header__title{
+
+    margin:0;
+
+    font-size:34px;
+
+    font-weight:700;
+
+    color:#1F2937;
+
+}
+
+.page-header__description{
+
+    margin-top:8px;
+
+    color:#6B7280;
+
+    line-height:1.6;
+
+    max-width:700px;
+
+}
+
+.page-header__actions{
+
+    display:flex;
+
+    gap:10px;
+
+    flex-wrap:wrap;
+
+}
+
+@media(max-width:900px){
+
+.page-header__content{
+
+flex-direction:column;
+
+}
+
+}

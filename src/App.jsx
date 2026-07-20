@@ -1,3 +1,5 @@
+import ScrollManager from "./components/navigation/ScrollManager";
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
@@ -12,7 +14,7 @@ import Usuarios from "./pages/Usuarios";
 import DashboardPlataforma from "./pages/DashboardPlataforma";
 
 /* Neuro */
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/dashboard/Dashboard";
 import Pacientes from "./pages/Pacientes";
 import NovoPaciente from "./pages/NovoPaciente";
 import Paciente from "./pages/Paciente";
@@ -58,11 +60,16 @@ import IntervencaoCardiometabolica
 from "./pages/cardiometabolico/IntervencaoCardiometabolica";
 
 import AssessmentPage from "./pages/assessments/AssessmentPage";
+import ExecutarSessaoAssistencial from "./pages/ExecutarSessaoAssistencial";
+import SessaoAssistencial from "./pages/SessaoAssistencial";
+import DiagnosticoDetalhe from "./pages/DiagnosticoDetalhe";
+import RegistrarDiagnostico from "./pages/RegistrarDiagnostico";
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <ScrollManager />
         <Routes>
 
           {/* Públicas */}
@@ -176,7 +183,23 @@ export default function App() {
                 path="/prontuario/evento/:tipo/:id"
                 element={<ProntuarioLongitudinal />}
               />
+              <Route
+                path="/sessoes-assistenciais/:sessaoId"
+                element={<SessaoAssistencial />}
+              />
 
+              <Route
+                path="/sessoes-assistenciais/:sessaoId/executar"
+                element={<ExecutarSessaoAssistencial />}
+              />
+              <Route
+                path="/diagnosticos/:diagnosticoId"
+                element={<DiagnosticoDetalhe />}
+              />
+              <Route
+                path="/pacientes/:pacienteId/diagnosticos/novo"
+                element={<RegistrarDiagnostico />}
+              />
             </Route>
 
             {/* Cardiometabólico */}
@@ -244,6 +267,23 @@ export default function App() {
                 path="/prontuario/evento/:tipo/:id"
                 element={<ProntuarioLongitudinal />}
               />
+              <Route
+                path="/sessoes-assistenciais/:sessaoId"
+                element={<SessaoAssistencial />}
+              />
+
+              <Route
+                path="/sessoes-assistenciais/:sessaoId/executar"
+                element={<ExecutarSessaoAssistencial />}
+              />
+              <Route
+                path="/diagnosticos/:diagnosticoId"
+                element={<DiagnosticoDetalhe />}
+              />
+              <Route
+                path="/pacientes/:pacienteId/diagnosticos/novo"
+                element={<RegistrarDiagnostico />}
+              />              
             </Route>
 
           </Route>

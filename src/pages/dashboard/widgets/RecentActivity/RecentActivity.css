@@ -1,0 +1,163 @@
+.recent-activity__loading {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.recent-activity__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.recent-activity__item {
+  position: relative;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+
+  padding: 18px 0;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.recent-activity__item:first-child {
+  padding-top: 0;
+}
+
+.recent-activity__item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.recent-activity__marker {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  font-size: 21px;
+}
+
+.recent-activity__marker--blue {
+  background: #eff6ff;
+}
+
+.recent-activity__marker--green {
+  background: #f0fdf4;
+}
+
+.recent-activity__marker--purple {
+  background: #faf5ff;
+}
+
+.recent-activity__marker--orange {
+  background: #fff7ed;
+}
+
+.recent-activity__marker--yellow {
+  background: #fefce8;
+}
+
+.recent-activity__marker--neutral {
+  background: #f3f4f6;
+}
+
+.recent-activity__content {
+  min-width: 0;
+  flex: 1;
+}
+
+.recent-activity__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.recent-activity__type {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.recent-activity__patient {
+  margin: 4px 0 0;
+
+  color: #1f2937;
+
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+.recent-activity__time {
+  flex-shrink: 0;
+
+  color: #6b7280;
+
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.recent-activity__description {
+  margin: 8px 0 0;
+
+  color: #4b5563;
+
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.recent-activity__link {
+  margin-top: 10px;
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: #0f766e;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.recent-activity__link:hover {
+  text-decoration: underline;
+}
+
+.recent-activity__link:focus-visible {
+  outline: 3px solid rgba(20, 184, 166, 0.22);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+@media (max-width: 700px) {
+  .recent-activity__item {
+    gap: 12px;
+  }
+
+  .recent-activity__marker {
+    width: 42px;
+    height: 42px;
+    font-size: 19px;
+  }
+
+  .recent-activity__top {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .recent-activity__time {
+    white-space: normal;
+  }
+}

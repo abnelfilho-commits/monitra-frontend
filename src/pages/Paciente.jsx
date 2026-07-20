@@ -614,17 +614,6 @@ export default function Paciente() {
   const [erro, setErro] = useState("");
   const [filtro, setFiltro] = useState("TODOS");
 
-  useEffect(() => {
-    const y = sessionStorage.getItem("timelineScrollY");
-
-    if (y) {
-      setTimeout(() => {
-        window.scrollTo(0, Number(y));
-        sessionStorage.removeItem("timelineScrollY");
-      }, 100);
-    }
-  }, []);
-
   if (!id || Number.isNaN(pacienteId) || pacienteId <= 0) {
     return (
       <div style={{ padding: 24 }}>
@@ -797,7 +786,21 @@ export default function Paciente() {
     });
 
     if (filtro === "INTERVENCAO") {
-      return base.filter((item) => item.tipo_evento === "INTERVENCAO");
+      return base.filter(
+        (item) => item.tipo_evento === "INTERVENCAO"
+      );
+    }
+
+    if (filtro === "REGISTRO_DIARIO") {
+      return base.filter(
+        (item) => item.tipo_evento === "REGISTRO_DIARIO"
+      );
+    }
+
+    if (filtro === "SESSAO_REALIZADA") {
+      return base.filter(
+        (item) => item.tipo_evento === "SESSAO_REALIZADA"
+      );
     }
 
     return base;
@@ -1141,6 +1144,12 @@ export default function Paciente() {
             onClick={() => navigate(`/pacientes/${pacienteId}/registro/novo`)}
           >
             + Registro Diário
+          </Button>
+
+          <Button
+            onClick={() => navigate(`/pacientes/${pacienteId}/diagnosticos/novo`)}
+          >
+            🩺 Registrar Diagnóstico
           </Button>
 
           <Button
@@ -1704,6 +1713,12 @@ export default function Paciente() {
           >
             Registros Diários
           </Button>
+          <Button
+            variant="secondary"
+            onClick={() => setFiltro("SESSAO_REALIZADA")}
+          >
+            Sessões Realizadas
+          </Button>
         </div>
       </div>
 
@@ -1719,10 +1734,16 @@ export default function Paciente() {
           }}
         >
           {ordenados.map((item) => {
+            const isDiagnostico =
+              item.tipo_evento === "DIAGNOSTICO";
             const isIntervencao = item.tipo_evento === "INTERVENCAO";
             const isAvaliacao = item.tipo_evento === "AVALIACAO_CLINICA";
-            const origem = item.tipo_evento === "AVALIACAO_CLINICA"
+            const isSessaoRealizada =
+              item.tipo_evento === "SESSAO_REALIZADA";
+            const origem = isAvaliacao
               ? "FRAMEWORK"
+              : isSessaoRealizada
+              ? "ASSISTENCIAL"
               : item.origem || "PROFISSIONAL";
 
             const badgeStyle = {
@@ -1737,28 +1758,44 @@ export default function Paciente() {
                 ? "#f3e8ff"
                 : origem === "RESPONSAVEL"
                 ? "#dcfce7"
+                : origem === "ASSISTENCIAL"
+                ? "#dcfce7"
                 : "#dbeafe",
+
             color:
               origem === "FRAMEWORK"
                 ? "#6d28d9"
                 : origem === "RESPONSAVEL"
                 ? "#166534"
+                : origem === "ASSISTENCIAL"
+                ? "#15803d"
                 : "#1d4ed8",
+
             border:
               origem === "FRAMEWORK"
                 ? "1px solid #d8b4fe"
                 : origem === "RESPONSAVEL"
                 ? "1px solid #86efac"
+                : origem === "ASSISTENCIAL"
+                ? "1px solid #86efac"
                 : "1px solid #93c5fd",
             };
             const tipoVisualizacao = isAvaliacao
               ? item.instrumento
+              : isSessaoRealizada &&
+                item.registro_longitudinal_id
+              ? "REGISTRO"
+              : isDiagnostico
+              ? "DIAGNOSTICO"
               : item.tipo_evento === "REGISTRO_DIARIO"
               ? "REGISTRO"
               : item.tipo_evento;
 
             const idVisualizacao = isAvaliacao
               ? item.avaliacao_id || item.id
+              : isSessaoRealizada &&
+                item.registro_longitudinal_id
+              ? item.registro_longitudinal_id
               : item.id;
             return (
               <div
@@ -1768,10 +1805,14 @@ export default function Paciente() {
                   borderRadius: 10,
                   padding: 12,
                   background: isAvaliacao
-                    ? "#faf5ff"
-                    : isIntervencao
-                    ? "#f5f9ff"
-                    : "#f9fff5",
+                  ? "#faf5ff"
+                  : isIntervencao
+                  ? "#f5f9ff"
+                  : isSessaoRealizada
+                  ? "#f0fdf4"
+                  : isDiagnostico
+                  ? "#fff7ed"
+                  : "#f9fff5",
                 }}
               >
                 <div
@@ -1789,6 +1830,8 @@ export default function Paciente() {
                         ? "Framework"
                         : origem === "RESPONSAVEL"
                         ? "Responsável"
+                        : origem === "ASSISTENCIAL"
+                        ? "Assistencial"
                         : "Profissional"}
                     </span>
 
@@ -1798,6 +1841,10 @@ export default function Paciente() {
                           ? `🧩 ${getAssessmentLabel(item.instrumento)}`
                           : isIntervencao
                           ? "🧠 Intervenção"
+                          : isSessaoRealizada
+                          ? "✅ Sessão realizada"
+                            : isDiagnostico
+                          ? "🩺 Diagnóstico clínico"
                           : "📋 Registro Diário"}
                       </b>
                     </div>
@@ -1839,7 +1886,109 @@ export default function Paciente() {
                             </span>
                           </div>
                         </div>
+
+                      ) : isDiagnostico ? (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            color: "#475569",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: 16,
+                              fontWeight: 700,
+                              color: "#1e293b",
+                            }}
+                          >
+                            {item.cid || "CID não informado"}
+                          </div>
+
+                          <div style={{ marginTop: 6 }}>
+                            {item.descricao}
+                          </div>
+
+                          {item.medico_nome && (
+                            <div style={{ marginTop: 8 }}>
+                              <strong>Médico:</strong>{" "}
+                              {item.medico_nome}
+                            </div>
+                          )}
+
+                          <div style={{ marginTop: 4 }}>
+                            <strong>Status:</strong>{" "}
+                            {item.status === "ATIVO"
+                              ? "Confirmado"
+                              : item.status}
+                          </div>
+                        </div>
+
+                      ) : isSessaoRealizada ? (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            color: "#475569",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          <div>
+                            {item.descricao ||
+                              `Sessão ${item.numero_sessao} realizada.`}
+                          </div>
+
+                          <div style={{ marginTop: 8 }}>
+                            <strong>Atividade:</strong>{" "}
+                            {item.atividade_nome || "-"}
+                          </div>
+
+                          <div style={{ marginTop: 4 }}>
+                            <strong>Ocupação:</strong>{" "}
+                            {item.ocupacao_nome || "-"}
+                          </div>
+
+                          {item.profissional_nome && (
+                            <div style={{ marginTop: 4 }}>
+                              <strong>Profissional:</strong>{" "}
+                              {item.profissional_nome}
+                            </div>
+                          )}
+
+                          <div style={{ marginTop: 4 }}>
+                            <strong>Horário:</strong>{" "}
+                            {item.hora_inicio
+                              ? item.hora_inicio.slice(0, 5)
+                              : "-"}
+                            {item.hora_fim
+                              ? ` às ${item.hora_fim.slice(0, 5)}`
+                              : ""}
+                          </div>
+
+                          <div style={{ marginTop: 4 }}>
+                            <strong>Sessão:</strong> Nº{" "}
+                            {item.numero_sessao}
+                          </div>
+
+                          {item.registro_longitudinal_id && (
+                            <span
+                              style={{
+                                display: "inline-block",
+                                marginTop: 10,
+                                padding: "5px 10px",
+                                borderRadius: 999,
+                                background: "#dcfce7",
+                                color: "#166534",
+                                border: "1px solid #86efac",
+                                fontSize: 12,
+                                fontWeight: 700,
+                              }}
+                            >
+                              Evolução registrada
+                            </span>
+                          )}
+                        </div>
                       ) : (
+                        
                         <p
                           style={{
                             margin: "6px 0 0",
@@ -1872,9 +2021,22 @@ export default function Paciente() {
                       <Button
                         variant="secondary"
                         onClick={() => {
-                          sessionStorage.setItem("timelineScrollY", String(window.scrollY));
 
-                          navigate(`/prontuario/evento/${tipoVisualizacao}/${idVisualizacao}`);
+                          if (isDiagnostico) {
+                            navigate(`/diagnosticos/${item.id}`);
+                            return;
+                          }
+
+                          if (isSessaoRealizada) {
+                            navigate(
+                              `/sessoes-assistenciais/${item.id}`
+                            );
+                            return;
+                          }
+
+                          navigate(
+                            `/prontuario/evento/${tipoVisualizacao}/${idVisualizacao}`
+                          );
                         }}
                       >
                         👁 Visualizar

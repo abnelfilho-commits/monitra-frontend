@@ -1,0 +1,197 @@
+.action-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+
+  padding: 22px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    transform .18s ease,
+    box-shadow .18s ease,
+    border-color .18s ease,
+    background .18s ease;
+
+  box-shadow:
+    0 8px 20px rgba(15,23,42,.05);
+}
+
+.action-card:hover {
+
+  transform: translateY(-3px);
+
+  border-color: #99f6e4;
+
+  background: #fcfffe;
+
+  box-shadow:
+    0 14px 30px rgba(15,23,42,.08);
+
+}
+
+.action-card:active{
+
+    transform:translateY(-1px);
+
+}
+
+.action-card:focus-visible{
+
+    outline:3px solid rgba(20,184,166,.25);
+
+    outline-offset:3px;
+
+}
+
+.action-card__top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+.action-card__icon{
+
+    width:58px;
+
+    height:58px;
+
+    border-radius:16px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    background:linear-gradient(
+        135deg,
+        #ecfdf5,
+        #eff6ff
+    );
+
+    font-size:28px;
+
+}
+
+.action-card__badge{
+
+    background:#DCFCE7;
+
+    color:#166534;
+
+    padding:6px 10px;
+
+    border-radius:999px;
+
+    font-size:12px;
+
+    font-weight:600;
+
+}
+
+.action-card__title{
+
+    margin:0;
+
+    color:#1f2937;
+
+    font-size:19px;
+
+    font-weight:700;
+
+}
+
+.action-card__description{
+
+    margin:0;
+
+    color:#6b7280;
+
+    line-height:1.5;
+
+    font-size:14px;
+
+}
+
+.action-card__footer{
+
+    margin-top:auto;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    color:#14b8a6;
+
+    font-weight:600;
+
+}
+
+.action-card__arrow{
+
+    font-size:18px;
+
+}
+
+.action-card--disabled{
+
+    cursor:not-allowed;
+
+    opacity:.65;
+
+}
+
+.action-card--disabled:hover{
+
+    transform:none;
+
+    box-shadow:0 8px 20px rgba(15,23,42,.05);
+
+    border-color:#e5e7eb;
+
+    background:white;
+
+}
+
+@media(max-width:700px){
+
+.action-card{
+
+padding:18px;
+
+}
+
+.action-card__icon{
+
+width:50px;
+height:50px;
+font-size:24px;
+
+}
+
+.action-card__title{
+
+font-size:17px;
+
+}
+
+}

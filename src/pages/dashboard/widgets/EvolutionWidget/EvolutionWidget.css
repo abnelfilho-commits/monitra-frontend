@@ -1,0 +1,13 @@
+.evolution-widget__chart {
+  width: 100%;
+  min-width: 0;
+  height: 320px;
+  min-height: 320px;
+}
+
+@media (max-width: 700px) {
+  .evolution-widget__chart {
+    height: 260px;
+    min-height: 260px;
+  }
+}

@@ -1,0 +1,20 @@
+.widget-grid {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(
+      min(
+        100%,
+        var(--widget-grid-min-width)
+      ),
+      1fr
+    )
+  );
+  gap: 16px;
+}
+
+.widget-grid > * {
+  min-width: 0;
+}
