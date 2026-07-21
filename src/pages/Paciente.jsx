@@ -32,6 +32,7 @@ import {
 import { listarTimelinePorPaciente } from "../services/timeline";
 import { excluirRegistroDiario } from "../services/registros";
 import { excluirIntervencao } from "../services/intervencoes";
+import { listarSessoesPorPaciente } from "../services/sessoesAssistenciais";
 
 function formatarSoData(iso) {
   if (!iso) return "";
@@ -608,6 +609,7 @@ export default function Paciente() {
 
   const [paciente, setPaciente] = useState(null);
   const [items, setItems] = useState([]);
+  const [sessoesAssistenciais, setSessoesAssistenciais] = useState([]);
   const [evolucaoRisco, setEvolucaoRisco] = useState([]);
   const [riscoPaciente, setRiscoPaciente] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -630,17 +632,21 @@ export default function Paciente() {
     setLoading(true);
 
     try {
-      const [p, t, evolucao, risco] = await Promise.all([
+      const [p, t, evolucao, risco, sessoes] = await Promise.all([
         obterPaciente(pacienteId),
         listarTimelinePorPaciente(pacienteId),
         obterEvolucaoPaciente(pacienteId),
         obterRiscoPaciente(pacienteId),
+        listarSessoesPorPaciente(pacienteId),
       ]);
 
       setPaciente(p);
       setItems(Array.isArray(t) ? t : []);
       setEvolucaoRisco(Array.isArray(evolucao?.serie) ? evolucao.serie : []);
       setRiscoPaciente(risco || null);
+      setSessoesAssistenciais(
+        Array.isArray(sessoes) ? sessoes : []
+      );
     } catch (e) {
       const msg =
         e?.response?.data?.detail || e?.message || "Falha ao carregar paciente.";

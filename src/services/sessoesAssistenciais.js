@@ -2,6 +2,14 @@ import axios from "axios";
 
 const API = `${import.meta.env.VITE_API_URL}/sessoes-assistenciais`;
 
+export async function listarSessoesPorPaciente(pacienteId) {
+  const { data } = await axios.get(
+    `${API}/paciente/${pacienteId}`
+  );
+
+  return data;
+}
+
 export async function obterSessaoAssistencial(sessaoId) {
   const { data } = await axios.get(`${API}/${sessaoId}`);
   return data;
