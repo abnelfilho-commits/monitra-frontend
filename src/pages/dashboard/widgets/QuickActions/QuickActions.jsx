@@ -44,9 +44,8 @@ export default function QuickActions() {
         <ActionCard
           icon="📅"
           title="Agenda Assistencial"
-          description="Em breve integrada ao PTS."
-          badge="Sprint 4.1"
-          disabled
+          description="Veja seus atendimentos de hoje e os próximos agendamentos."
+          onClick={() => navigate("/agenda-assistencial")}
         />
 
       </WidgetGrid>

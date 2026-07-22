@@ -64,6 +64,7 @@ import ExecutarSessaoAssistencial from "./pages/ExecutarSessaoAssistencial";
 import SessaoAssistencial from "./pages/SessaoAssistencial";
 import DiagnosticoDetalhe from "./pages/DiagnosticoDetalhe";
 import RegistrarDiagnostico from "./pages/RegistrarDiagnostico";
+import AgendaAssistencial from "./pages/AgendaAssistencial";
 
 export default function App() {
   return (
@@ -200,6 +201,10 @@ export default function App() {
                 path="/pacientes/:pacienteId/diagnosticos/novo"
                 element={<RegistrarDiagnostico />}
               />
+              <Route
+                path="/agenda-assistencial"
+                element={<AgendaAssistencial />}
+              />
             </Route>
 
             {/* Cardiometabólico */}
@@ -283,7 +288,11 @@ export default function App() {
               <Route
                 path="/pacientes/:pacienteId/diagnosticos/novo"
                 element={<RegistrarDiagnostico />}
-              />              
+              /> 
+              <Route
+                path="/agenda-assistencial"
+                element={<AgendaAssistencial />}
+              />             
             </Route>
 
           </Route>
