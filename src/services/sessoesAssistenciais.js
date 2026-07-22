@@ -1,6 +1,16 @@
+import api from "./api";
+
 import axios from "axios";
 
 const API = `${import.meta.env.VITE_API_URL}/sessoes-assistenciais`;
+
+export async function listarMinhasSessoesAssistenciais() {
+  const { data } = await api.get(
+    "/sessoes-assistenciais/minhas"
+  );
+
+  return data;
+}
 
 export async function listarSessoesPorPaciente(pacienteId) {
   const { data } = await axios.get(
