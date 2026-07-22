@@ -1,3 +1,5 @@
+import Button from "../components/ui/Button";
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -184,6 +186,13 @@ export default function AgendaAssistencial() {
         margin: "0 auto",
       }}
     >
+      <Button
+        variant="secondary"
+        onClick={() => navigate("/dashboard")}
+      >
+        ← Voltar
+      </Button>
+      
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ marginBottom: 6 }}>
           📅 Agenda Assistencial

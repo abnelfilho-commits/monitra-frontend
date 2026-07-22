@@ -1,3 +1,8 @@
+import { useEffect, useMemo, useState } from "react";
+
+import { listarPacientes } from "../../services/pacientes";
+import { obterMapaRiscoClinica } from "../../services/analytics";
+
 import { useAuth } from "../../context/AuthContext";
 
 import PageLayout from "../../components/layouts/PageLayout";
@@ -10,31 +15,98 @@ import RecentActivity from "./widgets/RecentActivity";
 export default function DashboardProfissional() {
   const { user } = useAuth();
 
+  const [pacientes, setPacientes] = useState([]);
+  const [mapaRisco, setMapaRisco] = useState([]);
+  const [loadingPrioridades, setLoadingPrioridades] =
+    useState(true);
+
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        setLoadingPrioridades(true);
+
+        const [pacientesData, mapaData] =
+          await Promise.all([
+            listarPacientes(),
+            obterMapaRiscoClinica(user.clinica_id),
+          ]);
+
+        setPacientes(
+          Array.isArray(pacientesData)
+            ? pacientesData
+            : []
+        );
+
+        setMapaRisco(
+          Array.isArray(mapaData)
+            ? mapaData
+            : []
+        );
+      } catch (error) {
+        console.error(
+          "Erro ao carregar dados do Cockpit:",
+          error
+        );
+
+        setPacientes([]);
+        setMapaRisco([]);
+      } finally {
+        setLoadingPrioridades(false);
+      }
+    }
+
+    if (user?.clinica_id) {
+      carregarDados();
+    }
+  }, [user?.clinica_id]);
+
   const nomeProfissional =
     user?.nome ||
     user?.name ||
     "Profissional";
 
-  const pacientesPrioritarios = [
-    {
-      id: 1,
-      nome: "Gabriel Henrique",
-      risco_atual: "alto_risco",
-      pontuacao_risco: 10,
-      tendencia: "piora",
-      status_resumido:
-        "O acompanhamento recente indica sinais que merecem atenção da equipe.",
-    },
-    {
-      id: 2,
-      nome: "Maria Clara",
-      risco_atual: "atencao",
-      pontuacao_risco: 6,
-      tendencia: "estavel",
-      status_resumido:
-        "A paciente permanece sob monitoramento e precisa de acompanhamento próximo.",
-    },
-  ];
+  const pacientesPrioritarios = useMemo(() => {
+    const idsPermitidos = new Set(
+      pacientes.map((paciente) => paciente.id)
+    );
+
+    return mapaRisco
+      .filter((item) => {
+        const pacienteId =
+          item.paciente_id ?? item.id;
+
+        return (
+          idsPermitidos.has(pacienteId) &&
+          ["alto_risco", "atencao"].includes(
+            item.risco_atual
+          )
+        );
+      })
+      .map((item) => {
+        const pacienteId =
+          item.paciente_id ?? item.id;
+
+        const paciente = pacientes.find(
+          (p) => p.id === pacienteId
+        );
+
+        return {
+          ...item,
+          id: pacienteId,
+          nome:
+            item.nome ||
+            item.paciente_nome ||
+            paciente?.nome ||
+            "Paciente",
+        };
+      })
+      .sort(
+        (a, b) =>
+          (b.pontuacao_risco ?? 0) -
+          (a.pontuacao_risco ?? 0)
+      )
+      .slice(0, 5);
+  }, [pacientes, mapaRisco]);
 
   const atividadesRecentes = [
     {
@@ -81,7 +153,10 @@ export default function DashboardProfissional() {
 
       <QuickActions />
 
-      <PriorityToday pacientes={pacientesPrioritarios} />
+      <PriorityToday
+        pacientes={pacientesPrioritarios}
+        loading={loadingPrioridades}
+      />
       <RecentActivity items={atividadesRecentes} />
       <SummaryCards
         totalPacientes={18}
