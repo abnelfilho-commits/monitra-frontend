@@ -320,7 +320,7 @@ export default function SessaoAssistencial() {
         <div style={{ marginTop: 16 }}>
           <Button
             variant="secondary"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/agenda-assistencial")}
           >
             Voltar
           </Button>
@@ -366,9 +366,9 @@ export default function SessaoAssistencial() {
         <div>
           <Button
             variant="secondary"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/agenda-assistencial")}
           >
-            ← Voltar
+            ← Voltar para Agenda
           </Button>
 
           <div style={{ marginTop: 18 }}>
