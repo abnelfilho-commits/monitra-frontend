@@ -267,9 +267,10 @@ export default function DashboardProfissional() {
     () =>
       sessoesAssistenciais.filter(
         (sessao) =>
+          sessao.data_agendada > hoje &&
           !["REALIZADA", "CANCELADA"].includes(sessao.status)
       ).length,
-    [sessoesAssistenciais]
+    [sessoesAssistenciais, hoje]
   );
 
   const proximoAtendimento = useMemo(() => {
