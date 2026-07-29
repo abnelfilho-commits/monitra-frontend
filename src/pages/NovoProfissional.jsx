@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { criarProfissional } from "../services/profissionais";
+import { listarOcupacoesProfissionais } from "../services/atividadesTerapeuticas";
 import { listarClinicas } from "../services/clinicas";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/ui/Button";
@@ -32,6 +33,7 @@ export default function NovoProfissional() {
   const [form, setForm] = useState({
     nome: "",
     email: "",
+    ocupacao_id: "",
     especialidade: "",
     clinica_id: "",
     senha: "",
@@ -39,6 +41,8 @@ export default function NovoProfissional() {
   });
 
   const [clinicas, setClinicas] = useState([]);
+  const [ocupacoes, setOcupacoes] = useState([]);
+  const [loadingOcupacoes, setLoadingOcupacoes] = useState(false);
   const [loadingClinicas, setLoadingClinicas] = useState(false);
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState("");
@@ -78,6 +82,28 @@ export default function NovoProfissional() {
   }, [admin]);
 
   useEffect(() => {
+    async function loadOcupacoes() {
+      try {
+        setLoadingOcupacoes(true);
+
+        const data = await listarOcupacoesProfissionais();
+
+        const ocupacoesAtivas = Array.isArray(data)
+          ? data.filter((item) => item.ativo !== false)
+          : [];
+
+        setOcupacoes(ocupacoesAtivas);
+      } catch (e) {
+        setErro("Falha ao carregar ocupações profissionais.");
+      } finally {
+        setLoadingOcupacoes(false);
+      }
+    }
+
+    loadOcupacoes();
+  }, []);
+
+  useEffect(() => {
     if (!user) return;
 
     if (!admin && user?.clinica_id) {
@@ -99,6 +125,11 @@ export default function NovoProfissional() {
 
     if (!form.email.trim()) {
       setErro("Informe o email do profissional.");
+      return;
+    }
+
+    if (!form.ocupacao_id) {
+      setErro("Selecione a ocupação profissional.");
       return;
     }
 
@@ -134,6 +165,7 @@ export default function NovoProfissional() {
       await criarProfissional({
         nome: form.nome.trim(),
         email: form.email.trim(),
+        ocupacao_id: Number(form.ocupacao_id),
         especialidade: form.especialidade?.trim() || null,
         clinica_id: Number(clinicaIdFinal),
         senha: form.senha,
@@ -228,12 +260,37 @@ export default function NovoProfissional() {
                 />
               </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
+              <div>
+                <label style={labelStyle}>Ocupação Profissional *</label>
+
+                <select
+                  name="novo-profissional-ocupacao"
+                  value={form.ocupacao_id}
+                  onChange={(e) => setField("ocupacao_id", e.target.value)}
+                  style={inputStyle}
+                  disabled={loadingOcupacoes}
+                >
+                  <option value="">
+                    {loadingOcupacoes
+                      ? "Carregando ocupações..."
+                      : "Selecione uma ocupação"}
+                  </option>
+
+                  {ocupacoes.map((ocupacao) => (
+                    <option key={ocupacao.id} value={ocupacao.id}>
+                      {ocupacao.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label style={labelStyle}>Especialidade</label>
+
                 <input
                   name="novo-profissional-especialidade"
                   autoComplete="off"
-                  placeholder="Especialidade"
+                  placeholder="Ex.: Neuropediatria, Integração Sensorial..."
                   value={form.especialidade}
                   onChange={(e) => setField("especialidade", e.target.value)}
                   style={inputStyle}

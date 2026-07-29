@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
 import api from "../services/api";
 
 import {
@@ -13,6 +18,7 @@ import {
 export default function ProntuarioLongitudinal() {
   const { tipo, id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [evento, setEvento] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -67,6 +73,22 @@ export default function ProntuarioLongitudinal() {
     return valor;
   }
 
+  function voltar() {
+    const returnTo = location.state?.returnTo;
+    const returnEventId = location.state?.returnEventId;
+
+    if (returnTo) {
+      navigate(returnTo, {
+        state: {
+          returnEventId,
+        },
+      });
+      return;
+    }
+
+    navigate(-1);
+  }
+
   if (carregando) {
     return <div style={styles.container}>Carregando prontuário...</div>;
   }
@@ -76,9 +98,10 @@ export default function ProntuarioLongitudinal() {
       <div style={styles.container}>
         <p>{erro}</p>
 
-        <button style={styles.voltar} onClick={() => navigate(-1)}>
-          ← Voltar
+        <button style={styles.voltar} onClick={voltar}>
+          ← Voltar para a Timeline
         </button>
+        
       </div>
     );
   }
@@ -89,8 +112,8 @@ export default function ProntuarioLongitudinal() {
 
   return (
     <div style={styles.container}>
-      <button style={styles.voltar} onClick={() => navigate(-1)}>
-        ← Voltar
+      <button style={styles.voltar} onClick={voltar}>
+        ← Voltar para a Timeline
       </button>
 
       <ClinicalHeader

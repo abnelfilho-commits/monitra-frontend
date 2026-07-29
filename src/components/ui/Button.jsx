@@ -8,7 +8,6 @@ export default function Button({
     borderRadius: 10,
     padding: "10px 14px",
     fontWeight: 600,
-    cursor: "pointer",
     border: "none",
     fontSize: 14,
   };
@@ -32,7 +31,13 @@ export default function Button({
 
   return (
     <button
-      style={{ ...base, ...variants[variant], ...style }}
+      style={{
+        ...base,
+        ...variants[variant],
+        cursor: props.disabled ? "not-allowed" : "pointer",
+        opacity: props.disabled ? 0.6 : 1,
+        ...style,
+      }}
       {...props}
     >
       {children}

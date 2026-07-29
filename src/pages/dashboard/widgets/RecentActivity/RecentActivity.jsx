@@ -44,6 +44,19 @@ const TIPO_CONFIG = {
   },
 };
 
+function formatarDescricaoAtividade(descricao) {
+  if (!descricao) {
+    return "Uma nova atividade foi registrada.";
+  }
+
+  return String(descricao)
+    .replace(
+      /^[A-Z]\d{2}(?:\.\d+)?\s*[-–—:]?\s*/i,
+      ""
+    )
+    .trim();
+}
+
 function obterConfigTipo(tipo) {
   return (
     TIPO_CONFIG[tipo] || {
@@ -115,14 +128,6 @@ export default function RecentActivity({
       icon="🕒"
       title="Atividade recente"
       description="Veja o que aconteceu recentemente com seus pacientes."
-      action={
-        <Button
-          variant="secondary"
-          onClick={() => navigate("/timeline")}
-        >
-          Abrir Timeline
-        </Button>
-      }
     >
       {atividades.length === 0 ? (
         <EmptyState
@@ -170,8 +175,7 @@ export default function RecentActivity({
                   </div>
 
                   <p className="recent-activity__description">
-                    {item.descricao ||
-                      "Uma nova atividade foi registrada."}
+                    {formatarDescricaoAtividade(item.descricao)}
                   </p>
 
                   {item.paciente_id ? (
@@ -179,7 +183,11 @@ export default function RecentActivity({
                       type="button"
                       className="recent-activity__link"
                       onClick={() =>
-                        navigate(`/pacientes/${item.paciente_id}`)
+                        navigate(`/pacientes/${item.paciente_id}`, {
+                          state: {
+                            returnTo: "/dashboard-profissional",
+                          },
+                        })
                       }
                     >
                       Acompanhar paciente →

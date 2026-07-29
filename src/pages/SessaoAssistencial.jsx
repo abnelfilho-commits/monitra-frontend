@@ -2,7 +2,12 @@ import SummaryCard from "../components/assistencial/SummaryCard";
 import ProgressCard from "../components/assistencial/ProgressCard";
 
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+
+import {
+  useNavigate,
+  useParams,
+  useLocation,
+} from "react-router-dom";
 
 import Button from "../components/ui/Button";
 import { obterSessaoAssistencial } from "../services/sessoesAssistenciais";
@@ -226,6 +231,7 @@ function LinhaInformacao({ label, valor }) {
 export default function SessaoAssistencial() {
   const { sessaoId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [dados, setDados] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -320,9 +326,11 @@ export default function SessaoAssistencial() {
         <div style={{ marginTop: 16 }}>
           <Button
             variant="secondary"
-            onClick={() => navigate("/agenda-assistencial")}
+            onClick={voltar}
           >
-            Voltar
+            {veioDaTimeline
+              ? "← Voltar para a Timeline"
+              : "← Voltar para Agenda"}
           </Button>
         </div>
       </div>
@@ -331,6 +339,33 @@ export default function SessaoAssistencial() {
 
   if (!dados) {
     return null;
+  }
+  
+  const returnTo = location.state?.returnTo;
+
+  const veioDoDashboard = returnTo === "/dashboard";
+
+  const veioDaTimeline = Boolean(
+    location.state?.returnTo &&
+    location.state?.returnEventId
+  );
+
+  function voltar() {
+
+    const returnTo = location.state?.returnTo;
+    const returnEventId = location.state?.returnEventId;
+
+    if (returnTo) {
+
+      navigate(returnTo, {
+        state: {
+          returnEventId,
+        },
+      });
+      return;
+    }
+
+    navigate("/agenda-assistencial");
   }
 
   const {
@@ -364,11 +399,12 @@ export default function SessaoAssistencial() {
         }}
       >
         <div>
-          <Button
-            variant="secondary"
-            onClick={() => navigate("/agenda-assistencial")}
-          >
-            ← Voltar para Agenda
+          <Button onClick={voltar}>
+            {veioDaTimeline
+              ? "← Voltar para Timeline"
+              : veioDoDashboard
+                ? "← Voltar ao Dashboard"
+                : "← Voltar para Agenda"}
           </Button>
 
           <div style={{ marginTop: 18 }}>

@@ -6,9 +6,9 @@ import "./SummaryCards.css";
 
 export default function SummaryCards({
   totalPacientes = 0,
-  registrosHoje = 0,
-  avaliacoesPendentes = 0,
-  totalPrioridades = 0,
+  atendimentosHoje = 0,
+  realizadosHoje = 0,
+  pendentesHoje = 0,
 }) {
   const cards = [
     {
@@ -19,28 +19,25 @@ export default function SummaryCards({
       tone: "success",
     },
     {
-      icon: "📋",
-      title: "Registros recebidos hoje",
-      value: registrosHoje,
-      description: "Enviados pelas famílias",
+      icon: "📅",
+      title: "Atendimentos hoje",
+      value: atendimentosHoje,
+      description: "Sessões previstas para hoje",
       tone: "info",
     },
     {
-      icon: "🧠",
-      title: "Avaliações pendentes",
-      value: avaliacoesPendentes,
-      description: "Aguardando conclusão",
-      tone: "warning",
+      icon: "✅",
+      title: "Realizados",
+      value: realizadosHoje,
+      description: "Atendimentos concluídos hoje",
+      tone: "success",
     },
     {
-      icon: "🎯",
-      title: "Prioridades assistenciais",
-      value: totalPrioridades,
-      description:
-        totalPrioridades === 1
-          ? "Paciente que merece atenção"
-          : "Pacientes que merecem atenção",
-      tone: totalPrioridades > 0 ? "danger" : "neutral",
+      icon: "⏳",
+      title: "Próximos",
+      value: pendentesHoje,
+      description: "Atendimentos agendados ainda por realizar",
+      tone: pendentesHoje > 0 ? "warning" : "neutral",
     },
   ];
 

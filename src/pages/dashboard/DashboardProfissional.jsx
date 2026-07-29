@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { listarPacientes } from "../../services/pacientes";
-import { obterMapaRiscoClinica } from "../../services/analytics";
+import { obterRiscoPaciente } from "../../services/analytics";
+import { listarTimelinePorPaciente } from "../../services/timeline";
+import { listarMinhasSessoesAssistenciais } from "../../services/sessoesAssistenciais";
 
 import { useAuth } from "../../context/AuthContext";
 
@@ -14,156 +17,391 @@ import RecentActivity from "./widgets/RecentActivity";
 
 export default function DashboardProfissional() {
   const { user } = useAuth();
-
+  const navigate = useNavigate();
   const [pacientes, setPacientes] = useState([]);
-  const [mapaRisco, setMapaRisco] = useState([]);
-  const [loadingPrioridades, setLoadingPrioridades] =
-    useState(true);
+  const [atividadesRecentes, setAtividadesRecentes] = useState([]);
+  const [totalRegistrosHoje, setTotalRegistrosHoje] = useState(0);
+  const [sessoesAssistenciais, setSessoesAssistenciais] = useState([]);
+  const [loadingPrioridades, setLoadingPrioridades] = useState(true);
 
   useEffect(() => {
+    let ativo = true;
+
     async function carregarDados() {
       try {
         setLoadingPrioridades(true);
 
-        const [pacientesData, mapaData] =
-          await Promise.all([
-            listarPacientes(),
-            obterMapaRiscoClinica(user.clinica_id),
-          ]);
+        // 1. Pacientes reais acessíveis ao profissional autenticado
+        const [pacientesData, sessoesData] = await Promise.all([
+          listarPacientes(),
+          listarMinhasSessoesAssistenciais(),
+        ]);
 
-        setPacientes(
-          Array.isArray(pacientesData)
-            ? pacientesData
-            : []
+        const pacientesArray = Array.isArray(pacientesData)
+          ? pacientesData
+          : [];
+
+        const sessoesArray = Array.isArray(sessoesData)
+          ? sessoesData
+          : [];
+
+        // 2. Risco real individual de cada paciente
+        const pacientesComRisco = await Promise.all(
+          pacientesArray.map(async (paciente) => {
+            try {
+              const risco = await obterRiscoPaciente(paciente.id);
+
+              return {
+                ...paciente,
+                ...risco,
+              };
+            } catch (error) {
+              console.error(
+                `Erro ao carregar risco do paciente ${paciente.id}:`,
+                error
+              );
+
+              return {
+                ...paciente,
+                risco_atual: null,
+                pontuacao_risco: null,
+                tendencia: null,
+                status_resumido: null,
+              };
+            }
+          })
         );
 
-        setMapaRisco(
-          Array.isArray(mapaData)
-            ? mapaData
-            : []
+        // 3. Timeline real dos pacientes do profissional
+        const timelines = await Promise.all(
+          pacientesArray.map(async (paciente) => {
+            try {
+              const eventos = await listarTimelinePorPaciente(
+                paciente.id
+              );
+
+              return (
+                Array.isArray(eventos) ? eventos : []
+              ).map((evento) => ({
+                ...evento,
+                paciente_id: paciente.id,
+                paciente_nome: paciente.nome,
+              }));
+            } catch (error) {
+              console.error(
+                `Erro ao carregar Timeline do paciente ${paciente.id}:`,
+                error
+              );
+
+              return [];
+            }
+          })
         );
+
+        // 4. Todos os eventos reais, ordenados do mais recente
+        const todosEventos = timelines
+          .flat()
+          .map((evento) => ({
+            ...evento,
+
+            tipo:
+              evento.tipo ||
+              evento.tipo_evento ||
+              "ATIVIDADE",
+
+            data:
+              evento.data ||
+              evento.created_at,
+          }))
+          .sort(
+            (a, b) =>
+              new Date(b.data || 0).getTime() -
+              new Date(a.data || 0).getTime()
+          );
+
+        // 5. Registros Diários realizados hoje
+        const agora = new Date();
+
+        const registrosHoje = todosEventos.filter((evento) => {
+          const tipo =
+            evento.tipo ||
+            evento.tipo_evento;
+
+          if (tipo !== "REGISTRO_DIARIO") {
+            return false;
+          }
+
+          const valorData =
+            evento.data ||
+            evento.created_at;
+
+          if (!valorData) {
+            return false;
+          }
+
+          const dataEvento = new Date(valorData);
+
+          if (Number.isNaN(dataEvento.getTime())) {
+            return false;
+          }
+
+          return (
+            dataEvento.getDate() === agora.getDate() &&
+            dataEvento.getMonth() === agora.getMonth() &&
+            dataEvento.getFullYear() === agora.getFullYear()
+          );
+        }).length;
+
+        // 6. Atividade recente:
+        // apenas o evento mais recente de cada paciente,
+        // limitado a 5 pacientes.
+        const pacientesJaExibidos = new Set();
+
+        const atividades = todosEventos
+          .filter((evento) => {
+            if (!evento.paciente_id) {
+              return false;
+            }
+
+            if (pacientesJaExibidos.has(evento.paciente_id)) {
+              return false;
+            }
+
+            pacientesJaExibidos.add(evento.paciente_id);
+
+            return true;
+          })
+          .slice(0, 5);
+
+        if (!ativo) {
+          return;
+        }
+
+        setPacientes(pacientesComRisco);
+        setAtividadesRecentes(atividades);
+        setTotalRegistrosHoje(registrosHoje);
+        setSessoesAssistenciais(sessoesArray);
       } catch (error) {
         console.error(
-          "Erro ao carregar dados do Cockpit:",
+          "Erro ao carregar dados do Cockpit do Profissional:",
           error
         );
 
+        if (!ativo) {
+          return;
+        }
+
         setPacientes([]);
-        setMapaRisco([]);
+        setAtividadesRecentes([]);
+        setTotalRegistrosHoje(0);
+        setSessoesAssistenciais([]);
       } finally {
-        setLoadingPrioridades(false);
+        if (ativo) {
+          setLoadingPrioridades(false);
+        }
       }
     }
 
-    if (user?.clinica_id) {
-      carregarDados();
-    }
-  }, [user?.clinica_id]);
+    carregarDados();
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const nomeProfissional =
     user?.nome ||
     user?.name ||
     "Profissional";
 
+  // Prioridades reais:
+  // somente alto risco ou atenção, máximo 5.
   const pacientesPrioritarios = useMemo(() => {
-    const idsPermitidos = new Set(
-      pacientes.map((paciente) => paciente.id)
-    );
-
-    return mapaRisco
-      .filter((item) => {
-        const pacienteId =
-          item.paciente_id ?? item.id;
-
-        return (
-          idsPermitidos.has(pacienteId) &&
-          ["alto_risco", "atencao"].includes(
-            item.risco_atual
-          )
-        );
-      })
-      .map((item) => {
-        const pacienteId =
-          item.paciente_id ?? item.id;
-
-        const paciente = pacientes.find(
-          (p) => p.id === pacienteId
-        );
-
-        return {
-          ...item,
-          id: pacienteId,
-          nome:
-            item.nome ||
-            item.paciente_nome ||
-            paciente?.nome ||
-            "Paciente",
-        };
-      })
+    return pacientes
+      .filter((paciente) =>
+        ["alto_risco", "atencao"].includes(
+          paciente.risco_atual
+        )
+      )
       .sort(
         (a, b) =>
           (b.pontuacao_risco ?? 0) -
           (a.pontuacao_risco ?? 0)
       )
       .slice(0, 5);
-  }, [pacientes, mapaRisco]);
+  }, [pacientes]);
 
-  const atividadesRecentes = [
-    {
-      id: 1,
-      tipo: "REGISTRO_DIARIO",
-      paciente_id: 1,
-      paciente_nome: "Gabriel Henrique",
-      descricao: "A família enviou um novo registro diário.",
-      data: new Date().toISOString(),
-    },
-    {
-      id: 2,
-      tipo: "INTERVENCAO",
-      paciente_id: 2,
-      paciente_nome: "Maria Clara",
-      descricao: "Uma nova intervenção clínica foi registrada.",
-      data: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 3,
-      tipo: "AVALIACAO_CLINICA",
-      paciente_id: 3,
-      paciente_nome: "Pedro Augusto",
-      descricao: "A avaliação M-CHAT foi concluída.",
-      data: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: 4,
-      tipo: "PTS",
-      paciente_id: 1,
-      paciente_nome: "Gabriel Henrique",
-      descricao: "O Plano Terapêutico Singular foi atualizado.",
-      data: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    },
-  ];
+  const hoje = useMemo(() => {
+    const agora = new Date();
 
-  return (
-    <PageLayout>
-      <WelcomeWidget
-        nome={nomeProfissional}
-        totalPacientes={18}
-        totalPrioridades={pacientesPrioritarios.length}
-      />
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, "0");
+    const dia = String(agora.getDate()).padStart(2, "0");
 
-      <QuickActions />
+    return `${ano}-${mes}-${dia}`;
+  }, []);
 
-      <PriorityToday
-        pacientes={pacientesPrioritarios}
-        loading={loadingPrioridades}
-      />
-      <RecentActivity items={atividadesRecentes} />
-      <SummaryCards
-        totalPacientes={18}
-        registrosHoje={5}
-        avaliacoesPendentes={2}
-        totalPrioridades={pacientesPrioritarios.length}
-      />
-    </PageLayout>
+  const sessoesHoje = useMemo(() => {
+    return sessoesAssistenciais
+      .filter(
+        (sessao) =>
+          sessao.data_agendada === hoje &&
+          sessao.status !== "CANCELADA"
+      )
+      .sort((a, b) =>
+        String(a.hora_inicio || "").localeCompare(
+          String(b.hora_inicio || "")
+        )
+      );
+  }, [sessoesAssistenciais, hoje]);
+
+  const atendimentosRealizadosHoje = useMemo(
+    () =>
+      sessoesHoje.filter(
+        (sessao) => sessao.status === "REALIZADA"
+      ).length,
+    [sessoesHoje]
+  );
+
+  const atendimentosPendentes = useMemo(
+    () =>
+      sessoesAssistenciais.filter(
+        (sessao) =>
+          !["REALIZADA", "CANCELADA"].includes(sessao.status)
+      ).length,
+    [sessoesAssistenciais]
+  );
+
+  const proximoAtendimento = useMemo(() => {
+  return sessoesAssistenciais
+    .filter(
+      (sessao) =>
+        !["REALIZADA", "CANCELADA"].includes(sessao.status) &&
+        sessao.data_agendada >= hoje
+    )
+    .sort((a, b) => {
+      const dataHoraA = `${a.data_agendada}T${a.hora_inicio || "00:00:00"}`;
+      const dataHoraB = `${b.data_agendada}T${b.hora_inicio || "00:00:00"}`;
+
+      return new Date(dataHoraA) - new Date(dataHoraB);
+    })[0] || null;
+}, [sessoesAssistenciais, hoje]);
+
+return (
+  <PageLayout>
+    <WelcomeWidget
+      nome={nomeProfissional}
+      totalPacientes={pacientes.length}
+      totalPrioridades={pacientesPrioritarios.length}
+    />
+
+    <SummaryCards
+      totalPacientes={pacientes.length}
+      atendimentosHoje={sessoesHoje.length}
+      realizadosHoje={atendimentosRealizadosHoje}
+      pendentesHoje={atendimentosPendentes}
+    />
+
+    {proximoAtendimento && (
+      <section
+        style={{
+          marginTop: 24,
+          padding: 20,
+          border: "1px solid #e5e7eb",
+          borderRadius: 16,
+          background: "#fff",
+        }}
+      >
+        <div
+          style={{
+            fontSize: 14,
+            color: "#6b7280",
+            marginBottom: 6,
+          }}
+        >
+          Próximo atendimento
+        </div>
+
+        <div
+          style={{
+            fontSize: 20,
+            fontWeight: 700,
+          }}
+        >
+          {proximoAtendimento.data_agendada
+            ? new Date(
+                `${proximoAtendimento.data_agendada}T00:00:00`
+              ).toLocaleDateString("pt-BR")
+            : "Data não definida"}
+
+          {" às "}
+
+          {proximoAtendimento.hora_inicio?.slice(0, 5) ||
+            "Horário não definido"}
+
+          {" • "}
+
+          {proximoAtendimento.paciente}
+        </div>
+
+        <div
+          style={{
+            marginTop: 6,
+            color: "#4b5563",
+          }}
+        >
+          {proximoAtendimento.atividade ||
+            "Atividade assistencial"}
+        </div>
+
+        <div
+          style={{
+            marginTop: 14,
+            display: "flex",
+            gap: 10,
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/sessoes-assistenciais/${proximoAtendimento.id}`, {
+                state: {
+                  returnTo: "/dashboard",
+                },
+              })
+            }
+          >
+            Visualizar Sessão
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              navigate(`/sessoes-assistenciais/${proximoAtendimento.id}/executar`, {
+                state: {
+                  returnTo: "/dashboard",
+                },
+              })
+            }
+          >
+            Registrar Atendimento
+          </button>
+        </div>
+      </section>
+    )}
+
+    <QuickActions />
+
+    <PriorityToday
+      pacientes={pacientesPrioritarios}
+      loading={loadingPrioridades}
+    />
+
+    <RecentActivity
+      items={atividadesRecentes}
+      maxItems={5}
+    />
+</PageLayout>
   );
 }

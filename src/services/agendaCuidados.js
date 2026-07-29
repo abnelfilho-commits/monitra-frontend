@@ -51,3 +51,23 @@ export async function registrarFrequenciaAgenda(agendaId, payload) {
 
   return response.data;
 }
+
+export async function sugerirCronograma(agendaId) {
+  const response = await api.post(
+    `/scheduling/agenda/${agendaId}/sugerir`
+  );
+
+  return response.data;
+}
+
+export async function confirmarCronograma(
+  agendaId,
+  payload
+) {
+  const response = await api.post(
+    `/scheduling/agenda/${agendaId}/confirmar`,
+    payload
+  );
+
+  return response.data;
+}

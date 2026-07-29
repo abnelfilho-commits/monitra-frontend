@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { listarPacientes } from "../services/pacientes";
 import { getApiErrorMessage } from "../utils/errors";
 import Button from "../components/ui/Button";
@@ -22,6 +25,11 @@ function formatarGenero(genero) {
 
 export default function Pacientes() {
   const navigate = useNavigate();
+
+  const [searchParams] = useSearchParams();
+
+  const modoRegistrarCuidado =
+    searchParams.get("acao") === "registrar-cuidado";
 
   const [pacientes, setPacientes] = useState([]);
   const [erro, setErro] = useState(null);
@@ -103,9 +111,16 @@ export default function Pacientes() {
             </Button>
 
             <div>
-              <h2 style={{ margin: 0 }}>Pacientes</h2>
+              <h2 style={{ margin: 0 }}>
+                {modoRegistrarCuidado
+                  ? "🩺 Registrar Cuidado"
+                  : "Pacientes"}
+              </h2>
+
               <p style={{ marginTop: 4, color: "#4b5563" }}>
-                Lista de pacientes cadastrados com acesso rápido ao prontuário.
+                {modoRegistrarCuidado
+                  ? "Selecione o paciente para acessar o prontuário e continuar o cuidado."
+                  : "Lista de pacientes cadastrados com acesso rápido ao prontuário."}
               </p>
             </div>
           </div>

@@ -5,6 +5,7 @@ import {
   atualizarProfissional,
 } from "../services/profissionais";
 import { listarClinicas } from "../services/clinicas";
+import { listarOcupacoesProfissionais } from "../services/atividadesTerapeuticas";
 import Button from "../components/ui/Button";
 
 const MODULOS = [
@@ -28,6 +29,7 @@ export default function EditarProfissional() {
   const [form, setForm] = useState({
     nome: "",
     email: "",
+    ocupacao_id: "",
     especialidade: "",
     clinica_id: "",
     ativo: true,
@@ -38,6 +40,8 @@ export default function EditarProfissional() {
   const [usuarioAtivo, setUsuarioAtivo] = useState(null);
 
   const [clinicas, setClinicas] = useState([]);
+  const [ocupacoes, setOcupacoes] = useState([]);
+  const [loadingOcupacoes, setLoadingOcupacoes] = useState(true);
   const [loading, setLoading] = useState(true);
   const [loadingClinicas, setLoadingClinicas] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,20 +72,27 @@ export default function EditarProfissional() {
     setLoading(true);
 
     try {
-      const [prof, listaClinicas] = await Promise.all([
+      const [prof, listaClinicas, listaOcupacoes] = await Promise.all([
         obterProfissional(profissionalId),
         listarClinicas(),
+        listarOcupacoesProfissionais(),
       ]);
-
       setClinicas(
         Array.isArray(listaClinicas)
           ? listaClinicas
           : []
       );
-
+      setOcupacoes(
+        Array.isArray(listaOcupacoes)
+          ? listaOcupacoes.filter((item) => item.ativo !== false)
+          : []
+      );
       setForm({
         nome: prof?.nome || "",
         email: prof?.email || "",
+        ocupacao_id: prof?.ocupacao_id
+          ? String(prof.ocupacao_id)
+          : "",
         especialidade: prof?.especialidade || "",
         clinica_id: prof?.clinica_id
           ? String(prof.clinica_id)
@@ -104,6 +115,7 @@ export default function EditarProfissional() {
     } finally {
       setLoading(false);
       setLoadingClinicas(false);
+      setLoadingOcupacoes(false);
     }
   }
 
@@ -129,6 +141,11 @@ export default function EditarProfissional() {
       return;
     }
 
+    if (!form.ocupacao_id) {
+      setErro("Selecione a ocupação profissional.");
+      return;
+    }
+
     if (!form.clinica_id) {
       setErro("Selecione a clínica.");
       return;
@@ -147,6 +164,7 @@ export default function EditarProfissional() {
         {
           nome: form.nome.trim(),
           email: form.email.trim(),
+          ocupacao_id: Number(form.ocupacao_id),
           especialidade:
             form.especialidade?.trim() || null,
           clinica_id: Number(form.clinica_id),
@@ -274,7 +292,38 @@ export default function EditarProfissional() {
                 />
               </div>
 
-              <div style={{ gridColumn: "1 / -1" }}>
+              <div>
+                <label style={labelStyle}>
+                  Ocupação Profissional *
+                </label>
+
+                <select
+                  name="editar-profissional-ocupacao"
+                  value={form.ocupacao_id}
+                  onChange={(e) =>
+                    setField("ocupacao_id", e.target.value)
+                  }
+                  disabled={loadingOcupacoes}
+                  style={inputStyle}
+                >
+                  <option value="">
+                    {loadingOcupacoes
+                      ? "Carregando ocupações..."
+                      : "Selecione uma ocupação"}
+                  </option>
+
+                  {ocupacoes.map((ocupacao) => (
+                    <option
+                      key={ocupacao.id}
+                      value={ocupacao.id}
+                    >
+                      {ocupacao.nome}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label style={labelStyle}>
                   Especialidade
                 </label>
@@ -282,12 +331,10 @@ export default function EditarProfissional() {
                 <input
                   name="editar-profissional-especialidade"
                   autoComplete="off"
+                  placeholder="Ex.: Neuropsicologia, Integração Sensorial..."
                   value={form.especialidade}
                   onChange={(e) =>
-                    setField(
-                      "especialidade",
-                      e.target.value
-                    )
+                    setField("especialidade", e.target.value)
                   }
                   style={inputStyle}
                 />

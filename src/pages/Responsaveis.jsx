@@ -7,6 +7,8 @@ import {
   listarResponsaveis,
   vincularResponsavelPaciente,
 } from "../services/responsaveis";
+import { listarClinicas } from "../services/clinicas";
+import { useAuth } from "../context/AuthContext";
 
 const buttonBaseStyle = {
   borderRadius: 10,
@@ -17,13 +19,6 @@ const buttonBaseStyle = {
 };
 
 const buttonSecondaryStyle = {
-  ...buttonBaseStyle,
-  border: "1px solid #d1d5db",
-  background: "#fff",
-  color: "#111827",
-};
-
-const buttonPrimaryStyle = {
   ...buttonBaseStyle,
   border: "1px solid #d1d5db",
   background: "#fff",
@@ -53,18 +48,30 @@ const labelStyle = {
   fontWeight: 600,
 };
 
+function getPerfil(user) {
+  return String(user?.perfil || "").trim().toUpperCase();
+}
+
 export default function Responsaveis() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const perfil = useMemo(() => getPerfil(user), [user]);
+  const isAdminGlobal = ["ADMIN", "ADMINISTRADOR"].includes(perfil);
+  const isAdminClinica = perfil === "ADMIN_CLINICA";
 
   const [responsaveis, setResponsaveis] = useState([]);
   const [pacientes, setPacientes] = useState([]);
+  const [clinicas, setClinicas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingClinicas, setLoadingClinicas] = useState(false);
   const [erro, setErro] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [busca, setBusca] = useState("");
   const [mostrarNovoResponsavel, setMostrarNovoResponsavel] = useState(false);
 
   const [formResponsavel, setFormResponsavel] = useState({
+    clinica_id: "",
     nome: "",
     email: "",
     telefone: "",
@@ -105,6 +112,42 @@ export default function Responsaveis() {
     load();
   }, []);
 
+  useEffect(() => {
+    async function loadClinicas() {
+      if (!isAdminGlobal) {
+        setClinicas([]);
+        return;
+      }
+
+      try {
+        setLoadingClinicas(true);
+        const data = await listarClinicas();
+        setClinicas(Array.isArray(data) ? data : []);
+      } catch (e) {
+        const msg =
+          e?.response?.data?.detail ||
+          e?.message ||
+          "Falha ao carregar clínicas.";
+        setErro(String(msg));
+      } finally {
+        setLoadingClinicas(false);
+      }
+    }
+
+    loadClinicas();
+  }, [isAdminGlobal]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    if (isAdminClinica && user?.clinica_id) {
+      setFormResponsavel((prev) => ({
+        ...prev,
+        clinica_id: String(user.clinica_id),
+      }));
+    }
+  }, [user, isAdminClinica]);
+
   const responsaveisFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     if (!termo) return responsaveis;
@@ -122,11 +165,6 @@ export default function Responsaveis() {
     });
   }, [responsaveis, busca]);
 
-  function atualizarCampoResponsavel(e) {
-    const { name, value } = e.target;
-    setFormResponsavel((prev) => ({ ...prev, [name]: value }));
-  }
-
   function atualizarCampoVinculo(e) {
     const { name, value, type, checked } = e.target;
     setFormVinculo((prev) => ({
@@ -140,16 +178,34 @@ export default function Responsaveis() {
     setErro("");
     setMensagem("");
 
+    const clinicaIdFinal = isAdminGlobal
+      ? formResponsavel.clinica_id
+      : isAdminClinica && user?.clinica_id
+      ? String(user.clinica_id)
+      : "";
+
+    if (!clinicaIdFinal) {
+      setErro(
+        isAdminGlobal
+          ? "Selecione a clínica do responsável."
+          : "Usuário sem clínica vinculada."
+      );
+      return;
+    }
+
     try {
       await criarResponsavel({
         nome: formResponsavel.nome.trim(),
         email: formResponsavel.email.trim(),
         telefone: formResponsavel.telefone.trim() || null,
         senha: formResponsavel.senha,
+        clinica_id: Number(clinicaIdFinal),
       });
 
       setMensagem("Responsável cadastrado com sucesso.");
       setFormResponsavel({
+        clinica_id:
+          isAdminClinica && user?.clinica_id ? String(user.clinica_id) : "",
         nome: "",
         email: "",
         telefone: "",
@@ -210,7 +266,14 @@ export default function Responsaveis() {
           marginBottom: 18,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
           <button onClick={() => navigate(-1)} style={buttonSecondaryStyle}>
             ← Voltar
           </button>
@@ -283,6 +346,7 @@ export default function Responsaveis() {
 
           <form
             onSubmit={onCriarResponsavel}
+            autoComplete="off"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -290,6 +354,34 @@ export default function Responsaveis() {
               alignItems: "end",
             }}
           >
+            {isAdminGlobal && (
+              <label style={labelStyle}>
+                Clínica *
+                <select
+                  name="novo-responsavel-clinica"
+                  value={formResponsavel.clinica_id}
+                  onChange={(e) =>
+                    setFormResponsavel((prev) => ({
+                      ...prev,
+                      clinica_id: e.target.value,
+                    }))
+                  }
+                  required
+                  style={inputStyle}
+                >
+                  <option value="">
+                    {loadingClinicas ? "Carregando clínicas..." : "Selecione"}
+                  </option>
+
+                  {clinicas.map((clinica) => (
+                    <option key={clinica.id} value={clinica.id}>
+                      {clinica.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             <label style={labelStyle}>
               Nome
               <input
@@ -360,9 +452,7 @@ export default function Responsaveis() {
             </label>
 
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Button type="submit">
-                Salvar Responsável
-              </Button>
+              <Button type="submit">Salvar Responsável</Button>
 
               <button
                 type="button"
@@ -393,7 +483,12 @@ export default function Responsaveis() {
               }}
             >
               <thead>
-                <tr style={{ textAlign: "left", borderBottom: "1px solid #e5e7eb" }}>
+                <tr
+                  style={{
+                    textAlign: "left",
+                    borderBottom: "1px solid #e5e7eb",
+                  }}
+                >
                   <th style={{ padding: "10px 8px" }}>Nome</th>
                   <th style={{ padding: "10px 8px" }}>E-mail</th>
                   <th style={{ padding: "10px 8px" }}>Telefone</th>
@@ -401,10 +496,15 @@ export default function Responsaveis() {
               </thead>
               <tbody>
                 {responsaveisFiltrados.map((r) => (
-                  <tr key={r.id} style={{ borderBottom: "1px solid #f3f4f6" }}>
+                  <tr
+                    key={r.id}
+                    style={{ borderBottom: "1px solid #f3f4f6" }}
+                  >
                     <td style={{ padding: "10px 8px" }}>{r.nome}</td>
                     <td style={{ padding: "10px 8px" }}>{r.email}</td>
-                    <td style={{ padding: "10px 8px" }}>{r.telefone || "-"}</td>
+                    <td style={{ padding: "10px 8px" }}>
+                      {r.telefone || "-"}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -492,9 +592,7 @@ export default function Responsaveis() {
           </label>
 
           <div>
-            <Button type="submit">
-              Vincular Paciente
-            </Button>
+            <Button type="submit">Vincular Paciente</Button>
           </div>
         </form>
       </div>

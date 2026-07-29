@@ -192,7 +192,7 @@ export default function AgendaAssistencial() {
       >
         ← Voltar
       </Button>
-      
+
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ marginBottom: 6 }}>
           📅 Agenda Assistencial

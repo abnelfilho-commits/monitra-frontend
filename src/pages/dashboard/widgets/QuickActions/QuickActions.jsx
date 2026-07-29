@@ -11,15 +11,12 @@ export default function QuickActions() {
 
   return (
     <section className="quick-actions">
-
       <WidgetHeader
         icon="⚡"
         title="Ações rápidas"
-        subtitle="Acesse rapidamente as funcionalidades mais utilizadas."
       />
 
       <WidgetGrid minItemWidth={260}>
-
         <ActionCard
           icon="👥"
           title="Meus Pacientes"
@@ -28,17 +25,10 @@ export default function QuickActions() {
         />
 
         <ActionCard
-          icon="🧠"
-          title="Nova Intervenção"
-          description="Registre uma intervenção clínica."
-          onClick={() => navigate("/intervencoes")}
-        />
-
-        <ActionCard
-          icon="📋"
-          title="Avaliações"
-          description="Aplicar protocolos clínicos."
-          onClick={() => navigate("/assessments")}
+          icon="🩺"
+          title="Registrar Cuidado"
+          description="Registre uma avaliação, intervenção ou acompanhamento do paciente."
+          onClick={() => navigate("/pacientes?acao=registrar-cuidado")}
         />
 
         <ActionCard
@@ -47,9 +37,7 @@ export default function QuickActions() {
           description="Veja seus atendimentos de hoje e os próximos agendamentos."
           onClick={() => navigate("/agenda-assistencial")}
         />
-
       </WidgetGrid>
-
     </section>
   );
 }

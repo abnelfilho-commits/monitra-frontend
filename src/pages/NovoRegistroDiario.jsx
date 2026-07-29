@@ -143,10 +143,23 @@ export default function NovoRegistroDiario() {
   }, [pacienteId]);
 
   function setField(name, value) {
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => {
+      if (name === "evacuacao") {
+        return {
+          ...prev,
+          evacuacao: value,
+          consistencia_fezes:
+            value === true
+              ? prev.consistencia_fezes
+              : "",
+        };
+      }
+
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
   }
 
   function montarRespostas() {
@@ -165,9 +178,10 @@ export default function NovoRegistroDiario() {
       {
         campo_id: CAMPOS_NEURO.consistencia_fezes,
         valor:
-          form.consistencia_fezes === ""
-            ? null
-            : Number(form.consistencia_fezes),
+          form.evacuacao === true &&
+          form.consistencia_fezes !== ""
+            ? Number(form.consistencia_fezes)
+            : null,
       },
       {
         campo_id: CAMPOS_NEURO.irritabilidade,
@@ -376,6 +390,7 @@ export default function NovoRegistroDiario() {
                 )
               }
               opcoes={OPCOES_BRISTOL}
+              disabled={form.evacuacao !== true}
             />
           </div>
         </ClinicalSection>
@@ -533,6 +548,7 @@ function CampoSelect({
   value,
   onChange,
   opcoes,
+  disabled = false,
 }) {
   return (
     <label style={styles.campo}>
@@ -546,6 +562,7 @@ function CampoSelect({
           onChange(event.target.value)
         }
         style={styles.input}
+        disabled={disabled}
       >
         <option value="">
           Selecione

@@ -16,6 +16,8 @@ import {
   criarAgendaCuidado,
   excluirAgendaCuidado,
   registrarFrequenciaAgenda,
+  sugerirCronograma,
+  confirmarCronograma,
 } from "../services/agendaCuidados";
 
 import {
@@ -72,11 +74,14 @@ export default function PTS() {
 
   const [objetivoAgendaAbertoId, setObjetivoAgendaAbertoId] = useState(null);
   const [ocupacoesDisponiveis, setOcupacoesDisponiveis] = useState([]);
+  const [profissionaisDisponiveis, setProfissionaisDisponiveis] = useState([]);
 
   const [formAgenda, setFormAgenda] = useState({
     atividade_id: "",
     ocupacao_id: "",
+    profissional_id: "",
     frequencia_semanal: 1,
+    quantidade_sessoes: 1,
     duracao_minutos: 60,
     data_inicio: hojeISO(),
     data_fim: "",
@@ -89,6 +94,15 @@ export default function PTS() {
     data_realizacao: hojeISO(),
     observacao_execucao: "",
   });
+
+  const [cronogramaPorAgenda, setCronogramaPorAgenda] =
+    useState({});
+
+  const [gerandoCronogramaId, setGerandoCronogramaId] =
+    useState(null);
+
+  const [confirmandoCronogramaId, setConfirmandoCronogramaId] =
+    useState(null);
 
   useEffect(() => {
     carregar();
@@ -241,17 +255,21 @@ export default function PTS() {
     const abrindo = objetivoAgendaAbertoId !== objetivoId;
 
     setObjetivoAgendaAbertoId(abrindo ? objetivoId : null);
-    setOcupacoesDisponiveis([]);
 
     setFormAgenda({
       atividade_id: "",
       ocupacao_id: "",
+      profissional_id: "", 
       frequencia_semanal: 1,
+      quantidade_sessoes: 1,
       duracao_minutos: 60,
       data_inicio: hojeISO(),
       data_fim: "",
       observacoes: "",
     });
+
+    setOcupacoesDisponiveis([]);
+    setProfissionaisDisponiveis([]); 
 
     if (abrindo) {
       await carregarAgendaObjetivo(objetivoId);
@@ -265,8 +283,11 @@ export default function PTS() {
       ...prev,
       atividade_id: atividadeId,
       ocupacao_id: "",
+      profissional_id: "",
       duracao_minutos: atividade?.duracao_minutos || prev.duracao_minutos || 60,
     }));
+
+    setProfissionaisDisponiveis([]);
 
     if (!atividadeId) {
       setOcupacoesDisponiveis([]);
@@ -285,6 +306,46 @@ export default function PTS() {
     }
   }
 
+  async function selecionarOcupacao(ocupacaoId) {
+    setFormAgenda((prev) => ({
+      ...prev,
+      ocupacao_id: ocupacaoId,
+      profissional_id: "",
+    }));
+
+    setProfissionaisDisponiveis([]);
+
+    if (!ocupacaoId) {
+      return;
+    }
+
+    if (!paciente?.clinica_id) {
+      setErro("Paciente sem clínica vinculada.");
+      return;
+    }
+
+    try {
+      setErro("");
+
+      const response = await api.get("/profissionais/elegiveis/", {
+        params: {
+          ocupacao_id: Number(ocupacaoId),
+          clinica_id: Number(paciente.clinica_id),
+        },
+      });
+
+      setProfissionaisDisponiveis(
+        Array.isArray(response.data) ? response.data : []
+      );
+    } catch (e) {
+      setErro(
+        e?.response?.data?.detail ||
+          e?.message ||
+          "Erro ao carregar profissionais disponíveis."
+      );
+    }
+  }
+  
   async function salvarAgenda(e, ptsId, objetivoId) {
     e.preventDefault();
 
@@ -295,6 +356,11 @@ export default function PTS() {
 
     if (!formAgenda.ocupacao_id) {
       setErro("Selecione a ocupação profissional.");
+      return;
+    }
+
+    if (!formAgenda.profissional_id) {
+      setErro("Selecione o profissional responsável.");
       return;
     }
 
@@ -313,17 +379,27 @@ export default function PTS() {
         objetivo_id: Number(objetivoId),
         atividade_id: Number(formAgenda.atividade_id),
         ocupacao_id: Number(formAgenda.ocupacao_id),
-        frequencia_semanal: Number(formAgenda.frequencia_semanal || 1),
-        duracao_minutos: Number(formAgenda.duracao_minutos || 60),
+        profissional_id: Number(formAgenda.profissional_id),
+        frequencia_semanal: Number(
+          formAgenda.frequencia_semanal || 1
+        ),
+        quantidade_sessoes: Number(
+          formAgenda.quantidade_sessoes || 1
+        ),
+        duracao_minutos: Number(
+          formAgenda.duracao_minutos || 60
+        ),
         data_inicio: formAgenda.data_inicio,
         data_fim: formAgenda.data_fim || null,
-        observacoes: formAgenda.observacoes?.trim() || null,
+        observacoes:
+          formAgenda.observacoes?.trim() || null,
       });
 
       setFormAgenda({
         atividade_id: "",
         ocupacao_id: "",
         frequencia_semanal: 1,
+        quantidade_sessoes: 1,
         duracao_minutos: 60,
         data_inicio: hojeISO(),
         data_fim: "",
@@ -415,6 +491,131 @@ export default function PTS() {
     }
   }
 
+  async function handleSugerirCronograma(agendaId) {
+    try {
+      setGerandoCronogramaId(agendaId);
+      setErro("");
+      setMensagem("");
+
+      const sugestao = await sugerirCronograma(agendaId);
+
+      const cronograma = Array.isArray(sugestao?.cronograma)
+        ? sugestao.cronograma.map((sessao) => ({
+            numero: sessao.numero,
+            data: sessao.data,
+            duracao: sessao.duracao,
+            hora_inicio: "",
+            hora_fim: "",
+          }))
+        : [];
+
+      setCronogramaPorAgenda((prev) => ({
+        ...prev,
+        [agendaId]: cronograma,
+      }));
+
+      if (cronograma.length === 0) {
+        setErro(
+          "O sistema não encontrou sessões para sugerir."
+        );
+        return;
+      }
+
+      mostrarMensagem(
+        "Cronograma sugerido. Revise as datas e horários antes de confirmar."
+      );
+    } catch (e) {
+      setErro(
+        e?.response?.data?.detail ||
+          e?.message ||
+          "Erro ao sugerir cronograma."
+      );
+    } finally {
+      setGerandoCronogramaId(null);
+    }
+  }
+
+  function atualizarSessaoCronograma(
+    agendaId,
+    index,
+    campo,
+    valor
+  ) {
+    setCronogramaPorAgenda((prev) => {
+      const atual = prev[agendaId] || [];
+
+      const atualizado = atual.map((sessao, i) =>
+        i === index
+          ? {
+              ...sessao,
+              [campo]: valor,
+            }
+          : sessao
+      );
+
+      return {
+        ...prev,
+        [agendaId]: atualizado,
+      };
+    });
+  }
+
+  async function handleConfirmarCronograma(agendaId) {
+    const cronograma =
+      cronogramaPorAgenda[agendaId] || [];
+
+    if (cronograma.length === 0) {
+      setErro("Gere uma sugestão de cronograma primeiro.");
+      return;
+    }
+
+    const incompleto = cronograma.some(
+      (sessao) =>
+        !sessao.data ||
+        !sessao.hora_inicio ||
+        !sessao.hora_fim
+    );
+
+    if (incompleto) {
+      setErro(
+        "Preencha data, hora de início e hora de fim de todas as sessões."
+      );
+      return;
+    }
+
+    try {
+      setConfirmandoCronogramaId(agendaId);
+      setErro("");
+      setMensagem("");
+
+      await confirmarCronograma(agendaId, {
+        cronograma: cronograma.map((sessao) => ({
+          numero: sessao.numero,
+          data: sessao.data,
+          hora_inicio: sessao.hora_inicio,
+          hora_fim: sessao.hora_fim,
+        })),
+      });
+
+      mostrarMensagem(
+        "Cronograma confirmado e sessões assistenciais criadas com sucesso."
+      );
+
+      setCronogramaPorAgenda((prev) => ({
+        ...prev,
+        [agendaId]: [],
+      }));
+    } catch (e) {
+      setErro(
+        e?.response?.data?.detail ||
+          e?.message ||
+          "Erro ao confirmar cronograma."
+      );
+    } finally {
+      setConfirmandoCronogramaId(null);
+    }
+  }
+  
   if (!id || Number.isNaN(pacienteId) || pacienteId <= 0) {
     return (
       <div style={{ padding: 24 }}>
@@ -748,12 +949,7 @@ export default function PTS() {
                             <label style={labelStyle}>Ocupação habilitada</label>
                             <select
                               value={formAgenda.ocupacao_id}
-                              onChange={(e) =>
-                                setFormAgenda((prev) => ({
-                                  ...prev,
-                                  ocupacao_id: e.target.value,
-                                }))
-                              }
+                              onChange={(e) => selecionarOcupacao(e.target.value)}
                               style={inputStyle}
                               required
                               disabled={!formAgenda.atividade_id}
@@ -767,6 +963,45 @@ export default function PTS() {
                               {ocupacoesDisponiveis.map((ocupacao) => (
                                 <option key={ocupacao.id} value={ocupacao.id}>
                                   {ocupacao.nome}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label style={labelStyle}>
+                              Profissional responsável
+                            </label>
+
+                            <select
+                              value={formAgenda.profissional_id}
+                              onChange={(e) =>
+                                setFormAgenda((prev) => ({
+                                  ...prev,
+                                  profissional_id: e.target.value,
+                                }))
+                              }
+                              style={inputStyle}
+                              required
+                              disabled={!formAgenda.ocupacao_id}
+                            >
+                              <option value="">
+                                {!formAgenda.ocupacao_id
+                                  ? "Selecione a ocupação primeiro"
+                                  : profissionaisDisponiveis.length === 0
+                                  ? "Nenhum profissional disponível"
+                                  : "Selecione"}
+                              </option>
+
+                              {profissionaisDisponiveis.map((profissional) => (
+                                <option
+                                  key={profissional.id}
+                                  value={profissional.id}
+                                >
+                                  {profissional.nome}
+                                  {profissional.especialidade
+                                    ? ` - ${profissional.especialidade}`
+                                    : ""}
                                 </option>
                               ))}
                             </select>
@@ -801,6 +1036,26 @@ export default function PTS() {
                                 }))
                               }
                               style={inputStyle}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={labelStyle}>
+                              Número de sessões
+                            </label>
+
+                            <input
+                              type="number"
+                              min="1"
+                              value={formAgenda.quantidade_sessoes}
+                              onChange={(e) =>
+                                setFormAgenda((prev) => ({
+                                  ...prev,
+                                  quantidade_sessoes: e.target.value,
+                                }))
+                              }
+                              style={inputStyle}
+                              required
                             />
                           </div>
 
@@ -883,7 +1138,12 @@ export default function PTS() {
                               </div>
 
                               <div style={{ marginTop: 6, color: "#4b5563" }}>
-                                <strong>Profissional:</strong> {agenda.ocupacao_nome || nomeOcupacao(agenda.ocupacao_id, objetivo.id)}
+                                <strong>Ocupação:</strong> {agenda.ocupacao_nome || nomeOcupacao(agenda.ocupacao_id, objetivo.id)}
+                              </div>
+
+                              <div style={{ marginTop: 8, color: "#4b5563" }}>
+                                <strong>Profissional responsável:</strong>{" "}
+                                {agenda.profissional_nome || "-"}
                               </div>
 
                               <div style={{ marginTop: 8, color: "#4b5563" }}>
@@ -916,7 +1176,15 @@ export default function PTS() {
                               <div style={{ marginTop: 8, color: "#4b5563" }}>
                                 <strong>Frequência:</strong> {agenda.frequencia_semanal}x por semana
                               </div>
-
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  color: "#4b5563",
+                                }}
+                              >
+                                <strong>Sessões planejadas:</strong>{" "}
+                                {agenda.quantidade_sessoes || "-"}
+                              </div>
                               <div style={{ marginTop: 8, color: "#4b5563" }}>
                                 <strong>Duração:</strong> {agenda.duracao_minutos} minutos
                               </div>
@@ -946,6 +1214,167 @@ export default function PTS() {
                                     }}
                                   >
                                     {agenda.observacoes}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div
+                                style={{
+                                  marginTop: 14,
+                                  paddingTop: 14,
+                                  borderTop: "1px solid #e5e7eb",
+                                }}
+                              >
+                                <Button
+                                  variant="secondary"
+                                  disabled={
+                                    saving ||
+                                    gerandoCronogramaId === agenda.id
+                                  }
+                                  onClick={() =>
+                                    handleSugerirCronograma(agenda.id)
+                                  }
+                                >
+                                  {gerandoCronogramaId === agenda.id
+                                    ? "Gerando..."
+                                    : "📅 Sugerir Cronograma"}
+                                </Button>
+                              </div>
+
+                              {(cronogramaPorAgenda[agenda.id] || []).length > 0 && (
+                                <div
+                                  style={{
+                                    marginTop: 16,
+                                    padding: 16,
+                                    border: "1px solid #bfdbfe",
+                                    borderRadius: 14,
+                                    background: "#eff6ff",
+                                  }}
+                                >
+                                  <h4 style={{ marginTop: 0 }}>
+                                    📅 Cronograma sugerido
+                                  </h4>
+
+                                  <p
+                                    style={{
+                                      color: "#475569",
+                                      marginTop: 4,
+                                    }}
+                                  >
+                                    Revise as datas e informe os horários antes
+                                    de confirmar as sessões.
+                                  </p>
+
+                                  {(cronogramaPorAgenda[agenda.id] || []).map(
+                                    (sessao, index) => (
+                                      <div
+                                        key={`${agenda.id}-${sessao.numero}`}
+                                        style={{
+                                          display: "grid",
+                                          gridTemplateColumns:
+                                            "80px repeat(3, minmax(150px, 1fr))",
+                                          gap: 10,
+                                          alignItems: "end",
+                                          padding: "12px 0",
+                                          borderBottom: "1px solid #dbeafe",
+                                        }}
+                                      >
+                                        <div>
+                                          <strong>
+                                            Sessão {sessao.numero}
+                                          </strong>
+                                        </div>
+
+                                        <div>
+                                          <label style={labelStyle}>
+                                            Data
+                                          </label>
+
+                                          <input
+                                            type="date"
+                                            value={sessao.data || ""}
+                                            onChange={(e) =>
+                                              atualizarSessaoCronograma(
+                                                agenda.id,
+                                                index,
+                                                "data",
+                                                e.target.value
+                                              )
+                                            }
+                                            style={inputStyle}
+                                          />
+                                        </div>
+
+                                        <div>
+                                          <label style={labelStyle}>
+                                            Hora início
+                                          </label>
+
+                                          <input
+                                            type="time"
+                                            value={sessao.hora_inicio || ""}
+                                            onChange={(e) =>
+                                              atualizarSessaoCronograma(
+                                                agenda.id,
+                                                index,
+                                                "hora_inicio",
+                                                e.target.value
+                                              )
+                                            }
+                                            style={inputStyle}
+                                          />
+                                        </div>
+
+                                        <div>
+                                          <label style={labelStyle}>
+                                            Hora fim
+                                          </label>
+
+                                          <input
+                                            type="time"
+                                            value={sessao.hora_fim || ""}
+                                            onChange={(e) =>
+                                              atualizarSessaoCronograma(
+                                                agenda.id,
+                                                index,
+                                                "hora_fim",
+                                                e.target.value
+                                              )
+                                            }
+                                            style={inputStyle}
+                                          />
+                                        </div>
+                                      </div>
+                                    )
+                                  )}
+
+                                  <div style={actionsStyle}>
+                                    <Button
+                                      type="button"
+                                      variant="secondary"
+                                      onClick={() =>
+                                        setCronogramaPorAgenda((prev) => ({
+                                          ...prev,
+                                          [agenda.id]: [],
+                                        }))
+                                      }
+                                    >
+                                      Cancelar
+                                    </Button>
+
+                                    <Button
+                                      type="button"
+                                      disabled={
+                                        confirmandoCronogramaId === agenda.id
+                                      }
+                                      onClick={() =>
+                                        handleConfirmarCronograma(agenda.id)
+                                      }
+                                    >
+                                      {confirmandoCronogramaId === agenda.id
+                                        ? "Confirmando..."
+                                        : "✅ Confirmar Cronograma"}
+                                    </Button>
                                   </div>
                                 </div>
                               )}
