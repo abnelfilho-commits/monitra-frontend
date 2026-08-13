@@ -677,7 +677,7 @@ export default function Paciente() {
       );
       const link = document.createElement("a");
       link.href = url;
-      link.download = `relatorio_paciente_${pacienteId}.pdf`;
+      link.download = `relatorio_longitudinal_${pacienteId}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -686,7 +686,7 @@ export default function Paciente() {
       const msg =
         e?.response?.data?.detail ||
         e?.message ||
-        "Falha ao gerar relatorio PDF.";
+        "Falha ao gerar Relatório Longitudinal Inteligente.";
       setErro(String(msg));
     }
   }
@@ -1286,10 +1286,10 @@ export default function Paciente() {
 
           <Button
             variant="secondary"
-            disabled
-            title="Em breve. O novo Relatório Inteligente do Integra Care está em desenvolvimento."
+            onClick={onBaixarRelatorioPdf}
+            title="Gerar Relatório Longitudinal Inteligente"
           >
-            📄 Gerar PDF (Em breve)
+            📄 Gerar Relatório
           </Button>
 
           <Button variant="secondary" onClick={load}>
