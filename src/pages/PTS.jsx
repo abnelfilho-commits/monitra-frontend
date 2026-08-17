@@ -588,7 +588,7 @@ export default function PTS() {
       setErro("");
       setMensagem("");
 
-      await confirmarCronograma(agendaId, {
+      const resultado = await confirmarCronograma(agendaId, {
         cronograma: cronograma.map((sessao) => ({
           numero: sessao.numero,
           data: sessao.data,
@@ -596,6 +596,28 @@ export default function PTS() {
           hora_fim: sessao.hora_fim,
         })),
       });
+
+      mostrarMensagem(
+        resultado?.mensagem ||
+          "Cronograma confirmado e sessões assistenciais criadas com sucesso."
+      );
+
+      setCronogramaPorAgenda((prev) => ({
+        ...prev,
+        [agendaId]: [],
+      }));
+
+      const agendaConfirmada = Object.values(
+        agendaPorObjetivo
+      )
+        .flat()
+        .find((agenda) => agenda.id === agendaId);
+
+      if (agendaConfirmada?.objetivo_id) {
+        await carregarAgendaObjetivo(
+          agendaConfirmada.objetivo_id
+        );
+      }
 
       mostrarMensagem(
         "Cronograma confirmado e sessões assistenciais criadas com sucesso."
@@ -1225,20 +1247,47 @@ export default function PTS() {
                                   borderTop: "1px solid #e5e7eb",
                                 }}
                               >
-                                <Button
-                                  variant="secondary"
-                                  disabled={
-                                    saving ||
-                                    gerandoCronogramaId === agenda.id
-                                  }
-                                  onClick={() =>
-                                    handleSugerirCronograma(agenda.id)
-                                  }
-                                >
-                                  {gerandoCronogramaId === agenda.id
-                                    ? "Gerando..."
-                                    : "📅 Sugerir Cronograma"}
-                                </Button>
+                                {agenda.cronograma_confirmado ? (
+                                  <div
+                                    style={{
+                                      padding: 12,
+                                      background: "#f0fdf4",
+                                      border: "1px solid #bbf7d0",
+                                      borderRadius: 10,
+                                    }}
+                                  >
+                                    <div style={{ fontWeight: 700 }}>
+                                      ✅ Cronograma confirmado
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        marginTop: 4,
+                                        color: "#475569",
+                                      }}
+                                    >
+                                      {agenda.sessoes_geradas}{" "}
+                                      {agenda.sessoes_geradas === 1
+                                        ? "sessão assistencial criada."
+                                        : "sessões assistenciais criadas."}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <Button
+                                    variant="secondary"
+                                    disabled={
+                                      saving ||
+                                      gerandoCronogramaId === agenda.id
+                                    }
+                                    onClick={() =>
+                                      handleSugerirCronograma(agenda.id)
+                                    }
+                                  >
+                                    {gerandoCronogramaId === agenda.id
+                                      ? "Gerando..."
+                                      : "📅 Sugerir Cronograma"}
+                                  </Button>
+                                )}
                               </div>
 
                               {(cronogramaPorAgenda[agenda.id] || []).length > 0 && (
