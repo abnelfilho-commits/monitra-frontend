@@ -181,32 +181,101 @@ export default function AssessmentForm({ codigo, pacienteId }) {
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-700">
-              Progresso
-            </span>
+        <div
+          style={{
+            marginTop: 24,
+            marginBottom: 24,
+            padding: 20,
+            border: "1px solid #bfdbfe",
+            borderRadius: 16,
+            background: "#eff6ff",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-end",
+              gap: 16,
+              marginBottom: 14,
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: "#1d4ed8",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: 6,
+                }}
+              >
+                Progresso da avaliação
+              </div>
 
-            <span className="text-sm font-semibold text-gray-700">
-              {percentual}%
-            </span>
+              <div
+                style={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: "#0f172a",
+                }}
+              >
+                {respondidas} de {totalPerguntas} perguntas respondidas
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontSize: 28,
+                fontWeight: 800,
+                color: avaliacaoCompleta
+                  ? "#15803d"
+                  : "#2563eb",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {percentual.toFixed(1).replace(".", ",")}%
+            </div>
           </div>
 
-          <div className="w-full h-3 rounded-full bg-gray-200 overflow-hidden">
+          <div
+            style={{
+              width: "100%",
+              height: 12,
+              borderRadius: 999,
+              background: "#dbeafe",
+              overflow: "hidden",
+            }}
+          >
             <div
-              className={`
-                h-3 rounded-full transition-all duration-500
-                ${avaliacaoCompleta ? "bg-green-600" : "bg-blue-600"}
-              `}
-              style={{ width: `${percentual}%` }}
+              style={{
+                width: `${percentual}%`,
+                height: "100%",
+                borderRadius: 999,
+                background: avaliacaoCompleta
+                  ? "#16a34a"
+                  : "#2563eb",
+                transition: "width 0.4s ease",
+              }}
             />
           </div>
 
-          <p className="mt-2 text-sm text-gray-500">
+          <div
+            style={{
+              marginTop: 10,
+              fontSize: 14,
+              color: "#64748b",
+            }}
+          >
             {avaliacaoCompleta
               ? "✓ Avaliação completa. Pronta para finalizar."
-              : `${totalPerguntas - respondidas} pergunta(s) restante(s).`}
-          </p>
+              : `${totalPerguntas - respondidas} ${
+                  totalPerguntas - respondidas === 1
+                    ? "pergunta restante."
+                    : "perguntas restantes."
+                }`}
+          </div>
         </div>
       </div>
 
