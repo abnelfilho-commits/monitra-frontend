@@ -1551,7 +1551,7 @@ export default function Paciente() {
               )}
             </div>
             <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-              Tendência observada nos registros
+              Estado no registro mais recente
             </div>
           </div>
 
@@ -1581,7 +1581,7 @@ export default function Paciente() {
               )}
             </div>
             <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>
-              Frequência/gravidade observada
+              Estado no registro mais recente
             </div>
           </div>
 
