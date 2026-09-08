@@ -61,7 +61,7 @@ export default function PriorityToday({
 
             return (
               <article
-                key={paciente.id}
+                key={paciente.paciente_id}
                 className={[
                   "priority-today__item",
                   altoRisco
@@ -111,7 +111,7 @@ export default function PriorityToday({
                 <Button
                   variant="secondary"
                   onClick={() =>
-                    navigate(`/pacientes/${paciente.id}`, {
+                    navigate(`/pacientes/${paciente.paciente_id}`, {
                       state: {
                         returnTo: "/dashboard-profissional",
                       },
