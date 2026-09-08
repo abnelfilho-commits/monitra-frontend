@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { listarPacientes } from "../../services/pacientes";
-import { obterRiscoPaciente } from "../../services/analytics";
-import { listarTimelinePorPaciente } from "../../services/timeline";
+import { obterCockpitProfissional } from "../../services/cockpit";
 import { listarMinhasSessoesAssistenciais } from "../../services/sessoesAssistenciais";
 
 import { useAuth } from "../../context/AuthContext";
@@ -20,9 +18,9 @@ export default function DashboardProfissional() {
   const navigate = useNavigate();
   const [pacientes, setPacientes] = useState([]);
   const [atividadesRecentes, setAtividadesRecentes] = useState([]);
-  const [totalRegistrosHoje, setTotalRegistrosHoje] = useState(0);
   const [sessoesAssistenciais, setSessoesAssistenciais] = useState([]);
   const [loadingPrioridades, setLoadingPrioridades] = useState(true);
+  const [totalPacientes, setTotalPacientes] = useState(0);
 
   useEffect(() => {
     let ativo = true;
@@ -31,156 +29,35 @@ export default function DashboardProfissional() {
       try {
         setLoadingPrioridades(true);
 
-        // 1. Pacientes reais acessíveis ao profissional autenticado
-        const [pacientesData, sessoesData] = await Promise.all([
-          listarPacientes(),
+        const [cockpitData, sessoesData] = await Promise.all([
+          obterCockpitProfissional(),
           listarMinhasSessoesAssistenciais(),
         ]);
 
-        const pacientesArray = Array.isArray(pacientesData)
-          ? pacientesData
+        const pacientesPrioritariosData = Array.isArray(
+          cockpitData?.pacientes_prioritarios
+        )
+          ? cockpitData.pacientes_prioritarios
+          : [];
+
+        const atividades = Array.isArray(
+          cockpitData?.atividades_recentes
+        )
+          ? cockpitData.atividades_recentes
           : [];
 
         const sessoesArray = Array.isArray(sessoesData)
           ? sessoesData
           : [];
 
-        // 2. Risco real individual de cada paciente
-        const pacientesComRisco = await Promise.all(
-          pacientesArray.map(async (paciente) => {
-            try {
-              const risco = await obterRiscoPaciente(paciente.id);
-
-              return {
-                ...paciente,
-                ...risco,
-              };
-            } catch (error) {
-              console.error(
-                `Erro ao carregar risco do paciente ${paciente.id}:`,
-                error
-              );
-
-              return {
-                ...paciente,
-                risco_atual: null,
-                pontuacao_risco: null,
-                tendencia: null,
-                status_resumido: null,
-              };
-            }
-          })
+        setTotalPacientes(
+          Number(cockpitData?.total_pacientes || 0)
         );
 
-        // 3. Timeline real dos pacientes do profissional
-        const timelines = await Promise.all(
-          pacientesArray.map(async (paciente) => {
-            try {
-              const eventos = await listarTimelinePorPaciente(
-                paciente.id
-              );
-
-              return (
-                Array.isArray(eventos) ? eventos : []
-              ).map((evento) => ({
-                ...evento,
-                paciente_id: paciente.id,
-                paciente_nome: paciente.nome,
-              }));
-            } catch (error) {
-              console.error(
-                `Erro ao carregar Timeline do paciente ${paciente.id}:`,
-                error
-              );
-
-              return [];
-            }
-          })
-        );
-
-        // 4. Todos os eventos reais, ordenados do mais recente
-        const todosEventos = timelines
-          .flat()
-          .map((evento) => ({
-            ...evento,
-
-            tipo:
-              evento.tipo ||
-              evento.tipo_evento ||
-              "ATIVIDADE",
-
-            data:
-              evento.data ||
-              evento.created_at,
-          }))
-          .sort(
-            (a, b) =>
-              new Date(b.data || 0).getTime() -
-              new Date(a.data || 0).getTime()
-          );
-
-        // 5. Registros Diários realizados hoje
-        const agora = new Date();
-
-        const registrosHoje = todosEventos.filter((evento) => {
-          const tipo =
-            evento.tipo ||
-            evento.tipo_evento;
-
-          if (tipo !== "REGISTRO_DIARIO") {
-            return false;
-          }
-
-          const valorData =
-            evento.data ||
-            evento.created_at;
-
-          if (!valorData) {
-            return false;
-          }
-
-          const dataEvento = new Date(valorData);
-
-          if (Number.isNaN(dataEvento.getTime())) {
-            return false;
-          }
-
-          return (
-            dataEvento.getDate() === agora.getDate() &&
-            dataEvento.getMonth() === agora.getMonth() &&
-            dataEvento.getFullYear() === agora.getFullYear()
-          );
-        }).length;
-
-        // 6. Atividade recente:
-        // apenas o evento mais recente de cada paciente,
-        // limitado a 5 pacientes.
-        const pacientesJaExibidos = new Set();
-
-        const atividades = todosEventos
-          .filter((evento) => {
-            if (!evento.paciente_id) {
-              return false;
-            }
-
-            if (pacientesJaExibidos.has(evento.paciente_id)) {
-              return false;
-            }
-
-            pacientesJaExibidos.add(evento.paciente_id);
-
-            return true;
-          })
-          .slice(0, 5);
-
-        if (!ativo) {
-          return;
-        }
-
-        setPacientes(pacientesComRisco);
+        setPacientes(pacientesPrioritariosData);
         setAtividadesRecentes(atividades);
-        setTotalRegistrosHoje(registrosHoje);
         setSessoesAssistenciais(sessoesArray);
+
       } catch (error) {
         console.error(
           "Erro ao carregar dados do Cockpit do Profissional:",
@@ -193,8 +70,8 @@ export default function DashboardProfissional() {
 
         setPacientes([]);
         setAtividadesRecentes([]);
-        setTotalRegistrosHoje(0);
         setSessoesAssistenciais([]);
+        setTotalPacientes(0);
       } finally {
         if (ativo) {
           setLoadingPrioridades(false);
@@ -213,23 +90,6 @@ export default function DashboardProfissional() {
     user?.nome ||
     user?.name ||
     "Profissional";
-
-  // Prioridades reais:
-  // somente alto risco ou atenção, máximo 5.
-  const pacientesPrioritarios = useMemo(() => {
-    return pacientes
-      .filter((paciente) =>
-        ["alto_risco", "atencao"].includes(
-          paciente.risco_atual
-        )
-      )
-      .sort(
-        (a, b) =>
-          (b.pontuacao_risco ?? 0) -
-          (a.pontuacao_risco ?? 0)
-      )
-      .slice(0, 5);
-  }, [pacientes]);
 
   const hoje = useMemo(() => {
     const agora = new Date();
@@ -292,12 +152,12 @@ return (
   <PageLayout>
     <WelcomeWidget
       nome={nomeProfissional}
-      totalPacientes={pacientes.length}
-      totalPrioridades={pacientesPrioritarios.length}
+      totalPacientes={totalPacientes}
+      totalPrioridades={pacientes.length}
     />
 
     <SummaryCards
-      totalPacientes={pacientes.length}
+      totalPacientes={totalPacientes}
       atendimentosHoje={sessoesHoje.length}
       realizadosHoje={atendimentosRealizadosHoje}
       pendentesHoje={atendimentosPendentes}
@@ -395,7 +255,7 @@ return (
     <QuickActions />
 
     <PriorityToday
-      pacientes={pacientesPrioritarios}
+      pacientes={pacientes}
       loading={loadingPrioridades}
     />
 
