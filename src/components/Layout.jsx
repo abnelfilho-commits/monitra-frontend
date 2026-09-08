@@ -158,7 +158,7 @@ export default function Layout() {
             ) : (
               <>
                 <ItemMenu
-                  label="Dashboard Neuro"
+                  label="Cockpit Neuro"
                   to="/dashboard"
                   active={pathname === "/dashboard"}
                   onClick={go}
