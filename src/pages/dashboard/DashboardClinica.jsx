@@ -137,7 +137,7 @@ export default function DashboardClinica() {
   }, []);
 
   if (loading) {
-    return <div style={{ padding: 24 }}>Carregando dashboard...</div>;
+    return <div style={{ padding: 24 }}>Carregando Cockpit de Gestão...</div>;
   }
 
   if (!cockpit) {
@@ -199,7 +199,7 @@ export default function DashboardClinica() {
         >
           <div>
             <h2 style={{ margin: 0 }}>
-              Cockpit de Gestão
+              Cockpit de Gestão — Neurodesenvolvimento
             </h2>
 
             <p
@@ -211,8 +211,7 @@ export default function DashboardClinica() {
                 lineHeight: 1.5,
               }}
             >
-              Visão executiva da população, continuidade longitudinal
-              e operação assistencial.
+              Visão populacional e operacional da linha de cuidado.
             </p>
 
             <div
