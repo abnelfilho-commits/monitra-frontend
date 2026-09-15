@@ -1,8 +1,6 @@
 import api from "./api";
 
-import axios from "axios";
-
-const API = `${import.meta.env.VITE_API_URL}/sessoes-assistenciais`;
+const API = "/sessoes-assistenciais";
 
 export async function listarMinhasSessoesAssistenciais() {
   const { data } = await api.get(
@@ -13,7 +11,7 @@ export async function listarMinhasSessoesAssistenciais() {
 }
 
 export async function listarSessoesPorPaciente(pacienteId) {
-  const { data } = await axios.get(
+  const { data } = await api.get(
     `${API}/paciente/${pacienteId}`
   );
 
@@ -21,22 +19,22 @@ export async function listarSessoesPorPaciente(pacienteId) {
 }
 
 export async function obterSessaoAssistencial(sessaoId) {
-  const { data } = await axios.get(`${API}/${sessaoId}`);
+  const { data } = await api.get(`${API}/${sessaoId}`);
   return data;
 }
 
 export async function confirmarSessaoAssistencial(sessaoId) {
-  const { data } = await axios.post(`${API}/${sessaoId}/confirmar`);
+  const { data } = await api.post(`${API}/${sessaoId}/confirmar`);
   return data;
 }
 
 export async function iniciarSessaoAssistencial(sessaoId) {
-  const { data } = await axios.post(`${API}/${sessaoId}/iniciar`);
+  const { data } = await api.post(`${API}/${sessaoId}/iniciar`);
   return data;
 }
 
 export async function registrarAtendimento(sessaoId, payload) {
-  const { data } = await axios.post(
+  const { data } = await api.post(
     `${API}/${sessaoId}/registrar-atendimento`,
     payload
   );
@@ -45,6 +43,6 @@ export async function registrarAtendimento(sessaoId, payload) {
 }
 
 export async function finalizarSessaoAssistencial(sessaoId) {
-  const { data } = await axios.post(`${API}/${sessaoId}/finalizar`);
+  const { data } = await api.post(`${API}/${sessaoId}/finalizar`);
   return data;
 }
