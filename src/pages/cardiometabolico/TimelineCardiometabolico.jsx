@@ -1,145 +1,33 @@
-import { useEffect, useState } from "react";
-import { buscarTimelineCardiometabolica } from "../../services/cardiometabolico/timeline";
+import { useEffect, useState } from 'react';
+import { buscarTimelineCardiometabolica } from '../../services/cardiometabolico/timeline';
 
+export function TimelineEvents({ events }) {
+  return events.length ? <div className="space-y-4">{events.map(event => <article key={event.id} className="cardio-timeline-card">
+    <h3>{event.tipo}{event.nome ? ` — ${event.nome}` : ''}</h3>
+    <p>{event.data ? `Data clínica: ${event.data.split('-').reverse().join('/')}` : 'Data clínica não informada'}
+      {event.created_at ? ` · Registrado em: ${new Date(event.created_at).toLocaleString('pt-BR')}` : ''}</p>
+    {event.origem && <p>Canal: {event.origem}</p>}
+    {event.actor && <p>Autoria: {event.actor.name ?? `${event.actor.namespace} #${event.actor.id}`}</p>}
+    {event.descricao && <p style={{whiteSpace:'pre-wrap'}}>{event.descricao}</p>}
+    {event.metadata?.cid && <p>CID: {event.metadata.cid}</p>}
+    {event.metadata?.observacoes != null && <p style={{whiteSpace:'pre-wrap'}}>Observações: {event.metadata.observacoes}</p>}
+    {event.metadata?.answers?.length > 0 && <details><summary>Detalhes do registro</summary>
+      <ul>{event.metadata.answers.map((answer, index) => <li key={`${answer.field_id}:${index}`}>
+        {answer.name}: {Object.values(answer.values).map(value => typeof value === 'object' ? JSON.stringify(value) : String(value)).join(', ')}
+      </li>)}</ul></details>}
+  </article>)}</div> : <p>Nenhum evento encontrado.</p>;
+}
 export default function TimelineCardiometabolico({ pacienteId }) {
-  const [timeline, setTimeline] = useState([]);
-  const [loading, setLoading] = useState(true);
-
+  const [loaded, setEvents] = useState(null);
+  const events = loaded?.id === pacienteId ? loaded.data : null;
+  const [error, setError] = useState(false);
   useEffect(() => {
-    carregarTimeline();
+    let active = true;
+    buscarTimelineCardiometabolica(pacienteId).then(data => { if (active) setEvents({id: pacienteId, data}); })
+      .catch(() => { if (active) setError(pacienteId); });
+    return () => { active = false; };
   }, [pacienteId]);
-
-  async function carregarTimeline() {
-    try {
-      setLoading(true);
-
-      const dadosTimeline = await buscarTimelineCardiometabolica(pacienteId);
-      setTimeline(dadosTimeline);
-    } catch (error) {
-      console.error("Erro ao carregar timeline cardiometabólica:", error);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl shadow p-4">
-        <p className="text-gray-500">
-          Carregando timeline...
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white rounded-2xl shadow p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Timeline Cardiometabólica
-        </h2>
-
-        <button
-          onClick={carregarTimeline}
-          className="text-sm bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg"
-        >
-          Atualizar
-        </button>
-      </div>
-
-      {timeline.length === 0 ? (
-        <p className="text-gray-500">
-          Nenhum registro encontrado.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {timeline.map((evento) => (
-            <div
-              key={evento.id}
-               className="cardio-timeline-card"
-            >
-
-              <div className="cardio-timeline-header">
-
-                <div>
-
-                  <div className="cardio-timeline-title">
-                    {evento.tipo || "Monitoramento longitudinal"}
-                  </div>
-
-                  <div className="cardio-timeline-date">
-                    {new Date(evento.data).toLocaleDateString("pt-BR")}
-                  </div>
-
-                </div>
-
-                <div
-                   className={`cardio-risk-badge ${
-                    evento.risco === "alto"
-                      ? "cardio-risk-alto"
-                      : evento.risco === "moderado"
-                      ? "cardio-risk-moderado"
-                      : "cardio-risk-baixo"
-                  }`}
-                >
-                  {evento.risco || "baixo"}
-                </div>
-
-              </div>
-
-              <div className="cardio-timeline-grid">
-
-                <div className="cardio-timeline-metric">
-                  <div className="cardio-timeline-metric-label">
-                    Glicemia
-                  </div>
-
-                  <div className="cardio-timeline-metric-value">
-                    {evento.glicemia || "--"}
-                  </div>
-                </div>
-
-                <div className="cardio-timeline-metric">
-                  <div className="cardio-timeline-metric-label">
-                    Pressão arterial
-                  </div>
-
-                  <div className="cardio-timeline-metric-value">
-                    {evento.pressao || "--"}
-                  </div>
-                </div>
-
-                <div className="cardio-timeline-metric">
-                  <div className="cardio-timeline-metric-label">
-                    Peso
-                  </div>
-
-                  <div className="cardio-timeline-metric-value">
-                    {evento.peso || "--"} kg
-                  </div>
-                </div>
-
-                <div className="cardio-timeline-metric">
-                  <div className="cardio-timeline-metric-label">
-                    IMC
-                  </div>
-
-                  <div className="cardio-timeline-metric-value">
-                    {evento.imc || "--"}
-                  </div>
-                </div>
-
-              </div>
-
-              <div className="cardio-timeline-description">
-                {evento.descricao || "Sem descrição clínica."}
-              </div>
-
-            </div>
-
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <section className="bg-white rounded-2xl shadow p-4"><h2>Timeline clínica</h2>
+    {error === pacienteId ? <p role="alert">Não foi possível carregar a Timeline.</p> : events ? <TimelineEvents events={events} /> : <p>Carregando Timeline...</p>}
+  </section>;
 }

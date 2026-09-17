@@ -10,7 +10,7 @@ import {
 } from "../../services/cardiometabolico/pacientes";
 
 function formatarRisco(risco) {
-  if (!risco) return "Baixo";
+  if (!risco) return "Indisponível";
 
   return risco.charAt(0).toUpperCase() + risco.slice(1);
 }
@@ -382,7 +382,7 @@ export default function PacientesCardiometabolico() {
                                 ? "#fee2e2"
                                 : p.risco === "moderado"
                                 ? "#fef3c7"
-                                : "#dcfce7",
+                                : p.risco === "baixo" ? "#dcfce7" : "#f1f5f9",
 
                             color:
                               p.risco === "critico"
@@ -391,7 +391,7 @@ export default function PacientesCardiometabolico() {
                                 ? "#b91c1c"
                                 : p.risco === "moderado"
                                 ? "#92400e"
-                                : "#166534",                            
+                                : p.risco === "baixo" ? "#166534" : "#475569",
                 
                           }}
                         >
@@ -562,14 +562,10 @@ export default function PacientesCardiometabolico() {
                           fontWeight: 700,
                           marginTop: 8,
                           color:
-                            p.score_clinico >= 7
-                              ? "#b91c1c"
-                              : p.score >= 4
-                              ? "#b45309"
-                              : "#166534",
+                            "#475569",
                         }}
                       >
-                        {p.score_clinico ?? 0}
+                        {p.score_clinico ?? "Indisponível"}
                       </div>
                     </div>
 

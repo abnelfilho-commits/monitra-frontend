@@ -1,21 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { listarDiagnosticos } from "../../services/diagnosticos";
 
 import {
   buscarPacienteCardiometabolico,
-  listarTimelineCardiometabolico,
+
 } from "../../services/cardiometabolico";
 
-import {
-  LineChart,
-  Line,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import GraficosCardiometabolico from './GraficosCardiometabolico';
+import TimelineCardiometabolico from './TimelineCardiometabolico';
 
 export default function PacienteCardiometabolico() {
   const { id } = useParams();
@@ -23,104 +16,16 @@ export default function PacienteCardiometabolico() {
 
   const [diagnosticos, setDiagnosticos] = useState([]);
   const [paciente, setPaciente] = useState(null);
-  const [timeline, setTimeline] = useState([]);
-  const ultimoRegistro =
-  timeline?.find(
-    (item) => item.tipo !== "Intervenção clínica"
-  ) || null;
-
-  const registrosClinicos = useMemo(() => {
-    return timeline.filter(
-      (item) => item.tipo !== "Intervenção clínica"
-    );
-  }, [timeline]);
-
-  const ultimoRegistroComIMC =
-    timeline?.find(
-      (item) =>
-        item.tipo !== "Intervenção clínica" &&
-        item.imc !== undefined &&
-        item.imc !== null
-    ) || null;
-
+  const [erro, setErro] = useState(null);
   useEffect(() => {
-    carregar();
+    let active = true;
+    Promise.all([buscarPacienteCardiometabolico(id), listarDiagnosticos(id, 'CARDIO')])
+      .then(([patient, diagnoses]) => { if (active) { setPaciente(patient); setDiagnosticos(diagnoses); } })
+      .catch(() => { if (active) setErro(id); });
+    return () => { active = false; };
   }, [id]);
-
-  async function carregar() {
-    try {
-      const pacienteData =
-        await buscarPacienteCardiometabolico(id);
-
-      setPaciente(pacienteData);
-
-      const timelineData =
-        await listarTimelineCardiometabolico(id);
-
-      setTimeline(timelineData || []);
-      setDiagnosticos(await listarDiagnosticos(id, "CARDIO"));
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  const dadosGrafico = useMemo(() => {
-    return timeline
-      .filter((t) => t.glicemia)
-      .map((t) => ({
-        data: new Date(t.data).toLocaleDateString("pt-BR"),
-        glicemia: t.glicemia,
-      }))
-      .reverse();
-  }, [timeline]);
-
-  const dadosPressao = useMemo(() => {
-    return timeline
-      .filter(
-        (t) =>
-          t.pressao_sistolica &&
-          t.pressao_diastolica
-      )
-      .map((t) => ({
-        data: new Date(t.data)
-          .toLocaleDateString("pt-BR"),
-
-        sistolica:
-          t.pressao_sistolica,
-
-        diastolica:
-          t.pressao_diastolica,
-      }))
-      .reverse();
-  }, [timeline]);
-
-  const dadosIMC = useMemo(() => {
-    return timeline
-      .filter((t) => t.imc)
-      .map((t) => ({
-        data: new Date(t.data)
-          .toLocaleDateString("pt-BR"),
-
-        imc: t.imc,
-      }))
-      .reverse();
-  }, [timeline]);
-
-  const dadosScore = useMemo(() => {
-    return timeline
-      .filter(
-        (t) => t.tipo !== "Intervenção clínica"
-      )
-      .map((t) => ({
-        data: new Date(t.data)
-          .toLocaleDateString("pt-BR"),
-
-        score: t.score || 0,
-      }))
-      .reverse();
-  }, [timeline]);
-
-  if (!paciente) {
+  if (erro === id) return <p role="alert">Não foi possível carregar o prontuário.</p>;
+  if (!paciente || String(paciente.id) !== id) {
     return (
       <div style={{ padding: 24 }}>
         Carregando paciente...
@@ -189,7 +94,7 @@ export default function PacienteCardiometabolico() {
                       ? "#fee2e2"
                       : paciente.risco === "moderado"
                       ? "#fef3c7"
-                      : "#dcfce7",
+                      : paciente.risco === "baixo" ? "#dcfce7" : "#f1f5f9",
 
                   color:
                     paciente.risco === "critico"
@@ -198,7 +103,7 @@ export default function PacienteCardiometabolico() {
                       ? "#b91c1c"
                       : paciente.risco === "moderado"
                       ? "#92400e"
-                      : "#166534",
+                      : paciente.risco === "baixo" ? "#166534" : "#475569",
 
                   padding: "6px 12px",
                   borderRadius: 999,
@@ -206,7 +111,7 @@ export default function PacienteCardiometabolico() {
                   fontSize: 13,
                 }}
               >
-                {paciente.risco || "baixo risco"}
+                {paciente.risco ?? "Indisponível"}
               </div>
 
             </div>
@@ -293,7 +198,7 @@ export default function PacienteCardiometabolico() {
 
         <CardStatus
           titulo="Score clínico"
-          valor={paciente.score_clinico || 0}
+          valor={paciente.score_clinico ?? "Indisponível"}
         />
 
         <CardStatus
@@ -304,10 +209,10 @@ export default function PacienteCardiometabolico() {
               melhora: "Melhora Clínica",
               piora: "Piora Clínica",
               "alto risco persistente": "Alto Risco Persistente",
-              "monitoramento inicial": "Monitoramento Inicial",
+              "monitoramento inicial": "Indisponível",
             }[paciente.tendencia] ||
             paciente.tendencia ||
-            "Monitoramento Inicial"
+            "Indisponível"
           }
         />
 
@@ -329,14 +234,14 @@ export default function PacienteCardiometabolico() {
               monitoramento_preventivo:
         "Monitoramento Preventivo",
             }[paciente.protocolo]
-            || paciente.protocolo
-            || "Preventivo"
+            ?? paciente.protocolo
+            ?? "Indisponível"
           }
         />
 
         <CardStatus
           titulo="Risco"
-          valor={paciente.risco || "baixo"}
+          valor={paciente.risco ?? "Indisponível"}
         />
 
       </div>
@@ -353,29 +258,27 @@ export default function PacienteCardiometabolico() {
        <CardIndicador
          titulo="Pressão arterial"
          valor={
-          ultimoRegistro?.pressao_sistolica
-            ? `${ultimoRegistro.pressao_sistolica}x${ultimoRegistro.pressao_diastolica}`
-            : "--"
+          paciente.pressao ?? "Indisponível"
          }
        />
 
        <CardIndicador
          titulo="Glicemia"
           valor={
-            ultimoRegistro?.glicemia || "--"
+            paciente.glicemia ?? "Indisponível"
           }
        />
 
         <CardIndicador
           titulo="IMC"
-          valor={ultimoRegistroComIMC?.imc ?? "--"}
+          valor={paciente.imc ?? "Indisponível"}
         />
 
         <CardIndicador
           titulo="Peso"
           valor={
-            ultimoRegistro?.peso
-              ? `${ultimoRegistro.peso} kg`
+            paciente.peso != null
+              ? `${paciente.peso} kg`
               : "--"
           }
         />
@@ -398,7 +301,7 @@ export default function PacienteCardiometabolico() {
           <p>
             Score clínico:{" "}
             <strong>
-              {paciente.score_clinico || 0}
+              {paciente.score_clinico ?? "Indisponível"}
             </strong>
           </p>
 
@@ -411,10 +314,10 @@ export default function PacienteCardiometabolico() {
                   melhora: "Melhora Clínica",
                   piora: "Piora Clínica",
                   "alto risco persistente": "Alto Risco Persistente",
-                  "monitoramento inicial": "Monitoramento Inicial",
+                  "monitoramento inicial": "Indisponível",
                 }[paciente.tendencia] ||
                 paciente.tendencia ||
-                "Monitoramento Inicial"
+                "Indisponível"
               }
             </strong>
           </p>
@@ -422,7 +325,7 @@ export default function PacienteCardiometabolico() {
           <p>
             Risco:{" "}
             <strong>
-              {paciente.risco || "baixo"}
+              {paciente.risco ?? "Indisponível"}
             </strong>
           </p>
 
@@ -433,284 +336,18 @@ export default function PacienteCardiometabolico() {
 
           <p>
             {paciente.leitura_clinica ||
-              "Paciente em acompanhamento longitudinal cardiometabólico."}
+              "Leitura clínica indisponível."}
           </p>
         </Box>
 
       </div>
 
-      {/* FATORES DE RISCO */}
-      <Box>
-        <h2>Fatores que elevaram o risco</h2>
-
-        {ultimoRegistro?.eventos_clinicos?.length > 0 ? (
-          <div
-            style={{
-              display: "flex",
-              gap: 10,
-              flexWrap: "wrap",
-              marginTop: 12,
-            }}
-          >
-            {ultimoRegistro.eventos_clinicos.map((evento, index) => (
-              <span
-                key={index}
-                style={{
-                  background: "#fee2e2",
-                  color: "#991b1b",
-                  padding: "8px 12px",
-                  borderRadius: 999,
-                  fontSize: 13,
-                  fontWeight: 700,
-                }}
-              >
-                {evento}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p>
-            Nenhum fator crítico identificado no último registro.
-          </p>
-        )}
+      <Box><h2>Continuidade assistencial</h2>
+        <p>{paciente.continuidade?.classification ?? 'Indisponível'}</p>
+        <p>Independente do risco clínico.</p>
       </Box>
-
-      {/* GRÁFICO */}
-      <Box>
-        <h2>Evolução glicêmica</h2>
-
-        <div style={{ width: "100%", height: 320 }}>
-          <ResponsiveContainer>
-            <LineChart data={dadosGrafico}>
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey="data" />
-
-              <YAxis />
-
-              <Tooltip />
-
-              <Line
-                type="monotone"
-                dataKey="glicemia"
-                stroke="#2563eb"
-                strokeWidth={3}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Box>
-
-      <Box>
-        <h2>Evolução da pressão arterial</h2>
-
-        <div style={{ width: "100%", height: 320 }}>
-          <ResponsiveContainer>
-            <LineChart data={dadosPressao}>
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey="data" />
-
-              <YAxis />
-
-              <Tooltip />
-
-              <Line
-                type="monotone"
-                dataKey="sistolica"
-                stroke="#dc2626"
-                strokeWidth={3}
-              />
-
-              <Line
-                type="monotone"
-                dataKey="diastolica"
-                stroke="#f59e0b"
-                strokeWidth={3}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Box>
-
-      {dadosIMC.length > 0 && (
-        <Box>
-          <h2>Evolução do IMC</h2>
-
-          <div style={{ width: "100%", height: 320 }}>
-            <ResponsiveContainer>
-              <LineChart data={dadosIMC}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="data" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="imc"
-                  stroke="#7c3aed"
-                  strokeWidth={3}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Box>
-      )}
-
-      <Box>
-        <h2>Evolução do score clínico</h2>
-
-        <div style={{ width: "100%", height: 320 }}>
-          <ResponsiveContainer>
-            <LineChart data={dadosScore}>
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey="data" />
-
-              <YAxis />
-
-              <Tooltip />
-
-              <Line
-                type="monotone"
-                dataKey="score"
-                stroke="#2563eb"
-                strokeWidth={4}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Box>
-
-      {/* TIMELINE */}
-      <Box>
-        <h2>Timeline clínica</h2>
-
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          {timeline.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                background:
-                  item.risco === "critico"
-                    ? "#fff1f2"
-                    : item.risco === "alto"
-                    ? "#fff5f5"
-                    : item.risco === "moderado"
-                    ? "#fffbeb"
-                    : item.risco === "intervencao"
-                    ? "#eff6ff"
-                    : "#f0fdf4",
-
-                border:
-                  item.risco === "critico"
-                    ? "1px solid #fda4af"
-                    : item.risco === "alto"
-                    ? "1px solid #fecaca"
-                    : item.risco === "moderado"
-                    ? "1px solid #fde68a"
-                    : item.risco === "intervencao"
-                    ? "1px solid #bfdbfe"
-                    : "1px solid #bbf7d0",
-                borderRadius: 20,
-                padding: 24,
-                marginBottom: 24,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 14,
-                  flexWrap: "wrap",
-                  gap: 10,
-                }}
-             >
-
-               <strong
-                  style={{
-                    fontSize: 16,
-                    color: "#0f172a",
-                  }}
-                >
-                 {item.tipo_evento}
-                </strong>
-
-                <span
-                  style={{
-                    fontSize: 13,
-                    color: "#64748b",
-                  }}
-                >
-                  {new Date(item.data)
-                    .toLocaleString("pt-BR")}
-                </span>
-
-              </div>
-
-              {item.tipo !== "Intervenção clínica" && (
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fit, minmax(180px, 1fr))",
-                    gap: 12,
-                  }}
-                >
-                  <Info label="🩸 Glicemia" valor={item.glicemia || "--"} />
-                  <Info label="❤️ Pressão" valor={item.pressao || "--"} />
-                  <Info label="⚖️ Peso" valor={item.peso ? `${item.peso} kg` : "--"} />
-                  <Info label="😴 Sono" valor={item.sono || "--"} />
-                  <Info label="🧠 Humor" valor={item.humor || "--"} />
-                  <Info label="📊 Score" valor={item.score || 0} />
-                </div>
-              )}
-
-              <div
-                style={{
-                  marginTop: 18,
-                  padding: 14,
-                  borderRadius: 12,
-                  background: "#f8fafc",
-                  color: "#334155",
-                }}
-              >
-                💡 {item.descricao}
-
-                {item.eventos_clinicos?.length > 0 && (
-                  <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {item.eventos_clinicos.map((evento, index) => (
-                      <span
-                        key={index}
-                        style={{
-                          background: "#fee2e2",
-                          color: "#991b1b",
-                          padding: "6px 10px",
-                          borderRadius: 999,
-                          fontSize: 12,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {evento}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-                 
-              </div>
-          
-            ))}     
-
-        </div>
-
-      </Box>
+      <GraficosCardiometabolico pacienteId={id} />
+      <TimelineCardiometabolico pacienteId={id} />
 
     </div>
   );
@@ -792,43 +429,6 @@ function CardStatus({
       >
         {valor}
       </div>
-    </div>
-  );
-}
-
-function Info({
-  label,
-  valor,
-}) {
-  return (
-    <div
-      style={{
-        background: "#f8fafc",
-        borderRadius: 12,
-        padding: 12,
-      }}
-    >
-
-      <div
-        style={{
-          fontSize: 12,
-          color: "#64748b",
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </div>
-
-      <div
-        style={{
-          fontSize: 18,
-          fontWeight: 700,
-          color: "#0f172a",
-        }}
-      >
-        {valor}
-      </div>
-
     </div>
   );
 }

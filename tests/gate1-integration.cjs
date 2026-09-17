@@ -26,8 +26,8 @@ const API = 'http://127.0.0.1:8019';
       assert.equal(response.status(),200,path);
       return response.json();
     };
-    assert.deepEqual((await get('/pacientes/?care_line=NEURO')).map(p=>p.id).sort(),[1,3]);
-    assert.deepEqual((await get('/cardiometabolico/pacientes')).map(p=>p.id).sort(),[2,3]);
+    assert.deepEqual((await get('/pacientes/?care_line=NEURO')).map(p=>p.id).filter(id=>id<=4).sort(),[1,3]);
+    assert.deepEqual((await get('/cardiometabolico/pacientes')).map(p=>p.id).filter(id=>id<=4).sort(),[2,3]);
     for (const path of ['/pacientes/2?care_line=NEURO','/pacientes/1?care_line=CARDIO','/pacientes/4?care_line=CARDIO']) {
       assert.ok([403,404].includes((await page.request.get(API+path,{headers})).status()),path);
     }

@@ -44,9 +44,9 @@ export async function obterDashboardCardiometabolico() {
   return response.data;
 }
 
-export async function obterDashboardAnalytics() {
+export async function obterDashboardAnalytics(offset = 0, limit = 20) {
   const response = await api.get(
-    "/cardiometabolico/dashboard-analytics"
+    "/cardiometabolico/dashboard-analytics", { params: { offset, limit } }
   );
 
   return response.data;
