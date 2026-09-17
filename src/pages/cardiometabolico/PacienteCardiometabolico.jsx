@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { listarDiagnosticos } from "../../services/diagnosticos";
 
 import {
   buscarPacienteCardiometabolico,
@@ -20,6 +21,7 @@ export default function PacienteCardiometabolico() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const [diagnosticos, setDiagnosticos] = useState([]);
   const [paciente, setPaciente] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const ultimoRegistro =
@@ -56,6 +58,7 @@ export default function PacienteCardiometabolico() {
         await listarTimelineCardiometabolico(id);
 
       setTimeline(timelineData || []);
+      setDiagnosticos(await listarDiagnosticos(id, "CARDIO"));
     } catch (err) {
       console.error(err);
     }
@@ -247,9 +250,9 @@ export default function PacienteCardiometabolico() {
             </button>
 
             <button
-              onClick={() => navigate(`/cardiometabolico/pacientes/${id}/pts`)}
+              onClick={() => navigate(`/pacientes/${id}/diagnosticos/novo?care_line=CARDIO`)}
             >
-              PTS
+              + Diagnóstico
             </button>
 
             <button
@@ -267,6 +270,16 @@ export default function PacienteCardiometabolico() {
         </div>
 
       </div>
+
+      <section>
+        <h2>Diagnósticos</h2>
+        {diagnosticos.length === 0 && <p>Nenhum diagnóstico registrado.</p>}
+        {diagnosticos.map((diagnostico) => (
+          <button key={diagnostico.id} onClick={() => navigate(`/diagnosticos/${diagnostico.id}?care_line=CARDIO`)}>
+            {diagnostico.descricao_clinica} — {diagnostico.status}
+          </button>
+        ))}
+      </section>
 
       {/* STATUS */}
       <div

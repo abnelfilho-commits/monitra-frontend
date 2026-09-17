@@ -12,7 +12,7 @@ export async function listarMinhasSessoesAssistenciais() {
 
 export async function listarSessoesPorPaciente(pacienteId) {
   const { data } = await api.get(
-    `${API}/paciente/${pacienteId}`
+    `${API}/paciente/${pacienteId}`, { params: { care_line: "NEURO" } }
   );
 
   return data;

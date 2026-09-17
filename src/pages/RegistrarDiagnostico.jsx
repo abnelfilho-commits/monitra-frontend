@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import ClinicalFooter from "../components/clinical/ClinicalFooter";
 import ClinicalSection from "../components/clinical/ClinicalSection";
@@ -70,6 +70,8 @@ export default function RegistrarDiagnostico() {
   const { id, pacienteId: pacienteIdParam } = useParams();
   const pacienteId = Number(pacienteIdParam || id);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const careLine = searchParams.get("care_line") || "NEURO";
 
   const [paciente, setPaciente] = useState(null);
   const [tipo, setTipo] = useState("");
@@ -97,7 +99,7 @@ export default function RegistrarDiagnostico() {
       setErro("");
 
       try {
-        const dados = await obterPaciente(pacienteId);
+        const dados = await obterPaciente(pacienteId, careLine);
         if (ativo) setPaciente(dados);
       } catch (error) {
         if (ativo) setErro(extrairMensagemErro(error));
@@ -111,17 +113,12 @@ export default function RegistrarDiagnostico() {
     return () => {
       ativo = false;
     };
-  }, [pacienteId, pacienteValido]);
-
-  const tipoSelecionado = useMemo(
-    () => TIPOS_DIAGNOSTICO.find((item) => item.valor === tipo),
-    [tipo]
-  );
+  }, [pacienteId, pacienteValido, careLine]);
 
   const formularioValido = Boolean(tipo && descricaoClinica.trim());
 
   function cancelar() {
-    navigate(`/pacientes/${pacienteId}`);
+    navigate(careLine === "CARDIO" ? `/cardiometabolico/pacientes/${pacienteId}` : `/pacientes/${pacienteId}`);
   }
 
   async function salvar(event) {
@@ -144,6 +141,7 @@ export default function RegistrarDiagnostico() {
 
     try {
       const diagnostico = await registrarDiagnostico({
+        care_line: careLine,
         paciente_id: pacienteId,
         tipo,
         cid,
@@ -159,7 +157,7 @@ export default function RegistrarDiagnostico() {
         throw new Error("O diagnóstico foi registrado, mas não foi possível abrir seus detalhes.");
       }
 
-      navigate(`/diagnosticos/${diagnosticoId}`, { replace: true });
+      navigate(`/diagnosticos/${diagnosticoId}?care_line=${careLine}`, { replace: true });
     } catch (error) {
       setErro(extrairMensagemErro(error));
     } finally {

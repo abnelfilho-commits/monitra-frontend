@@ -43,7 +43,7 @@ export default function Pacientes() {
     setErro(null);
     try {
       setLoading(true);
-      const data = await listarPacientes();
+      const data = await listarPacientes("NEURO");
       setPacientes(Array.isArray(data) ? data : []);
     } catch (e) {
       setErro(getApiErrorMessage(e, "Falha ao carregar pacientes."));

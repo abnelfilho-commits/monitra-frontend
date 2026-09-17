@@ -1253,7 +1253,7 @@ export default function Paciente() {
           </Button>
 
           <Button
-            onClick={() => navigate(`/pacientes/${pacienteId}/diagnosticos/novo`)}
+            onClick={() => navigate(`/pacientes/${pacienteId}/diagnosticos/novo?care_line=NEURO`)}
           >
             🩺 Registrar Diagnóstico
           </Button>
@@ -2207,7 +2207,7 @@ export default function Paciente() {
                           };
 
                           if (isDiagnostico) {
-                            navigate(`/diagnosticos/${item.id}`, {
+                            navigate(`/diagnosticos/${item.id}?care_line=NEURO`, {
                               state: navigationState,
                             });
                             return;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import Button from "../components/ui/Button";
 import { obterDiagnostico } from "../services/diagnosticos";
@@ -35,6 +35,8 @@ function formatarStatus(status) {
 export default function DiagnosticoDetalhe() {
   const { diagnosticoId } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const careLine = searchParams.get("care_line") || "NEURO";
 
   const [diagnostico, setDiagnostico] = useState(null);
   const [carregando, setCarregando] = useState(true);
@@ -49,7 +51,7 @@ export default function DiagnosticoDetalhe() {
 
       try {
         const resposta = await obterDiagnostico(
-          Number(diagnosticoId)
+          Number(diagnosticoId), careLine
         );
 
         if (ativo) {
@@ -75,7 +77,7 @@ export default function DiagnosticoDetalhe() {
     return () => {
       ativo = false;
     };
-  }, [diagnosticoId]);
+  }, [diagnosticoId, careLine]);
 
   if (carregando) {
     return (

@@ -1,16 +1,16 @@
-import axios from "axios";
+import { api } from "../lib/api";
 
-const API_URL = import.meta.env.VITE_API_URL;
 
-export async function obterDiagnostico(diagnosticoId) {
+
+export async function obterDiagnostico(diagnosticoId, careLine = "NEURO") {
   if (!diagnosticoId) {
     throw new Error(
       "O identificador do diagnóstico é obrigatório."
     );
   }
 
-  const response = await axios.get(
-    `${API_URL}/diagnosticos/${diagnosticoId}`
+  const response = await api.get(
+    `/diagnosticos/${diagnosticoId}`, { params: { care_line: careLine } }
   );
 
   return response.data;
@@ -39,6 +39,7 @@ export async function registrarDiagnostico(dados) {
 
   const payload = {
     paciente_id: Number(dados.paciente_id),
+    care_line: dados.care_line || "NEURO",
     tipo: dados.tipo,
     status: dados.status || "ATIVO",
     cid: dados.cid?.trim() || null,
@@ -55,10 +56,15 @@ export async function registrarDiagnostico(dados) {
     observacoes: dados.observacoes?.trim() || null,
   };
 
-  const response = await axios.post(
-    `${API_URL}/diagnosticos`,
+  const response = await api.post(
+    "/diagnosticos",
     payload
   );
 
   return response.data;
+}
+
+export async function listarDiagnosticos(pacienteId, careLine) {
+  const { data } = await api.get(`/diagnosticos/paciente/${pacienteId}`, { params: { care_line: careLine } });
+  return data;
 }
