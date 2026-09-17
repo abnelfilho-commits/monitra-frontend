@@ -57,7 +57,7 @@ export async function salvarRegistroDiarioCardiometabolico(
 ) {
   const response = await api.post(
     "/cardiometabolico/registro-diario",
-    payload
+    normalizeDailyRecord(payload)
   );
 
   return response.data;
@@ -66,8 +66,17 @@ export async function salvarRegistroDiarioCardiometabolico(
 export async function salvarRegistroCardiometabolico(payload) {
   const response = await api.post(
     "/cardiometabolico/registro-diario",
-    payload
+    normalizeDailyRecord(payload)
   );
 
   return response.data;
+}
+
+// HTML number controls return strings; blank optional measurements mean no value.
+function normalizeDailyRecord(payload) {
+  const result = { ...payload };
+  for (const key of ["glicemia_jejum", "glicemia_pos_prandial", "pressao_sistolica", "pressao_diastolica", "peso", "altura", "ingestao_hidrica"]) {
+    if (typeof result[key] === "string" && result[key].trim() === "") result[key] = null;
+  }
+  return result;
 }

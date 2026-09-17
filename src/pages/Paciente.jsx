@@ -1888,7 +1888,7 @@ export default function Paciente() {
             background:
               origem === "FRAMEWORK"
                 ? "#f3e8ff"
-                : origem === "RESPONSAVEL"
+                : ["RESPONSAVEL", "RESPONSAVEL_APP", "RESPONSAVEL_WHATSAPP"].includes(origem)
                 ? "#dcfce7"
                 : origem === "ASSISTENCIAL"
                 ? "#dcfce7"
@@ -1897,7 +1897,7 @@ export default function Paciente() {
             color:
               origem === "FRAMEWORK"
                 ? "#6d28d9"
-                : origem === "RESPONSAVEL"
+                : ["RESPONSAVEL", "RESPONSAVEL_APP", "RESPONSAVEL_WHATSAPP"].includes(origem)
                 ? "#166534"
                 : origem === "ASSISTENCIAL"
                 ? "#15803d"
@@ -1906,7 +1906,7 @@ export default function Paciente() {
             border:
               origem === "FRAMEWORK"
                 ? "1px solid #d8b4fe"
-                : origem === "RESPONSAVEL"
+                : ["RESPONSAVEL", "RESPONSAVEL_APP", "RESPONSAVEL_WHATSAPP"].includes(origem)
                 ? "1px solid #86efac"
                 : origem === "ASSISTENCIAL"
                 ? "1px solid #86efac"
@@ -1966,7 +1966,7 @@ export default function Paciente() {
                     <span style={badgeStyle}>
                       {origem === "FRAMEWORK"
                         ? "Framework"
-                        : origem === "RESPONSAVEL"
+                        : ["RESPONSAVEL", "RESPONSAVEL_APP", "RESPONSAVEL_WHATSAPP"].includes(origem)
                         ? "Responsável"
                         : origem === "ASSISTENCIAL"
                         ? "Assistencial"
@@ -1987,7 +1987,7 @@ export default function Paciente() {
                       </b>
                     </div>
 
-                    {origem === "RESPONSAVEL" && (
+                    {["RESPONSAVEL", "RESPONSAVEL_APP", "RESPONSAVEL_WHATSAPP"].includes(origem) && (
                       <div
                         style={{
                           fontSize: 12,
@@ -2135,7 +2135,7 @@ export default function Paciente() {
                           }}
                         >
                           <div>
-                            {item.origem === "RESPONSAVEL"
+                            {["RESPONSAVEL", "RESPONSAVEL_APP", "RESPONSAVEL_WHATSAPP"].includes(item.origem)
                               ? "Registro diário informado pelo responsável."
                               : "Registro diário realizado pelo profissional."}
                           </div>
