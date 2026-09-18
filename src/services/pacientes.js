@@ -25,9 +25,10 @@ export async function inativarPaciente(id) {
   return res.data;
 }
 
-export async function baixarRelatorioPacientePdf(id) {
+export async function baixarRelatorioPacientePdf(id, careLine, period = {}) {
   const res = await api.get(`/pacientes/${id}/relatorio-pdf`, {
     responseType: "blob",
+    params: { care_line: careLine, ...period },
   });
   return res.data;
 }

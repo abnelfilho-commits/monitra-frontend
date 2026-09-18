@@ -1,3 +1,4 @@
+import ReportDownload from "../../components/ReportDownload";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { listarDiagnosticos } from "../../services/diagnosticos";
@@ -170,6 +171,7 @@ export default function PacienteCardiometabolico() {
               + Nova intervenção
             </button>            
 
+            <ReportDownload patientId={id} careLine="CARDIO" />
           </div>
 
         </div>

@@ -1,3 +1,4 @@
+import ReportDownload from "../components/ReportDownload";
 import { getAssessmentLabel } from "../utils/assessmentLabels";
 import Button from "../components/ui/Button";
 
@@ -35,7 +36,6 @@ import {
 } from "../services/analytics";
 
 import {
-  baixarRelatorioPacientePdf,
   obterPaciente,
   inativarPaciente,
 } from "../services/pacientes";
@@ -667,28 +667,6 @@ export default function Paciente() {
 
   }
 
-  async function onBaixarRelatorioPdf() {
-    try {
-      const blob = await baixarRelatorioPacientePdf(pacienteId);
-      const url = window.URL.createObjectURL(
-        new Blob([blob], { type: "application/pdf" })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `relatorio_longitudinal_${pacienteId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      const msg =
-        e?.response?.data?.detail ||
-        e?.message ||
-        "Falha ao gerar Relatório Longitudinal Inteligente.";
-      setErro(String(msg));
-    }
-  }
-
   async function onInativar() {
     const ok = window.confirm(
       "Deseja realmente inativar este paciente? Ele deixará de aparecer na lista principal."
@@ -1282,13 +1260,7 @@ export default function Paciente() {
             + Intervenção
           </Button>
 
-          <Button
-            variant="secondary"
-            onClick={onBaixarRelatorioPdf}
-            title="Gerar Relatório Longitudinal Inteligente"
-          >
-            📄 Gerar Relatório
-          </Button>
+          <ReportDownload patientId={pacienteId} careLine="NEURO" />
 
           <Button variant="secondary" onClick={load}>
             ↻ Atualizar
