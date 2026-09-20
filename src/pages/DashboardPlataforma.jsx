@@ -73,7 +73,7 @@ export default function DashboardPlataforma() {
 
               <button
                 className="modulo-button blue"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/dashboard?care_line=1")}
               >
                 Acessar módulo Neuro
               </button>

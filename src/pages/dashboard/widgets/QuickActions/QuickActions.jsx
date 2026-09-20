@@ -21,14 +21,14 @@ export default function QuickActions() {
           icon="👥"
           title="Meus Pacientes"
           description="Visualize seus pacientes e acesse os prontuários."
-          onClick={() => navigate("/pacientes")}
+          onClick={() => navigate("/pacientes?care_line=1")}
         />
 
         <ActionCard
           icon="🩺"
           title="Registrar Cuidado"
           description="Registre uma avaliação, intervenção ou acompanhamento do paciente."
-          onClick={() => navigate("/pacientes?acao=registrar-cuidado")}
+          onClick={() => navigate("/pacientes?care_line=1&acao=registrar-cuidado")}
         />
 
         <ActionCard

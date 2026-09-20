@@ -183,9 +183,9 @@ export default function RecentActivity({
                       type="button"
                       className="recent-activity__link"
                       onClick={() =>
-                        navigate(`/pacientes/${item.paciente_id}`, {
+                        navigate(`/pacientes/${item.paciente_id}?care_line=1`, {
                           state: {
-                            returnTo: "/dashboard-profissional",
+                            returnTo: "/dashboard?care_line=1",
                           },
                         })
                       }

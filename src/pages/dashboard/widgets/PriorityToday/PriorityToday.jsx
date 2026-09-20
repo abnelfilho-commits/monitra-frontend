@@ -111,9 +111,9 @@ export default function PriorityToday({
                 <Button
                   variant="secondary"
                   onClick={() =>
-                    navigate(`/pacientes/${paciente.paciente_id}`, {
+                    navigate(`/pacientes/${paciente.paciente_id}?care_line=1`, {
                       state: {
-                        returnTo: "/dashboard-profissional",
+                        returnTo: "/dashboard?care_line=1",
                       },
                     })
                   }

@@ -1,3 +1,5 @@
+import { obterCockpitProfissional } from "../../services/cockpit";
+import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { obterDashboardAnalytics } from '../../services/cardiometabolico';
@@ -71,7 +73,9 @@ const reasons = {
   CONTINUIDADE_CRITICA: 'Continuidade crítica', RISCO_CLINICO_MODERADO: 'Risco clínico moderado',
   CONTINUIDADE_ATENCAO: 'Continuidade em atenção',
 };
-export default function DashboardCardiometabolico() {
+export default function DashboardCardiometabolico({ professional = false }) {
+  const { user } = useAuth();
+  const professionalMode = professional || user?.perfil === "PROFISSIONAL";
   const navigate = useNavigate();
   const [loaded, setData] = useState(null);
   const [offset, setOffset] = useState(0);
@@ -79,10 +83,13 @@ export default function DashboardCardiometabolico() {
   const data = loaded?.offset === offset ? loaded.result : null;
   useEffect(() => {
     let active = true;
-    obterDashboardAnalytics(offset).then(result => { if (active) setData({offset, result}); })
+    const request = professionalMode
+      ? obterCockpitProfissional(2, offset, 20).then(result => result.composition)
+      : obterDashboardAnalytics(offset);
+    request.then(result => { if (active) setData({offset, result}); })
       .catch(() => { if (active) setError(offset); });
     return () => { active = false; };
-  }, [offset]);
+  }, [offset, professionalMode]);
   if (error === offset) return <p role="alert">Não foi possível carregar o Cockpit.</p>;
   if (!data) return <p>Carregando Cockpit...</p>;
   const has = capability => data.capabilities[capability] === 'ACTIVE';
