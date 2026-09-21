@@ -35,6 +35,7 @@ export default function ReportDownload({ patientId, careLine }) {
       const link = document.createElement("a");
       link.href = url; link.download = `relatorio_${careLine.toLowerCase()}_${patientId}.pdf`;
       document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+      close();
     } catch { setError("Não foi possível gerar o relatório. Verifique o período e seu acesso."); }
     finally { setBusy(false); }
   }

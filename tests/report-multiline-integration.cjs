@@ -39,6 +39,7 @@ const FRONT='http://127.0.0.1:5173', API='http://127.0.0.1:8020';
    ['/pacientes/3/relatorio-pdf?care_line=CARDIO&period_start=2026-10-01&period_end=2026-09-01',422]])
     assert.equal((await page.request.get(API+path,{headers})).status(),status);
   assert.equal((await page.request.get(API+'/pacientes/3/relatorio-pdf?care_line=CARDIO')).status(),401);
+  await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
   await page.getByLabel('Data inicial').fill('2026-10-01');
   await page.getByRole('dialog').getByRole('button',{name:'Gerar relatório',exact:true}).click();
   await page.getByRole('alert').filter({hasText:'Período inválido.'}).waitFor();
