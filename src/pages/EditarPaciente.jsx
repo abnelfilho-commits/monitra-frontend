@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import Button from "../components/ui/Button";
 
@@ -107,7 +108,7 @@ export default function EditarPaciente() {
   const { id } = useParams();
 
   const pacienteId = Number(id);
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [form, setForm] = useState({
     nome: "",

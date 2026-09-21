@@ -1,7 +1,8 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import Button from "../components/ui/Button";
 
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 
 import { listarMinhasSessoesAssistenciais } from "../services/sessoesAssistenciais";
 
@@ -19,7 +20,7 @@ function formatarHora(hora) {
 }
 
 export default function AgendaAssistencial() {
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [sessoes, setSessoes] = useState([]);
   const [loading, setLoading] = useState(true);

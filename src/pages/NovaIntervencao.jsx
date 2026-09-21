@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import ClinicalFooter from "../components/clinical/ClinicalFooter";
 import ClinicalPageLayout from "../components/clinical/ClinicalPageLayout";
@@ -41,7 +42,7 @@ function extrairMensagemErro(error) {
 export default function NovaIntervencao() {
   const { id } = useParams();
   const pacienteId = Number(id);
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const agora = useMemo(
     () => toLocalDatetimeInputValue(new Date()),

@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../../hooks/useCareLineNavigate";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import {
   buscarPacienteCardiometabolico,
@@ -8,7 +9,7 @@ import {
 
 export default function RegistroDiarioCardiometabolico() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [paciente, setPaciente] = useState(null);
 

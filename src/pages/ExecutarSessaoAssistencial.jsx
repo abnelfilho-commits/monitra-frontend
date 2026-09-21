@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import ClinicalEventTypeCards from "../components/clinical/ClinicalEventTypeCards";
 import ClinicalFooter from "../components/clinical/ClinicalFooter";
@@ -85,7 +86,7 @@ function formatarHora(hora) {
 
 export default function ExecutarSessaoAssistencial() {
   const { sessaoId } = useParams();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [dados, setDados] = useState(null);
   const [narrativa, setNarrativa] = useState("");

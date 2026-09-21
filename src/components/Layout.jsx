@@ -1,4 +1,5 @@
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
+import { Outlet,  useLocation } from "react-router-dom";
 import Button from "../components/ui/Button";
 import { useAuth } from "../context/AuthContext";
 
@@ -31,7 +32,7 @@ function ItemMenu({ label, to, active, onClick }) {
 }
 
 export default function Layout() {
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const location = useLocation();
 
   const ambiente = import.meta.env.VITE_AMBIENTE;
@@ -51,15 +52,16 @@ export default function Layout() {
   const pathname = location.pathname;
   const searchParams = new URLSearchParams(location.search);
 
+  const { user } = useAuth();
+
   const isCardio =
+    (user?.perfil === "PROFISSIONAL" && ["2", "CARDIO"].includes(searchParams.get("care_line")) && user.modulos?.some(module => String(module.id) === "2")) ||
     pathname.startsWith("/cardiometabolico") ||
     searchParams.get("modulo") === "cardiometabolico";
 
   const moduloQuery = isCardio ? "?modulo=cardiometabolico" : "";
 
   const perfil = localStorage.getItem("perfil");
-  const { user } = useAuth();
-
   const isAdmin =
     user?.perfil === "ADMIN_CLINICA";
   const isSuporte = user?.perfil === "SUPORTE";
@@ -142,8 +144,8 @@ export default function Layout() {
             {isCardio ? (
               <>
                 <ItemMenu
-                  label="Dashboard Cardio"
-                  to="/cardiometabolico"
+                  label={isProfissional ? "Cockpit Assistencial" : "Dashboard Cardio"}
+                  to={isProfissional ? "/dashboard" : "/cardiometabolico"}
                   active={pathname === "/cardiometabolico"}
                   onClick={go}
                 />

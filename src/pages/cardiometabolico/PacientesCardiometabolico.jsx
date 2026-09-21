@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../../hooks/useCareLineNavigate";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 
 import Button from "../../components/ui/Button";
 
@@ -16,7 +17,7 @@ function formatarRisco(risco) {
 }
 
 export default function PacientesCardiometabolico() {
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [pacientes, setPacientes] = useState([]);
   const [erro, setErro] = useState(null);

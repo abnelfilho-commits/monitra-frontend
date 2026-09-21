@@ -1,6 +1,7 @@
+import useCareLineNavigate from "../../hooks/useCareLineNavigate";
 import ReportDownload from "../../components/ReportDownload";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { listarDiagnosticos } from "../../services/diagnosticos";
 
 import {
@@ -13,7 +14,7 @@ import TimelineCardiometabolico from './TimelineCardiometabolico';
 
 export default function PacienteCardiometabolico() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [diagnosticos, setDiagnosticos] = useState([]);
   const [paciente, setPaciente] = useState(null);

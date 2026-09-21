@@ -26,21 +26,33 @@ const FRONT='http://127.0.0.1:5176';
   for(const line of ['NEURO','CARDIO']){
    for(const [start,end] of [['2026-07-08','2026-09-21'],['2026-07-08',''],['','2026-09-21'],['','']]){
     await page.goto(FRONT+'/__report-test?line='+line);
+    assert.equal(await page.getByRole('dialog').count(),0);
+    await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
     await page.getByRole('heading',{name:'Período do relatório'}).waitFor();
+    assert.equal(await page.getByLabel('Data inicial').evaluate(el=>el===document.activeElement),true);
+    await page.getByRole('button',{name:'Cancelar',exact:true}).focus();
+    await page.keyboard.press('Tab');
+    assert.equal(await page.getByLabel('Data inicial').evaluate(el=>el===document.activeElement),true);
+    await page.keyboard.press('Escape');
+    assert.equal(await page.getByRole('dialog').count(),0);
+    assert.equal(await page.getByRole('button',{name:'Gerar relatório',exact:true}).evaluate(el=>el===document.activeElement),true);
+    await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
+    await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+    await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
     await page.getByLabel('Data inicial').fill(start);await page.getByLabel('Data final').fill(end);
-    const download=page.waitForEvent('download');await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
+    const download=page.waitForEvent('download');await page.getByRole('dialog').getByRole('button',{name:'Gerar relatório',exact:true}).click();
     assert.equal((await download).suggestedFilename(),`relatorio_${line.toLowerCase()}_3.pdf`);
     const u=requests.at(-1);assert.equal(u.pathname,'/pacientes/3/relatorio-pdf');
     assert.equal(u.searchParams.get('care_line'),line);
     assert.equal(u.searchParams.get('period_start'),start||null);assert.equal(u.searchParams.get('period_end'),end||null);passed++;
    }
    await page.getByLabel('Data inicial').fill('2026-09-21');await page.getByLabel('Data final').fill('2026-07-08');
-   const before=requests.length;await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
+   const before=requests.length;await page.getByRole('dialog').getByRole('button',{name:'Gerar relatório',exact:true}).click();
    await page.getByRole('alert').filter({hasText:'Período inválido.'}).waitFor();assert.equal(requests.length,before);passed++;
   }
   await page.getByLabel('Data inicial').fill('2026-07-08');
-  await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
-  await page.getByRole('button',{name:'Gerar relatório',exact:true}).waitFor();
+  await page.getByRole('dialog').getByRole('button',{name:'Gerar relatório',exact:true}).click();
+  await page.getByRole('dialog').getByRole('button',{name:'Gerar relatório',exact:true}).waitFor();
   await page.screenshot({path:'/private/tmp/pacote-b-period.png'});
   assert.deepEqual(errors,[]);console.log(`PASS: ${passed} report period scenarios; both lines, complete/partial/default parameters, downloads, invalid period.`);
  }finally{await browser.close();}

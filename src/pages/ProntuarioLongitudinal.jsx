@@ -1,9 +1,8 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useState } from "react";
-import {
-  useParams,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { useParams,
+
+  useLocation } from "react-router-dom";
 
 import api from "../services/api";
 
@@ -17,7 +16,7 @@ import {
 
 export default function ProntuarioLongitudinal() {
   const { tipo, id } = useParams();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const location = useLocation();
 
   const [evento, setEvento] = useState(null);

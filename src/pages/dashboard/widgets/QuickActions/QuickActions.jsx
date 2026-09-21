@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import useCareLineNavigate from "../../../../hooks/useCareLineNavigate";
+
 
 import WidgetHeader from "../../../../components/ui/WidgetHeader";
 import WidgetGrid from "../../../../components/layouts/WidgetGrid";
@@ -7,7 +8,7 @@ import ActionCard from "../../../../components/ui/ActionCard";
 import "./QuickActions.css";
 
 export default function QuickActions() {
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   return (
     <section className="quick-actions">

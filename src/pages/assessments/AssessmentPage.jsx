@@ -1,15 +1,13 @@
+import useCareLineNavigate from "../../hooks/useCareLineNavigate";
 import React, { useEffect, useState } from "react";
 import { obterPaciente } from "../../services/pacientes";
-import {
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from "react-router-dom";
+import { useParams,
+  useSearchParams } from "react-router-dom";
 
 import AssessmentForm from "../../components/assessments/AssessmentForm";
 
 export default function AssessmentPage() {
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const { codigo } = useParams();
 

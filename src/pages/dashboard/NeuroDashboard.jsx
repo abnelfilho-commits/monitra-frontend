@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../../hooks/useCareLineNavigate";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+
 
 import { obterCockpitProfissional } from "../../services/cockpit";
 import { listarMinhasSessoesAssistenciais } from "../../services/sessoesAssistenciais";
@@ -15,7 +16,7 @@ import RecentActivity from "./widgets/RecentActivity";
 
 export default function NeuroDashboard() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const [pacientes, setPacientes] = useState([]);
   const [atividadesRecentes, setAtividadesRecentes] = useState([]);
   const [sessoesAssistenciais, setSessoesAssistenciais] = useState([]);
@@ -120,10 +121,10 @@ return (
     />}
 
     <SummaryCards
-      totalPacientes={cockpitStatus === "ready" ? totalPacientes : "Indisponível"}
-      atendimentosHoje={agendaStatus === "ready" ? sessoesHoje.length : "Indisponível"}
-      realizadosHoje={agendaStatus === "ready" ? atendimentosRealizadosHoje : "Indisponível"}
-      pendentesHoje={agendaStatus === "ready" ? atendimentosPendentes : "Indisponível"}
+      totalPacientes={cockpitStatus === "ready" ? totalPacientes : cockpitStatus === "error" ? "Indisponível" : "Carregando…"}
+      atendimentosHoje={agendaStatus === "ready" ? sessoesHoje.length : agendaStatus === "error" ? "Indisponível" : "Carregando…"}
+      realizadosHoje={agendaStatus === "ready" ? atendimentosRealizadosHoje : agendaStatus === "error" ? "Indisponível" : "Carregando…"}
+      pendentesHoje={agendaStatus === "ready" ? atendimentosPendentes : agendaStatus === "error" ? "Indisponível" : "Carregando…"}
     />
 
     {cockpitStatus === "loading" && <p role="status">Carregando Cockpit...</p>}

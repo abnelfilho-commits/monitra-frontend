@@ -1,7 +1,8 @@
+import useCareLineNavigate from "../../hooks/useCareLineNavigate";
 import { obterCockpitProfissional } from "../../services/cockpit";
 import { useAuth } from "../../context/AuthContext";
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { obterDashboardAnalytics } from '../../services/cardiometabolico';
 import Button from '../../components/ui/Button';
 import { TimelineEvents } from './TimelineCardiometabolico';
@@ -28,7 +29,7 @@ const reasons = {
 export default function DashboardCardiometabolico({ professional = false }) {
   const { user } = useAuth();
   const professionalMode = professional || user?.perfil === "PROFISSIONAL";
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const [loaded, setData] = useState(null);
   const [offset, setOffset] = useState(0);
   const [error, setError] = useState(null);

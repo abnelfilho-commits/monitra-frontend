@@ -1,12 +1,13 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { criarPaciente } from "../services/pacientes";
 import { listarClinicas } from "../services/clinicas";
 import { listarProfissionaisPorClinica } from "../services/profissionais";
 import Button from "../components/ui/Button";
 
 export default function NovoPaciente() {
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const location = useLocation();
 
   const searchParams = new URLSearchParams(location.search);

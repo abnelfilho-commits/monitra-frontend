@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 
 import ClinicalFooter from "../components/clinical/ClinicalFooter";
 import ClinicalSection from "../components/clinical/ClinicalSection";
@@ -69,7 +70,7 @@ function extrairMensagemErro(error) {
 export default function RegistrarDiagnostico() {
   const { id, pacienteId: pacienteIdParam } = useParams();
   const pacienteId = Number(pacienteIdParam || id);
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const [searchParams] = useSearchParams();
   const careLine = searchParams.get("care_line") || "NEURO";
 

@@ -1,5 +1,6 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation,  useParams } from "react-router-dom";
 import api from "../services/api";
 import Button from "../components/ui/Button";
 
@@ -37,7 +38,7 @@ function formatarData(data) {
 export default function PTS() {
   const { id } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const pacienteId = Number(id);
   

@@ -1,4 +1,4 @@
-.report-period { width: 100%; box-sizing: border-box; padding: 20px; border: 1px solid #e5e7eb; border-radius: 16px; background: #fff; }
+.report-period { width: min(640px, calc(100% - 32px)); box-sizing: border-box; padding: 20px; border: 1px solid #e5e7eb; border-radius: 16px; background: #fff; }
 .report-period h2 { margin: 0 0 16px; font-size: 20px; color: #111827; }
 .report-period__fields { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
 .report-period label { display: grid; gap: 8px; color: #374151; font-weight: 600; }
@@ -8,3 +8,5 @@
 .report-period :is(input, button):focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
 .report-period [role=alert] { display: block; margin-top: 12px; color: #991b1b; }
 @media (max-width: 700px) { .report-period__fields { flex-direction: column; align-items: stretch; } }
+
+.report-period::backdrop { background: rgb(15 23 42 / 45%); }

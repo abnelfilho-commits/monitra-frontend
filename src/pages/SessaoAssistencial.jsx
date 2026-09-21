@@ -1,13 +1,11 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import SummaryCard from "../components/assistencial/SummaryCard";
 import ProgressCard from "../components/assistencial/ProgressCard";
 
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  useNavigate,
-  useParams,
-  useLocation,
-} from "react-router-dom";
+import { useParams,
+  useLocation } from "react-router-dom";
 
 import Button from "../components/ui/Button";
 import { obterSessaoAssistencial } from "../services/sessoesAssistenciais";
@@ -230,7 +228,7 @@ function LinhaInformacao({ label, valor }) {
 
 export default function SessaoAssistencial() {
   const { sessaoId } = useParams();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const location = useLocation();
 
   const [dados, setDados] = useState(null);
@@ -343,7 +341,7 @@ export default function SessaoAssistencial() {
   
   const returnTo = location.state?.returnTo;
 
-  const veioDoDashboard = returnTo === "/dashboard";
+  const veioDoDashboard = returnTo?.split(/[?#]/, 1)[0] === "/dashboard";
 
   const veioDaTimeline = Boolean(
     location.state?.returnTo &&
@@ -403,7 +401,7 @@ export default function SessaoAssistencial() {
             {veioDaTimeline
               ? "← Voltar para Timeline"
               : veioDoDashboard
-                ? "← Voltar ao Dashboard"
+                ? "← Voltar para Cockpit"
                 : "← Voltar para Agenda"}
           </Button>
 

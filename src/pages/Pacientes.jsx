@@ -1,8 +1,6 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import { useEffect, useMemo, useState } from "react";
-import {
-  useNavigate,
-  useSearchParams,
-} from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { listarPacientes } from "../services/pacientes";
 import { getApiErrorMessage } from "../utils/errors";
 import Button from "../components/ui/Button";
@@ -24,7 +22,7 @@ function formatarGenero(genero) {
 }
 
 export default function Pacientes() {
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [searchParams] = useSearchParams();
 

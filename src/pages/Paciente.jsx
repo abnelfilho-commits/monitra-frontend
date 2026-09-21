@@ -1,3 +1,4 @@
+import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import ReportDownload from "../components/ReportDownload";
 import { getAssessmentLabel } from "../utils/assessmentLabels";
 import Button from "../components/ui/Button";
@@ -8,11 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  useParams,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { useParams,
+
+  useLocation } from "react-router-dom";
 
 import {
   BarChart,
@@ -613,7 +612,7 @@ function classificarMomentoClinico(painel, statusPaciente) {
 export default function Paciente() {
   const { id } = useParams();
   const pacienteId = Number(id);
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
   const location = useLocation();
   const retornoTimelineExecutadoRef = useRef(null);
 

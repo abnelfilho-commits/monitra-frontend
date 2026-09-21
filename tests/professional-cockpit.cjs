@@ -10,7 +10,7 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
  try {
   const page=await browser.newPage();page.setDefaultTimeout(10000);
   let role='PROFISSIONAL',cardioResponse=cardio,modules=[1,2],hold=null,sessionFailure=false,cockpitFailure=false,empty=false,sessionHold=false,sessionRows=[];const requests=[],errors=[],pending=[];
-  page.on('pageerror',e=>errors.push(e.message));
+  page.on('pageerror',e=>{errors.push(e.message);console.error(e.message)});
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   await page.route('**/*',async route=>{
    const u=new URL(route.request().url());
@@ -18,6 +18,10 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
    requests.push(u.pathname+u.search);
    const json=data=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
    if(u.pathname==='/me')return json({id:99,nome:'Synthetic Professional',perfil:role,modulos:modules.map(id=>({id,nome:id===1?'Neurodesenvolvimento':'Cardiometabólico'}))});
+   if(u.pathname==='/pacientes/11')return json({id:11,nome:'Synthetic Neuro',ativo:true});
+   if(u.pathname==='/cardiometabolico/pacientes/22')return json({id:22,nome:'Synthetic Cardio',ativo:true,risco:null});
+   if(u.pathname==='/pacientes/')return json([{id:11,nome:'Synthetic Neuro',ativo:true}]);
+   if(u.pathname==='/cardiometabolico/pacientes')return json([{id:22,nome:'Synthetic Cardio',ativo:true}]);
    if(u.pathname==='/cockpit/profissional'){
     const line=u.searchParams.get('care_line');assert.ok(['1','2'].includes(line));
     if(line===hold){await new Promise(resolve=>pending.push(resolve));}
@@ -47,10 +51,32 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
   for(const name of ['PTS','Planejamento PTS','Agenda','Sessões Assistenciais'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
   await page.getByText('Tendência: indisponível',{exact:true}).first().waitFor();passed++;
   await page.getByRole('button',{name:'Abrir prontuário',exact:true}).click();
-  assert.ok(page.url().endsWith('/cardiometabolico/pacientes/22'));passed++;
+  assert.ok(page.url().endsWith('/cardiometabolico/pacientes/22?care_line=2'));passed++;
   await page.goto(FRONT+'/dashboard?care_line=1');await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
   await page.getByRole('button',{name:'Ver prontuário',exact:true}).click();
   assert.ok(page.url().endsWith('/pacientes/11?care_line=1'));passed++;
+  await page.getByRole('button',{name:'Cockpit Assistencial',exact:true}).click();
+  await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
+  assert.equal(new URL(page.url()).searchParams.get('care_line'),'1');passed++;
+  await page.getByRole('combobox').selectOption('2');
+  await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Abrir prontuário',exact:true}).click();
+  await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).waitFor();
+  await page.getByRole('button',{name:'+ Diagnóstico',exact:true}).click();
+  assert.equal(new URL(page.url()).searchParams.get('care_line'),'CARDIO');
+  await page.getByRole('button',{name:'Cockpit Assistencial',exact:true}).click();
+  await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).waitFor();
+  assert.equal(new URL(page.url()).searchParams.get('care_line'),'2');passed++;
+  // Lists and their patient links also preserve the explicit context.
+  for(const [line,path,id] of [['1','/pacientes',11],['2','/cardiometabolico/pacientes',22]]){
+   await page.goto(FRONT+path+'?care_line='+line);
+   await page.getByRole('button',{name:line==='1'?'Ver':'Abrir prontuário',exact:true}).click();
+   assert.equal(new URL(page.url()).pathname,path+'/'+id);
+   assert.equal(new URL(page.url()).searchParams.get('care_line'),line);
+   await page.getByRole('button',{name:'Cockpit Assistencial',exact:true}).click();
+   await page.getByRole('heading',{name:line==='1'?'Synthetic Neuro':'Synthetic Cardio',exact:true}).first().waitFor();
+   assert.equal(new URL(page.url()).searchParams.get('care_line'),line);passed++;
+  }
   // A pending Neuro response must never overwrite a later Cardio selection.
   hold='1';await page.goto(FRONT+'/dashboard?care_line=1');
   await page.waitForFunction(()=>document.querySelector('select')?.value==='1');
@@ -75,6 +101,13 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
    await page.getByRole('heading',{name:id===1?'Synthetic Neuro':'Synthetic Cardio',exact:true}).first().waitFor();
    assert.equal(await page.locator('select option').count(),2);passed++;
   }
+  modules=[1,2];hold='1';sessionHold=true;
+  await page.goto(FRONT+'/dashboard?care_line=1');
+  await page.getByText('Carregando Cockpit...',{exact:true}).waitFor();
+  assert.equal(await page.getByText('Indisponível',{exact:true}).count(),0);
+  assert.equal(await page.getByText('Carregando…',{exact:true}).count(),4);
+  hold=null;sessionHold=false;pending.splice(0).forEach(resolve=>resolve());
+  await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();passed++;
   modules=[1,2];sessionFailure=true;
   await page.goto(FRONT+'/dashboard?care_line=1');
   await page.getByText('Agenda Assistencial indisponível.',{exact:false}).waitFor();
@@ -172,6 +205,66 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
    await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).waitFor();
    assert.ok(requests.slice(start).some(r=>r.startsWith('/cardiometabolico/dashboard-analytics')));
    assert.ok(!requests.slice(start).some(r=>r.startsWith('/cockpit/profissional')));passed++;
+  }
+  // Exercise the real navigation hook with synthetic identity and an in-memory router.
+  let navigationCase;
+  await page.route(FRONT+'/__navigation-test',route=>route.fulfill({contentType:'text/html',body:`<div id="root"></div><script type="module">
+   import React from '/node_modules/.vite/deps/react.js';
+   import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';
+   import RefreshRuntime from '/@react-refresh';
+   RefreshRuntime.injectIntoGlobalHook(window);
+   window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>type=>type;window.__vite_plugin_react_preamble_installed__=true;
+   const hookSource=await (await fetch('/src/hooks/useCareLineNavigate.js')).text();
+   const routerUrl=hookSource.match(/from "([^"]*react-router-dom[^"]*)"/)[1];
+   const {MemoryRouter,Routes,Route,useLocation}=await import(routerUrl);
+   const {AuthContext}=await import('/src/context/AuthContext.jsx');
+   const {default:useNavigate}=await import('/src/hooks/useCareLineNavigate.js');
+   const {default:Session}=await import('/src/pages/SessaoAssistencial.jsx');
+   const cfg=${JSON.stringify(navigationCase)};
+   function Screen(){
+    const navigate=useNavigate(),location=useLocation();
+    return React.createElement(React.Fragment,null,
+     React.createElement('output',{id:'location'},JSON.stringify({url:location.pathname+location.search+location.hash,state:location.state})),
+     cfg.session?React.createElement(Routes,null,React.createElement(Route,{path:'/sessoes-assistenciais/:sessaoId',element:React.createElement(Session)}),React.createElement(Route,{path:'*',element:null})):
+      React.createElement('button',{onClick:()=>navigate(cfg.target,{state:{returnTo:cfg.returnTo,marker:'preserved'}})},'Navigate'));
+   }
+   ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(AuthContext.Provider,{value:{user:{perfil:cfg.role||'PROFISSIONAL',modulos:cfg.modules.map(id=>({id}))}}},React.createElement(MemoryRouter,{initialEntries:[{pathname:cfg.session?'/sessoes-assistenciais/91':'/dashboard',search:cfg.source||'',state:{returnTo:cfg.returnTo}}]},React.createElement(Screen))));
+  </script>`}));
+  const cases=[
+   {modules:[1],source:'?care_line=1',target:'/pacientes?care_line=NEURO',expected:'/pacientes?care_line=NEURO'},
+   {modules:[2],source:'?care_line=2',target:'/pacientes?care_line=CARDIO',expected:'/pacientes?care_line=CARDIO'},
+   {modules:[1,2],source:'?care_line=1',target:'/pacientes?care_line=2',expected:'/pacientes?care_line=2'},
+   {modules:[1],source:'?care_line=1',target:'/pacientes?care_line=2',expected:'/pacientes'},
+   {modules:[2],source:'?care_line=2',target:'/pacientes?care_line=1',expected:'/pacientes'},
+   {modules:[1,2],source:'?care_line=1',target:'/pacientes?care_line=invalid&tab=a#event',expected:'/pacientes?tab=a#event'},
+   {modules:[1,2],source:'?care_line=1',target:'/pacientes?care_line=1&care_line=2',expected:'/pacientes'},
+   {modules:[1],source:'?care_line=1',target:'/pacientes',expected:'/pacientes?care_line=1'},
+   {modules:[2],source:'?care_line=CARDIO',target:'/pacientes',expected:'/pacientes?care_line=2'},
+   {modules:[1,2],target:'/pacientes',expected:'/pacientes'},
+   {modules:[1],source:'?care_line=2',target:'/pacientes',expected:'/pacientes'},
+   {modules:[1,2],source:'?care_line=invalid',target:'/pacientes',expected:'/pacientes'},
+   {modules:[1,2],source:'?care_line=1&care_line=2',target:'/pacientes',expected:'/pacientes'},
+   ...['NEURO','2','invalid'].map(value=>({modules:[1],source:'?care_line=1',target:'/pacientes',expected:'/pacientes?care_line=1',returnTo:'/dashboard?care_line='+value,expectedReturn:value==='NEURO'?'/dashboard?care_line=NEURO':'/dashboard'})),
+   {modules:[1,2],source:'?care_line=1',target:'/pacientes',expected:'/pacientes?care_line=1',returnTo:'/dashboard?care_line=2',expectedReturn:'/dashboard?care_line=2'},
+   {modules:[2],source:'?care_line=2',target:'/pacientes',expected:'/pacientes?care_line=2',returnTo:'/dashboard',expectedReturn:'/dashboard?care_line=2'},
+   ...['ADMIN','ADMIN_CLINICA'].flatMap(role=>[
+    {role,modules:[1],source:'?care_line=1',target:'/pacientes',expected:'/pacientes',returnTo:'/dashboard',expectedReturn:'/dashboard'},
+    {role,modules:[1],source:'?care_line=1',target:'/pacientes?care_line=invalid',expected:'/pacientes?care_line=invalid',returnTo:'/dashboard?care_line=2',expectedReturn:'/dashboard?care_line=2'}])
+  ];
+  for(const cfg of cases){
+   navigationCase=cfg;await page.goto(FRONT+'/__navigation-test');
+   await page.getByRole('button',{name:'Navigate',exact:true}).click();
+   await page.waitForFunction(expected=>JSON.parse(document.querySelector('#location').textContent).url===expected,cfg.expected);
+   const result=JSON.parse(await page.locator('#location').textContent());
+   assert.equal(result.state.marker,'preserved');assert.equal(result.state.returnTo,cfg.expectedReturn);passed++;
+  }
+  await page.route('**/sessoes-assistenciais/91',route=>route.fulfill({contentType:'application/json',body:JSON.stringify({sessao:{id:91,numero:1,data:'2026-09-21',status:'AGENDADA'},paciente:{id:11,nome:'Synthetic Neuro'},avaliacoes:[],intervencoes:[]})}));
+  // Cardio query is a navigation-only fixture, not a Cardio sessions capability.
+  for(const [returnTo,label] of [['/dashboard?care_line=1','← Voltar para Cockpit'],['/dashboard?care_line=2','← Voltar para Cockpit'],['/agenda-assistencial?care_line=1','← Voltar para Agenda']]){
+   navigationCase={session:true,modules:[1,2],source:'?care_line='+new URL(returnTo,FRONT).searchParams.get('care_line'),returnTo};
+   await page.goto(FRONT+'/__navigation-test');
+   await page.getByRole('button',{name:label,exact:true}).click();
+   await page.waitForFunction(expected=>JSON.parse(document.querySelector('#location').textContent).url===expected,returnTo);passed++;
   }
   assert.deepEqual(errors,[]);console.log(`PASS: ${passed} browser scenarios; explicit context, isolation, widgets, links, delayed responses, single/multi-line.`);
  } finally {await browser.close();}

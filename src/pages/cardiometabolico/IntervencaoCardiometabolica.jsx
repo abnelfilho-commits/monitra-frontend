@@ -1,11 +1,12 @@
+import useCareLineNavigate from "../../hooks/useCareLineNavigate";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import api from "../../services/api";
 import Button from "../../components/ui/Button";
 
 export default function IntervencaoCardiometabolica() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const navigate = useCareLineNavigate();
 
   const [tipo, setTipo] = useState("ajuste_medicamentoso");
   const [prioridade, setPrioridade] = useState("moderada");
