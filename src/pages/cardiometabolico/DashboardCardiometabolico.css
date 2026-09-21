@@ -1,0 +1,6 @@
+.cardio-actions, .cardio-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.cardio-priority { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; margin-bottom: 16px; overflow-wrap: anywhere; }
+.cardio-priority h3 { margin-top: 0; }
+.cardio-priority p { line-height: 1.6; }
+.cardio-pagination { justify-content: space-between; }
+@media (max-width: 700px) { .cardio-actions > *, .cardio-pagination > * { width: 100%; } .cardio-priority { padding: 16px; } }
