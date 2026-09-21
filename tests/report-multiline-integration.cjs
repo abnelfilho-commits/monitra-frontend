@@ -16,12 +16,12 @@ const FRONT='http://127.0.0.1:5173', API='http://127.0.0.1:8020';
   const headers={Authorization:'Bearer '+token};
   for(const [line,id] of [['NEURO',1],['CARDIO',2],['NEURO',3],['CARDIO',3]]) {
    await page.goto(FRONT+(line==='NEURO'?`/pacientes/${id}`:`/cardiometabolico/pacientes/${id}`));
-   await page.getByRole('button',{name:'📄 Gerar Relatório',exact:true}).waitFor();
-   await page.getByLabel('Início do relatório').fill('2026-09-01');
-   await page.getByLabel('Fim do relatório').fill('2026-09-30');
+   await page.getByRole('button',{name:'Gerar relatório',exact:true}).waitFor();
+   await page.getByLabel('Data inicial').fill('2026-09-01');
+   await page.getByLabel('Data final').fill('2026-09-30');
    const responsePromise=page.waitForResponse(r=>new URL(r.url()).pathname===`/pacientes/${id}/relatorio-pdf`);
    const downloadPromise=page.waitForEvent('download');
-   await page.getByRole('button',{name:'📄 Gerar Relatório',exact:true}).click();
+   await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
    const response=await responsePromise, download=await downloadPromise;
    assert.equal(response.status(),200);
    const params=new URL(response.url()).searchParams;
@@ -38,8 +38,8 @@ const FRONT='http://127.0.0.1:5173', API='http://127.0.0.1:8020';
    ['/pacientes/3/relatorio-pdf?care_line=CARDIO&period_start=2026-10-01&period_end=2026-09-01',422]])
     assert.equal((await page.request.get(API+path,{headers})).status(),status);
   assert.equal((await page.request.get(API+'/pacientes/3/relatorio-pdf?care_line=CARDIO')).status(),401);
-  await page.getByLabel('Início do relatório').fill('2026-10-01');
-  await page.getByRole('button',{name:'📄 Gerar Relatório',exact:true}).click();
+  await page.getByLabel('Data inicial').fill('2026-10-01');
+  await page.getByRole('button',{name:'Gerar relatório',exact:true}).click();
   await page.getByRole('alert').filter({hasText:'Período inválido.'}).waitFor();
   assert.deepEqual(errors,[]);
   console.log('PASS authorization, ambiguity, invalid period and frontend errors');

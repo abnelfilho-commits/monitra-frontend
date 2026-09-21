@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { baixarRelatorioPacientePdf } from "../services/pacientes";
 
+import "./ReportDownload.css";
+
 export default function ReportDownload({ patientId, careLine }) {
+  const headingId = useId();
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,10 +23,13 @@ export default function ReportDownload({ patientId, careLine }) {
     } catch { setError("Não foi possível gerar o relatório. Verifique o período e seu acesso."); }
     finally { setBusy(false); }
   }
-  return <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-    <label>Início do relatório <input type="date" value={start} onChange={e => setStart(e.target.value)} /></label>
-    <label>Fim do relatório <input type="date" value={end} onChange={e => setEnd(e.target.value)} /></label>
-    <button type="button" disabled={busy} onClick={download}>{busy ? "Gerando…" : "📄 Gerar Relatório"}</button>
+  return <section className="report-period" aria-labelledby={headingId}>
+    <h2 id={headingId}>Período do relatório</h2>
+    <div className="report-period__fields">
+    <label>Data inicial <input type="date" value={start} onChange={e => setStart(e.target.value)} /></label>
+    <label>Data final <input type="date" value={end} onChange={e => setEnd(e.target.value)} /></label>
+    <button type="button" disabled={busy} onClick={download}>{busy ? "Gerando…" : "Gerar relatório"}</button>
+    </div>
     {error && <span role="alert">{error}</span>}
-  </div>;
+  </section>;
 }
