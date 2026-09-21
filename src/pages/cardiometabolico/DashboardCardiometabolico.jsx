@@ -13,6 +13,7 @@ import PageHeader from '../../components/ui/PageHeader';
 import CardWidget from '../../components/ui/CardWidget';
 import StatCard from '../../components/ui/StatCard';
 import './DashboardCardiometabolico.css';
+import CardioProfessionalCockpit from './CardioProfessionalCockpit';
 
 function clinicalDate(value) {
   if (value == null || value === '') return 'Não iniciado';
@@ -39,10 +40,20 @@ export default function DashboardCardiometabolico({ professional = false }) {
     const request = professionalMode
       ? obterCockpitProfissional(2, offset, 20).then(result => result.composition)
       : obterDashboardAnalytics(offset);
-    request.then(result => { if (active) setData({offset, result}); })
+    request.then(result => {
+      if (active) {
+        setData({offset, result});
+        if (professionalMode) setError(null);
+      }
+    })
       .catch(() => { if (active) setError(offset); });
     return () => { active = false; };
   }, [offset, professionalMode]);
+  if (professionalMode) return <CardioProfessionalCockpit
+    data={data} loading={loaded?.offset !== offset && error !== offset} error={error === offset}
+    name={user?.nome} offset={offset}
+    onPage={next => { setError(null); setData(null); setOffset(next); }}
+    onPatient={id => navigate(`/cardiometabolico/pacientes/${id}?care_line=2`)} />;
   const has = capability => data.capabilities[capability] === 'ACTIVE';
   return <PageLayout>
     <PageHeader title="Bem-vindo ao Cockpit Cardiometabólico"

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const FRONT=process.env.COCKPIT_FRONT_URL || 'http://127.0.0.1:5176';
 const neuro={care_line:'NEURO',total_pacientes:2,pacientes_prioritarios:[{paciente_id:11,nome:'Synthetic Neuro',risco_atual:'alto_risco',tendencia:'piora',status_resumido:'Neuro unchanged',pontuacao_risco:8}],atividades_recentes:[{id:1,paciente_id:11,paciente_nome:'Synthetic Neuro',tipo:'REGISTRO_DIARIO',data:'2026-09-20T12:00:00Z',descricao:'Synthetic Neuro activity'}]};
-const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,critico:1,alto_risco:0,moderado:0,baixo:0,indisponivel:2},pacientes_criticos:[{id:22,nome:'Synthetic Cardio',risco:'critico',tendencia:null,motivo_principal:'RISCO_CLINICO_CRITICO',sinais:['RISCO_CLINICO_CRITICO'],continuidade:{classification:'REGULAR'},resumo:'Cardio preserved',ultima_atualizacao:'2026-07-08'}],pagination:{offset:0,limit:20,total:1},recent_activity:[],evolution:{com_registro:1,sem_registro:2},continuidade:{REGULAR:1,ATENCAO:0,CRITICA:0},capabilities:{daily_record:'ACTIVE',interventions:'ACTIVE',timeline:'ACTIVE'}}};
+const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,critico:1,alto_risco:0,moderado:0,baixo:0,indisponivel:2},pacientes_criticos:[{id:22,nome:'Synthetic Cardio',risco:'critico',tendencia:null,motivo_principal:'RISCO_CLINICO_CRITICO',sinais:['RISCO_CLINICO_CRITICO'],continuidade:{classification:'REGULAR'},resumo:'Cardio preserved',ultima_atualizacao:'2026-07-08'}],pagination:{offset:0,limit:20,total:1},recent_activity:[],evolution:{com_registro:1,sem_registro:2},continuidade:{REGULAR:1,ATENCAO:0,CRITICA:0,NAO_INICIADA:2},capabilities:{daily_record:'ACTIVE',interventions:'ACTIVE',timeline:'ACTIVE'}}};
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true});
  let passed=0;
@@ -49,7 +49,7 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
   assert.ok(requests.slice(before).some(r=>r.includes('care_line=2')));
   assert.ok(!requests.slice(before).some(r=>/sessoes|pts|agenda|analytics/.test(r)));
   for(const name of ['PTS','Planejamento PTS','Agenda','Sessões Assistenciais'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
-  await page.getByText('Tendência: indisponível',{exact:true}).first().waitFor();passed++;
+  assert.equal(await page.getByText('Tendência: indisponível',{exact:true}).count(),0);passed++;
   await page.getByRole('button',{name:'Abrir prontuário',exact:true}).click();
   assert.ok(page.url().endsWith('/cardiometabolico/pacientes/22?care_line=2'));passed++;
   await page.goto(FRONT+'/dashboard?care_line=1');await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
@@ -161,7 +161,8 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
   await page.goto(FRONT+'/dashboard?care_line=2');
   await page.getByText('Último registro clínico: 08/07/2026',{exact:true}).waitFor();
   assert.equal(cardio.composition.pacientes_criticos[0].ultima_atualizacao,'2026-07-08');
-  await page.getByText('Risco clínico: critico · Continuidade: REGULAR',{exact:true}).waitFor();passed++;
+  assert.match(await page.locator('.cardio-v2-signals').innerText(),/Risco clínico: Crítico/);
+  assert.match(await page.locator('.cardio-v2-signals').innerText(),/Continuidade: Regular/);passed++;
   cardioResponse=structuredClone(cardio);cardioResponse.composition.pagination.total=21;
   await page.reload();await page.getByRole('button',{name:'Próxima',exact:true}).click();
   await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).waitFor();
@@ -173,18 +174,18 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
   cardioResponse.composition.pacientes_criticos=[];
   cardioResponse.composition.capabilities={daily_record:'PLANNED',interventions:'UNAVAILABLE',timeline:'UNAVAILABLE'};
   await page.goto(FRONT+'/dashboard?care_line=2');
-  await page.getByText('Nenhum paciente prioritário nesta página.',{exact:true}).waitFor();
+  await page.getByText('Nenhum paciente prioritário nesta página',{exact:true}).waitFor();
   for(const name of ['Registro Diário','Intervenções'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
   assert.equal(await page.getByRole('heading',{name:'Atividade recente',exact:true}).count(),0);passed++;
   cockpitFailure=true;await page.reload();
   await page.getByRole('alert').filter({hasText:'Não foi possível carregar o Cockpit.'}).waitFor();
-  await page.getByRole('heading',{name:'Bem-vindo ao Cockpit Cardiometabólico'}).waitFor();
+  await page.getByRole('heading',{name:'Cockpit Assistencial',exact:true}).waitFor();
   assert.equal(await page.locator('.stat-card').count(),0);passed++;
   cockpitFailure=false;cardioResponse=structuredClone(cardio);
   cardioResponse.composition.pacientes_criticos[0].risco=null;
   cardioResponse.composition.pacientes_criticos[0].ultima_atualizacao=null;
   await page.reload();await page.getByText('Último registro clínico: Não iniciado',{exact:true}).waitFor();
-  await page.getByText('Risco clínico: Indisponível · Continuidade: REGULAR',{exact:true}).waitFor();passed++;
+  assert.match(await page.locator('.cardio-v2-signals').innerText(),/Risco clínico: Sem leitura/);passed++;
   for(const width of [390,1280]){
    await page.setViewportSize({width,height:900});
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
