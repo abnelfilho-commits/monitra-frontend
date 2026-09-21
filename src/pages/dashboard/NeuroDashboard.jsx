@@ -19,72 +19,34 @@ export default function NeuroDashboard() {
   const [pacientes, setPacientes] = useState([]);
   const [atividadesRecentes, setAtividadesRecentes] = useState([]);
   const [sessoesAssistenciais, setSessoesAssistenciais] = useState([]);
-  const [loadingPrioridades, setLoadingPrioridades] = useState(true);
+  const [cockpitStatus, setCockpitStatus] = useState("loading");
+  const [agendaStatus, setAgendaStatus] = useState("loading");
   const [totalPacientes, setTotalPacientes] = useState(0);
 
   useEffect(() => {
     let ativo = true;
-
-    async function carregarDados() {
-      try {
-        setLoadingPrioridades(true);
-
-        const [cockpitData, sessoesData] = await Promise.all([
-          obterCockpitProfissional(1),
-          listarMinhasSessoesAssistenciais(),
-        ]);
-
-        if (!ativo) return;
-        const pacientesPrioritariosData = Array.isArray(
-          cockpitData?.pacientes_prioritarios
-        )
-          ? cockpitData.pacientes_prioritarios
-          : [];
-
-        const atividades = Array.isArray(
-          cockpitData?.atividades_recentes
-        )
-          ? cockpitData.atividades_recentes
-          : [];
-
-        const sessoesArray = Array.isArray(sessoesData)
-          ? sessoesData
-          : [];
-
-        setTotalPacientes(
-          Number(cockpitData?.total_pacientes || 0)
-        );
-
-        setPacientes(pacientesPrioritariosData);
-        setAtividadesRecentes(atividades);
-        setSessoesAssistenciais(sessoesArray);
-
-      } catch (error) {
-        console.error(
-          "Erro ao carregar dados do Cockpit do Profissional:",
-          error
-        );
-
-        if (!ativo) {
-          return;
-        }
-
-        setPacientes([]);
-        setAtividadesRecentes([]);
-        setSessoesAssistenciais([]);
-        setTotalPacientes(0);
-      } finally {
-        if (ativo) {
-          setLoadingPrioridades(false);
-        }
+    obterCockpitProfissional(1).then(data => {
+      if (!ativo) return;
+      if (!data || !Number.isFinite(data.total_pacientes) ||
+          !Array.isArray(data.pacientes_prioritarios) || !Array.isArray(data.atividades_recentes)) {
+        throw new Error("Resposta de Cockpit inválida");
       }
-    }
-
-    carregarDados();
-
-    return () => {
-      ativo = false;
-    };
+      setTotalPacientes(data.total_pacientes);
+      setPacientes(data.pacientes_prioritarios);
+      setAtividadesRecentes(data.atividades_recentes);
+      setCockpitStatus("ready");
+    }).catch(() => {
+      if (ativo) setCockpitStatus("error");
+    });
+    listarMinhasSessoesAssistenciais().then(data => {
+      if (!ativo) return;
+      if (!Array.isArray(data)) throw new Error("Resposta de Agenda inválida");
+      setSessoesAssistenciais(data);
+      setAgendaStatus("ready");
+    }).catch(() => {
+      if (ativo) setAgendaStatus("error");
+    });
+    return () => { ativo = false; };
   }, []);
 
   const nomeProfissional =
@@ -151,20 +113,27 @@ export default function NeuroDashboard() {
 
 return (
   <PageLayout>
-    <WelcomeWidget
+    {cockpitStatus === "ready" && <WelcomeWidget
       nome={nomeProfissional}
       totalPacientes={totalPacientes}
       totalPrioridades={pacientes.length}
-    />
+    />}
 
     <SummaryCards
-      totalPacientes={totalPacientes}
-      atendimentosHoje={sessoesHoje.length}
-      realizadosHoje={atendimentosRealizadosHoje}
-      pendentesHoje={atendimentosPendentes}
+      totalPacientes={cockpitStatus === "ready" ? totalPacientes : "Indisponível"}
+      atendimentosHoje={agendaStatus === "ready" ? sessoesHoje.length : "Indisponível"}
+      realizadosHoje={agendaStatus === "ready" ? atendimentosRealizadosHoje : "Indisponível"}
+      pendentesHoje={agendaStatus === "ready" ? atendimentosPendentes : "Indisponível"}
     />
 
-    {proximoAtendimento && (
+    {cockpitStatus === "loading" && <p role="status">Carregando Cockpit...</p>}
+    {cockpitStatus === "error" && <p role="alert">Não foi possível carregar os pacientes, prioridades e atividades do Cockpit.</p>}
+    <section aria-label="Agenda Assistencial">
+      {agendaStatus === "loading" && <p role="status">Carregando Agenda Assistencial...</p>}
+      {agendaStatus === "error" && <p role="alert">Agenda Assistencial indisponível. Não foi possível carregar suas sessões.</p>}
+      {agendaStatus === "ready" && !sessoesAssistenciais.length && <p>Nenhuma sessão na Agenda Assistencial.</p>}
+    </section>
+    {agendaStatus === "ready" && proximoAtendimento && (
       <section
         style={{
           marginTop: 24,
@@ -255,15 +224,16 @@ return (
 
     <QuickActions />
 
+    {cockpitStatus === "ready" && <>
     <PriorityToday
       pacientes={pacientes}
-      loading={loadingPrioridades}
     />
 
     <RecentActivity
       items={atividadesRecentes}
       maxItems={5}
     />
+    </>}
 </PageLayout>
   );
 }

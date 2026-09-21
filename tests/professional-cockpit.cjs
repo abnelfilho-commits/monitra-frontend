@@ -9,7 +9,7 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
  let passed=0;
  try {
   const page=await browser.newPage();page.setDefaultTimeout(10000);
-  let modules=[1,2],hold=null;const requests=[],errors=[],pending=[];
+  let modules=[1,2],hold=null,sessionFailure=false,cockpitFailure=false,empty=false,sessionHold=false,sessionRows=[];const requests=[],errors=[],pending=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   await page.route('**/*',async route=>{
@@ -21,7 +21,13 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
    if(u.pathname==='/cockpit/profissional'){
     const line=u.searchParams.get('care_line');assert.ok(['1','2'].includes(line));
     if(line===hold){await new Promise(resolve=>pending.push(resolve));}
-    return json(line==='1'?neuro:cardio);
+    if(cockpitFailure)return route.fulfill({status:500,contentType:'application/json',body:'{}'});
+    return json(line==='1'?(empty?{...neuro,total_pacientes:0,pacientes_prioritarios:[],atividades_recentes:[]}: {...neuro,total_pacientes:7}):cardio);
+   }
+   if(u.pathname==='/sessoes-assistenciais/minhas'){
+    if(sessionHold)await new Promise(resolve=>pending.push(resolve));
+    if(sessionFailure)return route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({detail:'Acesso negado (clínica diferente)'})});
+    return json(sessionRows);
    }
    return json([]);
   });
@@ -68,6 +74,43 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
    await page.getByRole('heading',{name:id===1?'Synthetic Neuro':'Synthetic Cardio',exact:true}).first().waitFor();
    assert.equal(await page.locator('select option').count(),2);passed++;
   }
+  modules=[1,2];sessionFailure=true;
+  await page.goto(FRONT+'/dashboard?care_line=1');
+  await page.getByText('Agenda Assistencial indisponível.',{exact:false}).waitFor();
+  assert.match(await page.locator('.welcome-widget__message').innerText(),/7 pacientes/);
+  await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
+  await page.getByText('Synthetic Neuro activity',{exact:false}).first().waitFor();
+  assert.equal(await page.getByText('Tudo tranquilo por enquanto',{exact:false}).count(),0);passed++;
+  // A pending auxiliary request cannot hold back successful cockpit data.
+  sessionHold=true;
+  await page.goto(FRONT+'/dashboard?care_line=1');
+  await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
+  assert.match(await page.locator('.welcome-widget__message').innerText(),/7 pacientes/);
+  await page.getByText('Carregando Agenda Assistencial...',{exact:true}).waitFor();
+  sessionHold=false;pending.splice(0).forEach(resolve=>resolve());
+  await page.getByText('Agenda Assistencial indisponível.',{exact:false}).waitFor();passed++;
+  sessionFailure=false;empty=true;
+  await page.goto(FRONT+'/dashboard?care_line=1');
+  await page.getByText('Nenhuma sessão na Agenda Assistencial.',{exact:true}).waitFor();
+  assert.match(await page.locator('.welcome-widget__message').innerText(),/0 pacientes/);
+  assert.equal(await page.getByRole('alert').count(),0);passed++;
+  cockpitFailure=true;
+  await page.goto(FRONT+'/dashboard?care_line=1');
+  await page.getByText('Não foi possível carregar os pacientes, prioridades e atividades do Cockpit.',{exact:true}).waitFor();
+  assert.equal(await page.locator('.welcome-widget__message').count(),0);
+  assert.equal(await page.getByText('Tudo tranquilo por enquanto',{exact:false}).count(),0);
+  await page.getByText('Nenhuma sessão na Agenda Assistencial.',{exact:true}).waitFor();passed++;
+  sessionRows=[{id:91,paciente:'Synthetic scheduled',data_agendada:'2099-01-01',hora_inicio:'10:00',status:'AGENDADA',atividade:'Synthetic activity'}];
+  await page.goto(FRONT+'/dashboard?care_line=1');
+  await page.getByText('Não foi possível carregar os pacientes, prioridades e atividades do Cockpit.',{exact:true}).waitFor();
+  await page.getByText('Próximo atendimento',{exact:true}).waitFor();
+  await page.getByText('Synthetic scheduled',{exact:false}).waitFor();passed++;
+  cockpitFailure=false;empty=false;
+  await page.goto(FRONT+'/dashboard?care_line=1');
+  await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
+  await page.getByText('Synthetic scheduled',{exact:false}).waitFor();
+  assert.match(await page.locator('.welcome-widget__message').innerText(),/7 pacientes/);
+  assert.equal(await page.getByRole('alert').count(),0);passed++;
   assert.deepEqual(errors,[]);console.log(`PASS: ${passed} browser scenarios; explicit context, isolation, widgets, links, delayed responses, single/multi-line.`);
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});
