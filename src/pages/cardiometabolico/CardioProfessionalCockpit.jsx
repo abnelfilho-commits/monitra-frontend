@@ -1,5 +1,8 @@
 import PageLayout from '../../components/layouts/PageLayout';
 import PageHeader from '../../components/ui/PageHeader';
+import WelcomeWidget from '../dashboard/widgets/WelcomeWidget';
+import '../dashboard/widgets/PriorityToday/PriorityToday.css';
+import '../dashboard/widgets/RecentActivity/RecentActivity.css';
 import WidgetGrid from '../../components/layouts/WidgetGrid';
 import StatCard from '../../components/ui/StatCard';
 import CardWidget from '../../components/ui/CardWidget';
@@ -15,6 +18,10 @@ const reasons = {
   CONTINUIDADE_ATENCAO: 'Continuidade em atenção',
 };
 const counts = [['Crítico', 'critico'], ['Alto', 'alto_risco'], ['Moderado', 'moderado'], ['Baixo', 'baixo'], ['Sem leitura', 'indisponivel']];
+const riskTones = { critico: 'danger', alto_risco: 'danger', moderado: 'warning', baixo: 'success', indisponivel: 'neutral' };
+const continuityTones = { REGULAR: 'success', ATENCAO: 'warning', CRITICA: 'danger', NAO_INICIADA: 'neutral' };
+const reasonTones = { RISCO_CLINICO_CRITICO: 'danger', RISCO_CLINICO_ALTO: 'danger', CONTINUIDADE_CRITICA: 'danger', RISCO_CLINICO_MODERADO: 'warning', CONTINUIDADE_ATENCAO: 'warning' };
+const eventIcons = { LONGITUDINAL_RECORD: '📋', GENERIC_INTERVENTION: '🤝', CARDIO_INTERVENTION: '🤝', DIAGNOSIS: '📝' };
 const number = value => typeof value === 'number' && Number.isFinite(value)
   ? value.toLocaleString('pt-BR') : 'Não disponível';
 function clinicalDate(value) {
@@ -33,47 +40,51 @@ function validComposition(data) {
 }
 
 function RecentActivity({ events }) {
-  return events.length ? <div className="cardio-v2-events">{events.map(event => <article key={event.id}>
-    <h3>{event.tipo}{event.nome ? ` — ${event.nome}` : ''}</h3>
-    <p>{event.data ? `Data clínica: ${clinicalDate(event.data)}` : 'Data clínica não informada'}
-      {event.created_at ? ` · Registrado em: ${new Date(event.created_at).toLocaleString('pt-BR')}` : ''}</p>
-    {event.origem && <p>Canal: {event.origem}</p>}
-    <p>{event.actor ? `Autoria: ${event.actor.name ?? `${event.actor.namespace} #${event.actor.id}`}` : 'Autoria não disponível'}</p>
+  return events.length ? <div className="cardio-v2-events recent-activity__list">{events.map(event => <article key={event.id} className="recent-activity__item">
+    <span className="recent-activity__marker recent-activity__marker--blue" aria-hidden="true">{eventIcons[event.id.split(':')[0]] ?? '📌'}</span>
+    <div className="recent-activity__content">
+      <span className="recent-activity__type">{event.tipo}</span>
+      <h3 className="recent-activity__patient">{event.nome || 'Paciente não informado'}</h3>
+      {event.descricao && <p className="recent-activity__description">{event.descricao}</p>}
+      <p className="cardio-v2-note">{event.data ? `Data clínica: ${clinicalDate(event.data)}` : 'Data clínica não informada'}
+        {event.created_at ? ` · Registrado em: ${new Date(event.created_at).toLocaleString('pt-BR')}` : ''}</p>
+      {event.origem && <p className="cardio-v2-note">Canal: {event.origem}</p>}
+      <p className="cardio-v2-note">{event.actor ? `Autoria: ${event.actor.name ?? `${event.actor.namespace} #${event.actor.id}`}` : 'Autoria não disponível'}</p>
+    </div>
   </article>)}</div> : <p>Nenhum evento encontrado.</p>;
 }
 
 export default function CardioProfessionalCockpit({ data, name, loading, error, offset, onPage, onPatient }) {
   const invalid = !loading && !error && !validComposition(data);
   return <PageLayout><div className="cardio-v2">
-    <PageHeader title="Cockpit Assistencial" description="Linha ativa: Cardiometabólico">
-      <p className="cardio-v2-greeting">{name ? `Olá, ${name}.` : 'Olá.'}</p>
-      <p>Acompanhe sua população cardiometabólica e identifique onde sua atenção é mais necessária.</p>
-    </PageHeader>
+    {!loading && !error && !invalid ? <WelcomeWidget
+      nome={name} totalPacientes={data.indicadores.total_pacientes} totalPrioridades={data.pagination.total}
+    /> : <PageHeader title="Cockpit Assistencial" description="Linha ativa: Cardiometabólico" />}
     {error || invalid ? <div className="cardio-v2-state" role="alert">
       <p>Não foi possível carregar o Cockpit.</p>
       <p>Os dados da população não estão disponíveis neste momento.</p>
       {offset > 0 && <Button variant="secondary" onClick={() => onPage(0)}>Voltar à primeira página</Button>}
     </div> : loading ? <div className="cardio-v2-state" role="status" aria-live="polite">Processando…</div> : <>
-      <CardWidget title="Panorama da população" description="Distribuição da leitura clínica atual.">
+      <CardWidget icon="👥" title="Panorama da população" description="Distribuição da leitura clínica atual.">
         <div className="cardio-v2-panorama">
-          <StatCard title="Total de pacientes" value={number(data.indicadores.total_pacientes)} description="Ativos na Linha e no seu escopo" />
+          <StatCard icon="👥" tone="success" title="Total de pacientes" value={number(data.indicadores.total_pacientes)} description="Ativos na Linha e no seu escopo" />
           <WidgetGrid minItemWidth={130}>
-            {counts.map(([label, key]) => <StatCard key={key} title={label} value={number(data.indicadores[key])} />)}
+            {counts.map(([label, key]) => <StatCard key={key} tone={riskTones[key]} title={label} value={number(data.indicadores[key])} />)}
           </WidgetGrid>
         </div>
         <p className="cardio-v2-note">Sem leitura: leitura clínica indisponível; não significa baixo risco.</p>
         {data.indicadores.total_pacientes === 0 && <EmptyState compact icon="—" title="Nenhum paciente ativo nesta Linha no seu escopo" />}
       </CardWidget>
-      <CardWidget title="Continuidade do acompanhamento" description="Recência dos registros, independente do risco clínico.">
-        <dl className="cardio-v2-continuity">{Object.entries(continuity).map(([key, label]) => <div key={key}>
+      <CardWidget icon="📅" title="Continuidade do acompanhamento" description="Recência dos registros, independente do risco clínico.">
+        <dl className="cardio-v2-continuity">{Object.entries(continuity).map(([key, label]) => <div key={key} className={`cardio-v2-continuity--${continuityTones[key]}`}>
           <dt>{label}</dt><dd>{number(data.continuidade[key])}</dd>
         </div>)}</dl>
       </CardWidget>
-      <CardWidget title="Sua atenção hoje" description="Prioridade operacional. O motivo principal vem dos sinais institucionais de risco e continuidade.">
+      <CardWidget icon="🎯" variant="attention" title="Sua atenção hoje" description="Prioridade operacional. O motivo principal vem dos sinais institucionais de risco e continuidade.">
         {!data.pacientes_criticos.length && <EmptyState compact icon="—" title="Nenhum paciente prioritário nesta página" />}
-        <div className="cardio-v2-priorities">{data.pacientes_criticos.map(patient => <article key={patient.id} className="cardio-v2-patient">
+        <div className="cardio-v2-priorities">{data.pacientes_criticos.map(patient => <article key={patient.id} className={`cardio-v2-patient priority-today__item--${reasonTones[patient.motivo_principal] ?? 'neutral'}`}>
           <h3>{patient.nome}</h3>
-          <p className="cardio-v2-reason">{reasons[patient.motivo_principal] ?? 'Motivo não disponível'}</p>
+          <p className={`cardio-v2-reason priority-today__badge priority-today__badge--${reasonTones[patient.motivo_principal] ?? 'neutral'}`}>{reasons[patient.motivo_principal] ?? 'Motivo não disponível'}</p>
           <div className="cardio-v2-signals">
             <span>Risco clínico: <strong>{patient.risco == null ? 'Sem leitura' : (risks[patient.risco] ?? 'Não disponível')}</strong></span>
             <span>Continuidade: <strong>{continuity[patient.continuidade?.classification] ?? 'Não disponível'}</strong></span>
@@ -88,7 +99,7 @@ export default function CardioProfessionalCockpit({ data, name, loading, error, 
             <div><dt>Peso (kg)</dt><dd>{number(patient.peso)}</dd></div>
             <div><dt>IMC (kg/m²)</dt><dd>{patient.imc_availability === 'available' ? number(patient.imc) : 'Não disponível'}</dd></div>
           </dl>
-          <Button variant="secondary" onClick={() => onPatient(patient.id)}>Abrir prontuário</Button>
+          <Button variant="secondary" onClick={() => onPatient(patient.id)}>Ver prontuário</Button>
         </article>)}</div>
         <nav className="cardio-v2-pagination" aria-label="Páginas de prioridade">
           <Button variant="secondary" disabled={offset === 0} onClick={() => onPage(Math.max(0, offset - 20))}>Anterior</Button>
@@ -96,13 +107,13 @@ export default function CardioProfessionalCockpit({ data, name, loading, error, 
           <Button variant="secondary" disabled={offset + 20 >= data.pagination.total} onClick={() => onPage(offset + 20)}>Próxima</Button>
         </nav>
       </CardWidget>
-      {data.capabilities.timeline === 'ACTIVE' && <CardWidget title="Atividade recente" description="Veja o que aconteceu recentemente com seus pacientes.">
+      {data.capabilities.timeline === 'ACTIVE' && <CardWidget icon="🕒" title="Atividade recente" description="Veja o que aconteceu recentemente com seus pacientes.">
         <RecentActivity events={data.recent_activity} />
       </CardWidget>}
-      <CardWidget title="Acompanhamento da população" description="Cobertura de Registro Diário, sem interpretação de evolução clínica.">
+      <CardWidget icon="📋" title="Acompanhamento da população" description="Cobertura de Registro Diário, sem interpretação de evolução clínica.">
         <WidgetGrid minItemWidth={200}>
-          <StatCard title="Com Registro Diário" value={number(data.evolution.com_registro)} />
-          <StatCard title="Sem Registro Diário" value={number(data.evolution.sem_registro)} />
+          <StatCard icon="📋" tone="success" title="Com Registro Diário" value={number(data.evolution.com_registro)} />
+          <StatCard icon="📋" tone="neutral" title="Sem Registro Diário" value={number(data.evolution.sem_registro)} />
         </WidgetGrid>
       </CardWidget>
     </>}

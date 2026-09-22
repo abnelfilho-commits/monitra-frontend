@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const FRONT = process.env.COCKPIT_FRONT_URL || 'http://127.0.0.1:5176';
-const ARTIFACTS = '/private/tmp/cardio-cockpit-v2';
+const ARTIFACTS = '/private/tmp/cardio-cockpit-v21';
 const fs = require('node:fs');
 const { execFileSync } = require('node:child_process');
 const timelinePath = 'src/pages/cardiometabolico/TimelineCardiometabolico.jsx';
@@ -42,7 +42,7 @@ const base = {indicadores:{total_pacientes:8,critico:1,alto_risco:1,moderado:2,b
   const u=new URL(route.request().url());if(u.origin===FRONT)return route.continue();
   requests.push(u.pathname+u.search);
   const json=data=>route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
-  if(u.pathname==='/me')return json({id:99,nome:'Profissional sintético',perfil:'PROFISSIONAL',modulos:[{id:2,nome:'Cardiometabólico'}]});
+  if(u.pathname==='/me')return json({id:99,nome:'Synthetic Professional',perfil:'PROFISSIONAL',modulos:[{id:2,nome:'Cardiometabólico'}]});
   if(u.pathname==='/cockpit/profissional'){
    assert.equal(u.searchParams.get('care_line'),'2');assert.equal(u.searchParams.get('limit'),'20');
    if(hold)await new Promise(resolve=>pending.push(resolve));
@@ -56,7 +56,13 @@ const base = {indicadores:{total_pacientes:8,critico:1,alto_risco:1,moderado:2,b
  const load=async()=>{await page.goto(FRONT+'/dashboard?care_line=2');await page.getByRole('heading',{name:'Panorama da população',exact:true}).waitFor();};
  try {
   await load();
-  assert.deepEqual(await page.locator('.cardio-v2 .widget-header__title').allTextContents(),['Panorama da população','Continuidade do acompanhamento','Sua atenção hoje','Atividade recente','Acompanhamento da população']);passed++;
+  // Vite development uses React StrictMode: baseline mounts each effect twice.
+  assert.deepEqual(requests, ['/me','/me','/cockpit/profissional?care_line=2&offset=0&limit=20','/cockpit/profissional?care_line=2&offset=0&limit=20']);passed++;
+  assert.match(await page.locator('.card-widget--welcome .widget-header__title').innerText(), /^(Bom dia|Boa tarde|Boa noite), Synthetic!$/);passed++;
+  assert.equal(await page.locator('.welcome-widget__message strong').innerText(),'8 pacientes');
+  assert.match(await page.locator('.welcome-widget__priority-message').innerText(),/6 pacientes merecem/);passed++;
+  assert.match(await page.locator('.cardio-v2-events').innerText(),/Intervenção Cardio sintética/);passed++;
+  assert.deepEqual(await page.locator('.cardio-v2 > .card-widget:not(.card-widget--welcome) .widget-header__title').allTextContents(),['Panorama da população','Continuidade do acompanhamento','Sua atenção hoje','Atividade recente','Acompanhamento da população']);passed++;
   const panorama=section('Panorama da população');
   assert.deepEqual(await panorama.locator('.stat-card__value').allTextContents(),['8','1','1','2','2','2']);
   assert.match(await panorama.innerText(),/não significa baixo risco/);passed++;
@@ -84,7 +90,7 @@ const base = {indicadores:{total_pacientes:8,critico:1,alto_risco:1,moderado:2,b
   assert.match(await page.locator('.cardio-v2-events article').first().innerText(),/Canal: RESPONSAVEL_APP/);
   assert.match(await page.locator('.cardio-v2-events article').first().innerText(),/Autoria: responsaveis #91/);passed++;
   assert.match(await section('Atividade recente').innerText(),/Veja o que aconteceu recentemente com seus pacientes\./);
-  assert.deepEqual(await page.locator('.cardio-v2-events h3').allTextContents(),events.map(event=>`${event.tipo} — ${event.nome}`));
+  assert.deepEqual(await page.locator('.cardio-v2-events h3').allTextContents(),events.map(event=>event.nome));
   assert.equal(await page.locator('.cardio-v2-events details').count(),0);passed++;
   const coverage=section('Acompanhamento da população');
   assert.deepEqual(await coverage.locator('.stat-card__value').allTextContents(),['7','1']);
@@ -96,12 +102,12 @@ const base = {indicadores:{total_pacientes:8,critico:1,alto_risco:1,moderado:2,b
    const fits=await page.locator('.cardio-v2').evaluate(el=>el.scrollWidth<=el.clientWidth);
    if(width>=768)assert.equal(fits,true);
    else console.log('390px integrated shell: content fits =',fits,'(fixed sidebar unchanged)');
-   await rows.first().getByRole('button',{name:'Abrir prontuário'}).focus();
+   await rows.first().getByRole('button',{name:'Ver prontuário'}).focus();
    assert.equal(await rows.first().getByRole('button').evaluate(el=>el===document.activeElement),true);
    await page.screenshot({path:`${ARTIFACTS}/population-${width}.png`,fullPage:true});passed++;
   }
   await page.setViewportSize({width:1280,height:1000});
-  await rows.first().getByRole('button',{name:'Abrir prontuário'}).click();
+  await rows.first().getByRole('button',{name:'Ver prontuário'}).click();
   assert.equal(new URL(page.url()).pathname,'/cardiometabolico/pacientes/21');
   assert.equal(new URL(page.url()).searchParams.get('care_line'),'2');passed++;
   response=structuredClone(base);response.pacientes_criticos[0].imc_availability='unavailable_same_observation_units_required';
@@ -158,7 +164,7 @@ const base = {indicadores:{total_pacientes:8,critico:1,alto_risco:1,moderado:2,b
    const {default:Cockpit}=await import('/src/pages/cardiometabolico/CardioProfessionalCockpit.jsx');
    const {TimelineEvents}=await import('/src/pages/cardiometabolico/TimelineCardiometabolico.jsx');
    const props=${JSON.stringify(visual)};
-   ReactDOM.createRoot(document.getElementById('root')).render(props.defaultTimeline ? React.createElement(TimelineEvents,{events:props.events}) : React.createElement(Cockpit,{...props,name:'Profissional sintético',offset:0,onPage:()=>{},onPatient:()=>{}}));
+   ReactDOM.createRoot(document.getElementById('root')).render(props.defaultTimeline ? React.createElement(TimelineEvents,{events:props.events}) : React.createElement(Cockpit,{...props,name:'Synthetic Professional',offset:0,onPage:()=>{},onPatient:()=>{}}));
   </script>`}));
   const zero=structuredClone(base);
   zero.indicadores=Object.fromEntries(Object.keys(base.indicadores).map(k=>[k,0]));
@@ -168,7 +174,7 @@ const base = {indicadores:{total_pacientes:8,critico:1,alto_risco:1,moderado:2,b
    await page.setViewportSize({width,height:1000});
    for(const [state,props] of [['population',{data:base}],['zero',{data:zero}],['loading',{loading:true}],['error',{error:true}]]){
     visual=props;await page.goto(FRONT+'/__cardio-content-test');
-    await page.getByRole('heading',{name:'Cockpit Assistencial',exact:true}).waitFor();
+    await page.locator('.cardio-v2').waitFor();
     assert.equal(await page.locator('.cardio-v2').evaluate(el=>el.scrollWidth<=el.clientWidth),true);
     await page.screenshot({path:`${ARTIFACTS}/content-${state}-${width}.png`,fullPage:true});passed++;
    }

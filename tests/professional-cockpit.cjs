@@ -42,6 +42,8 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
   await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
   assert.ok(requests.some(r=>r.includes('/cockpit/profissional?')&&r.includes('care_line=1')));
   assert.ok(requests.some(r=>r.includes('/sessoes-assistenciais/minhas')));passed++;
+  await page.setViewportSize({width:1280,height:1000});
+  await page.screenshot({path:'/private/tmp/cardio-cockpit-v21/neuro-1280.png',fullPage:true});
   const before=requests.length;
   await page.getByRole('combobox').selectOption('2');
   await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).first().waitFor();
@@ -50,7 +52,7 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
   assert.ok(!requests.slice(before).some(r=>/sessoes|pts|agenda|analytics/.test(r)));
   for(const name of ['PTS','Planejamento PTS','Agenda','Sessões Assistenciais'])assert.equal(await page.getByRole('button',{name,exact:true}).count(),0);
   assert.equal(await page.getByText('Tendência: indisponível',{exact:true}).count(),0);passed++;
-  await page.getByRole('button',{name:'Abrir prontuário',exact:true}).click();
+  await page.getByRole('button',{name:'Ver prontuário',exact:true}).click();
   assert.ok(page.url().endsWith('/cardiometabolico/pacientes/22?care_line=2'));passed++;
   await page.goto(FRONT+'/dashboard?care_line=1');await page.getByRole('heading',{name:'Synthetic Neuro',exact:true}).first().waitFor();
   await page.getByRole('button',{name:'Ver prontuário',exact:true}).click();
@@ -60,7 +62,7 @@ const cardio={care_line:'CARDIO',composition:{indicadores:{total_pacientes:3,cri
   assert.equal(new URL(page.url()).searchParams.get('care_line'),'1');passed++;
   await page.getByRole('combobox').selectOption('2');
   await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).waitFor();
-  await page.getByRole('button',{name:'Abrir prontuário',exact:true}).click();
+  await page.getByRole('button',{name:'Ver prontuário',exact:true}).click();
   await page.getByRole('heading',{name:'Synthetic Cardio',exact:true}).waitFor();
   await page.getByRole('button',{name:'+ Diagnóstico',exact:true}).click();
   assert.equal(new URL(page.url()).searchParams.get('care_line'),'CARDIO');
