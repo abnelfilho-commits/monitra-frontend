@@ -21,6 +21,7 @@ export default function RegistroDiarioCardiometabolico() {
     pressao_diastolica: "",
 
     peso: "",
+    altura: "",
 
     uso_medicacao: false,
     adesao_alimentar: false,
@@ -81,6 +82,8 @@ export default function RegistroDiarioCardiometabolico() {
 
         peso:
           form.peso,
+
+        altura: form.altura,
 
         ingestao_hidrica:
           form.ingestao_hidrica,
@@ -328,7 +331,7 @@ export default function RegistroDiarioCardiometabolico() {
         <Grid>
 
           <Input
-            label="Peso"
+            label="Peso (kg)"
             value={form.peso}
             onChange={(e) =>
               atualizarCampo(
@@ -336,6 +339,14 @@ export default function RegistroDiarioCardiometabolico() {
                 e.target.value
               )
             }
+          />
+
+          <Input
+            label="Altura (m)"
+            value={form.altura}
+            step="0.01"
+            placeholder="Ex.: 1.75"
+            onChange={(e) => atualizarCampo("altura", e.target.value)}
           />
 
           <Input
@@ -525,6 +536,8 @@ function Input({
   label,
   value,
   onChange,
+  step,
+  placeholder,
 }) {
   return (
     <div>
@@ -541,6 +554,9 @@ function Input({
 
       <input
         type="number"
+        step={step}
+        placeholder={placeholder}
+        aria-label={label}
         value={value}
         onChange={onChange}
         style={{
