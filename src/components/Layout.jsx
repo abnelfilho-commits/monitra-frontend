@@ -227,6 +227,15 @@ export default function Layout() {
               />
             )}
 
+            {(isAdminGlobal || isAdmin) && (
+              <ItemMenu
+                label="Financeiro Institucional"
+                to="/financeiro/institucional"
+                active={pathname.startsWith("/financeiro/institucional")}
+                onClick={go}
+              />
+            )}
+
           </div>
 
           <div

@@ -66,6 +66,10 @@ import DiagnosticoDetalhe from "./pages/DiagnosticoDetalhe";
 import RegistrarDiagnostico from "./pages/RegistrarDiagnostico";
 import AgendaAssistencial from "./pages/AgendaAssistencial";
 
+/* Financeiro Institucional */
+import FinanceiroInstitucional from "./pages/financeiro/FinanceiroInstitucional";
+
+
 export default function App() {
   return (
     <AuthProvider>
@@ -204,6 +208,12 @@ export default function App() {
               <Route
                 path="/agenda-assistencial"
                 element={<AgendaAssistencial />}
+              />
+
+              {/* Financeiro Institucional */}
+              <Route
+                path="/financeiro/institucional"
+                element={<FinanceiroInstitucional />}
               />
             </Route>
 
