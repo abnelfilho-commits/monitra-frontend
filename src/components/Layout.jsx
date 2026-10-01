@@ -184,6 +184,15 @@ export default function Layout() {
               />
             )}
 
+            {isAdminGlobal && (
+              <ItemMenu
+                label="Instituições"
+                to="/admin/instituicoes"
+                active={pathname.startsWith("/admin/instituicoes")}
+                onClick={go}
+              />
+            )}
+
             {!isProfissional && (
               <ItemMenu
                 label="Clínicas"

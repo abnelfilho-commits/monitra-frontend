@@ -9,6 +9,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import Layout from "./components/Layout";
 
 import Usuarios from "./pages/Usuarios";
+import Instituicoes from "./pages/Instituicoes";
 
 /* Plataforma */
 import DashboardPlataforma from "./pages/DashboardPlataforma";
@@ -94,6 +95,7 @@ export default function App() {
             <Route element={<Layout />}>
 
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/admin/instituicoes" element={<Instituicoes />} />
 
               <Route path="/pacientes" element={<Pacientes />} />
               <Route path="/pacientes/novo" element={<NovoPaciente />} />
