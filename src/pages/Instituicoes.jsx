@@ -202,7 +202,7 @@ function AdministracaoInstituicoes() {
                 <label>Nome fantasia<input style={campo} value={editor.form.nome_fantasia} onChange={(e) => alterar("nome_fantasia", e.target.value)} /></label>
                 <label>CNPJ<input style={campo} value={editor.form.cnpj} onChange={(e) => alterar("cnpj", e.target.value)} placeholder="Opcional" /></label>
                 <label>Tipo de instituição *<select aria-label="Tipo de instituição *" required style={campo} value={editor.form.tipo_instituicao} onChange={(e) => alterar("tipo_instituicao", e.target.value)}><option value="">Selecione</option>{Object.entries(tipos).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-                <label>Instituição superior<select aria-label="Instituição superior" style={campo} value={editor.form.instituicao_pai_id} onChange={(e) => alterar("instituicao_pai_id", e.target.value)}><option value="">Nenhuma</option>{editor.superiores.map((item) => <option key={item.id} value={item.id}>{nome(item)}{item.ativo ? "" : " (Inativa)"}</option>)}</select></label>
+                <label>Instituição superior<select aria-label="Instituição superior" style={campo} value={editor.form.instituicao_pai_id} onChange={(e) => alterar("instituicao_pai_id", e.target.value)}><option value="">Nenhuma</option>{editor.superiores.filter((item) => editor.id == null || String(item.id) !== String(editor.id)).map((item) => <option key={item.id} value={item.id}>{nome(item)}{item.ativo ? "" : " (Inativa)"}</option>)}</select></label>
               </div>
               <div style={{ marginTop: 20 }}><Button type="submit" disabled={ocupado}>{ocupado ? "Salvando..." : "Salvar instituição"}</Button></div>
             </fieldset>
