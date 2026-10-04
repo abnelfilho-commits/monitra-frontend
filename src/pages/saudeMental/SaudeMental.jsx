@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import PageLayout from "../../components/layouts/PageLayout/PageLayout";
+import CheckinBemEstar from "./CheckinBemEstar";
 import Button from "../../components/ui/Button";
 import { instituicoesMentais, pessoasMentais, jornadaMental, erroMental } from "../../services/saudeMental";
 
@@ -34,6 +35,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
+  const [saved, setSaved] = useState(false);
   useEffect(() => {
     let current = true;
     async function load() {
@@ -68,6 +70,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
       </select>
       <p>A instituição selecionada não concede acesso clínico. Somente contextos autorizados são exibidos.</p>
     </section>}
+    {saved && <p role="status">Check-in registrado com sucesso.</p>}
     {loading && <p role="status">Carregando Saúde Mental…</p>}
     {error && <div role="alert" style={card}><p>{error}</p><Button onClick={() => setRetry(n => n + 1)}>Tentar novamente</Button></div>}
     {!loading && !error && !detail && !institution && <p>{institutions.length ? "Selecione explicitamente uma instituição para consultar Pessoas." : "Nenhuma instituição disponível para esta conta. Solicite a verificação do acesso institucional."}</p>}
@@ -87,10 +90,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
       <section style={card}><h2>Visão Geral</h2>
         {result.linha_estado === "ATIVA" ? <p>Linha Saúde Mental ativa neste contexto. Esta é a área inicial da jornada.</p> : <p>{result.linha_estado === "AUSENTE" ? "A linha Saúde Mental ainda não foi vinculada a este contexto." : "A linha Saúde Mental está inativa neste contexto."} O início ou a ativação da linha não está disponível nesta tela.</p>}
       </section>
-      <section style={card}><h2>Bem-Estar</h2><p>O Check-in Inicial será um autorrelato da Pessoa, registrado pelo profissional no atendimento assistido.</p>
-        <Button disabled aria-describedby="checkin-next">Realizar Check-in Inicial</Button>
-        <p id="checkin-next">Próxima etapa — formulário e registro ainda indisponíveis.</p>
-      </section>
+      <div style={card}><CheckinBemEstar jornada={result} onSaved={() => { setSaved(true); setRetry(n => n + 1); }} /></div>
     </>}
   </>;
 }
