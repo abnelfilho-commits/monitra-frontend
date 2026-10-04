@@ -71,6 +71,8 @@ import AgendaAssistencial from "./pages/AgendaAssistencial";
 import FinanceiroInstitucional from "./pages/financeiro/FinanceiroInstitucional";
 
 
+import SaudeMental from "./pages/saudeMental/SaudeMental";
+
 export default function App() {
   return (
     <AuthProvider>
@@ -95,6 +97,8 @@ export default function App() {
             <Route element={<Layout />}>
 
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/saude-mental" element={<SaudeMental />} />
+              <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId" element={<SaudeMental />} />
               <Route path="/admin/instituicoes" element={<Instituicoes />} />
 
               <Route path="/pacientes" element={<Pacientes />} />
