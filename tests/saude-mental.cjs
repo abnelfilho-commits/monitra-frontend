@@ -6,14 +6,14 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
  try {
   const page = await browser.newPage(); page.setDefaultTimeout(10000);
   const item={pessoa_id:18,nome_completo:'Pessoa sintética',nome_social:null,paciente_id:24,instituicao_id:5,instituicao_nome:'Instituição sintética',paciente_instituicao_id:7,contexto_assistencial_id:9,data_inicio:'2026-01-01',data_fim:null,contexto_estado:'ABERTO',modulo_id:3,linha_estado:'ATIVA'};
-  let failure=null,empty=false,delay=false,line='ATIVA';const calls=[],errors=[];
+  let role='PROFISSIONAL',failure=null,empty=false,delay=false,line='ATIVA';const calls=[],errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   await page.route('**/*',async route=>{
    const req=route.request(),u=new URL(req.url());
    if(u.origin===FRONT)return route.continue();
    const reply=(data,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
-   if(u.pathname==='/me')return reply({id:99,nome:'Profissional sintético',perfil:'PROFISSIONAL',modulos:[{id:1,slug:'neurodesenvolvimento'},{id:2,slug:'cardiometabolico'}]});
+   if(u.pathname==='/me')return reply({id:99,nome:'Profissional sintético',perfil:role,modulos:[{id:1,slug:'neurodesenvolvimento'},{id:2,slug:'cardiometabolico'}]});
    assert.ok(u.pathname.startsWith('/saude-mental/'),'Unexpected API '+u.pathname);
    calls.push({method:req.method(),path:u.pathname,query:u.search});
    if(delay)await new Promise(r=>setTimeout(r,300));
@@ -28,7 +28,12 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   await page.getByRole('button',{name:'Acessar módulo Cardiometabólico',exact:true}).waitFor();
   await page.getByRole('button',{name:'Acessar módulo Saúde Mental',exact:true}).click();
   await page.waitForURL('**/saude-mental');
-  assert.equal(await page.locator('aside').getByRole('button',{name:'Saúde Mental',exact:true}).count(),0);
+  await page.getByRole('navigation',{name:'Navegação Saúde Mental'}).waitFor();
+  assert.equal(await page.locator('aside').count(),0);
+  for (const label of ['Cockpit Neuro','Responsáveis','Clínicas','Atividades Terapêuticas','Usuários','Organizacional','Gestão Institucional']) {
+   assert.equal(await page.getByRole('button',{name:label,exact:true}).count(),0);
+   assert.equal(await page.getByRole('link',{name:label,exact:true}).count(),0);
+  }
   await page.getByText('Selecione explicitamente uma instituição').waitFor();
   assert.equal(calls.filter(c=>c.path.endsWith('/pessoas')).length,0);
   delay=true;await page.getByLabel('Instituição',{exact:true}).selectOption('5');
@@ -52,6 +57,18 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   empty=false;line='ATIVA';await page.reload();await page.getByRole('link',{name:'Abrir jornada'}).click();
   await page.getByRole('heading',{name:'Visão Geral'}).waitFor();
   await page.setViewportSize({width:768,height:900});await page.screenshot({path:'/tmp/w2a-jornada-tablet.png',fullPage:true});
+  await page.getByRole('link',{name:'Pessoas e contextos autorizados'}).click();
+  await page.waitForURL('**/saude-mental?instituicao_id=5');
+  await page.getByRole('link',{name:'Voltar à Plataforma'}).click();
+  await page.waitForURL('**/plataforma');
+  for (const profile of ['ADMIN','ADMIN_CLINICA','SUPORTE','PROFISSIONAL']) {
+   role=profile;failure=403;
+   await page.goto(FRONT+'/saude-mental/pessoas/18/contextos/9?instituicao_id=5');
+   await page.getByRole('alert').waitFor();
+   assert.equal(await page.getByRole('heading',{name:'Pessoa sintética',exact:true}).count(),0);
+   assert.equal(await page.getByRole('button',{name:'Realizar Check-in Inicial'}).count(),0);
+   if(profile==='ADMIN') await page.getByText('Conta de administração global.',{exact:false}).waitFor();
+  }
   assert.ok(calls.every(c=>c.method==='GET'));
   assert.ok(calls.filter(c=>!c.path.endsWith('/instituicoes')).every(c=>c.query.includes('instituicao_id=5')));
   assert.equal(errors.length,0,errors.join('\n'));
