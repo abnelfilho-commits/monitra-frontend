@@ -29,7 +29,16 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   await page.getByRole('button',{name:'Acessar módulo Saúde Mental',exact:true}).click();
   await page.waitForURL('**/saude-mental');
   await page.getByRole('navigation',{name:'Navegação Saúde Mental'}).waitFor();
-  assert.equal(await page.locator('aside').count(),0);
+  assert.equal(await page.locator('aside').count(),1);
+  const nav=page.getByRole('navigation',{name:'Navegação Saúde Mental'});
+  const logo=page.getByRole('img',{name:'Integra Care',exact:true});
+  assert.equal(await logo.getAttribute('src'),'/logo-integracare.png');
+  assert.ok(await logo.evaluate(img=>img.complete && img.naturalWidth>0));
+  await page.getByText('Inteligência clínica em tempo real',{exact:true}).waitFor();
+  assert.equal(await nav.getByRole('link',{name:'Visão Geral',exact:true}).getAttribute('aria-current'),'page');
+  await nav.getByRole('link',{name:'Pessoas',exact:true}).click();
+  assert.equal(await nav.getByRole('link',{name:'Pessoas',exact:true}).getAttribute('aria-current'),'page');
+  assert.equal(await nav.locator('[aria-current="page"]').count(),1);
   for (const label of ['Cockpit Neuro','Responsáveis','Clínicas','Atividades Terapêuticas','Usuários','Organizacional','Gestão Institucional']) {
    assert.equal(await page.getByRole('button',{name:label,exact:true}).count(),0);
    assert.equal(await page.getByRole('link',{name:label,exact:true}).count(),0);
@@ -57,8 +66,8 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   empty=false;line='ATIVA';await page.reload();await page.getByRole('link',{name:'Abrir jornada'}).click();
   await page.getByRole('heading',{name:'Visão Geral'}).waitFor();
   await page.setViewportSize({width:768,height:900});await page.screenshot({path:'/tmp/w2a-jornada-tablet.png',fullPage:true});
-  await page.getByRole('link',{name:'Pessoas e contextos autorizados'}).click();
-  await page.waitForURL('**/saude-mental?instituicao_id=5');
+  await page.getByRole('link',{name:'Pessoas',exact:true}).click();
+  await page.waitForURL('**/saude-mental?instituicao_id=5#pessoas');
   await page.getByRole('link',{name:'Voltar à Plataforma'}).click();
   await page.waitForURL('**/plataforma');
   for (const profile of ['ADMIN','ADMIN_CLINICA','SUPORTE','PROFISSIONAL']) {
@@ -71,6 +80,9 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   }
   assert.ok(calls.every(c=>c.method==='GET'));
   assert.ok(calls.filter(c=>!c.path.endsWith('/instituicoes')).every(c=>c.query.includes('instituicao_id=5')));
+  await page.getByRole('button',{name:'Sair',exact:true}).click();
+  await page.waitForURL('**/login');
+  assert.equal(await page.evaluate(()=>localStorage.getItem('access_token')),null);
   assert.equal(errors.length,0,errors.join('\n'));
   console.log('PASS: três cards/entrada independente/sem menu lateral, contexto explícito, loading, Pessoas→jornada, linha ativa/inativa/ausente, vazio, 401/403/404/422/500/503, check-in desabilitado, GET-only, zero pageerrors. Synthetic data only in test interception.');
  } finally {await browser.close();}

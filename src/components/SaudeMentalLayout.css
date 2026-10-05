@@ -1,0 +1,22 @@
+.mental-shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; background: #f8fafc; }
+.mental-shell--hml { padding-top: 30px; }
+.mental-shell-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #f97316; color: white; text-align: center; font-weight: 800; font-size: 13px; padding: 6px 10px; letter-spacing: 1px; }
+.mental-shell-sidebar { border-right: 1px solid #e5e7eb; padding: 16px; background: #fff; display: flex; flex-direction: column; gap: 18px; }
+.mental-shell-brand { text-align: center; }
+.mental-shell-brand img { width: 260px; max-width: 100%; height: auto; object-fit: contain; }
+.mental-shell-brand div { font-size: 12px; color: #000001; margin-top: 8px; }
+.mental-shell-module { border-top: 1px solid #e5e7eb; padding-top: 18px; color: #111827; }
+.mental-shell-module p, .mental-shell-admin { font-size: 12px; line-height: 1.5; color: #6b7280; margin: 8px 0 0; }
+.mental-shell-navigation { display: flex; flex-direction: column; gap: 8px; }
+.mental-shell-item { box-sizing: border-box; width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid #e5e7eb; background: #fff; font-weight: 500; color: #111827; text-decoration: none; transition: all 0.15s ease; }
+.mental-shell-item:hover { background: #f9fafb; }
+.mental-shell-item[aria-current="page"] { border-color: #bbf7d0; background: #ecfdf5; font-weight: 700; }
+.mental-shell-item:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.mental-shell-separator { height: 1px; background: #e5e7eb; }
+.mental-shell-content { min-width: 0; }
+@media (max-width: 700px) {
+  .mental-shell { grid-template-columns: minmax(0, 1fr); }
+  .mental-shell-sidebar { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+  .mental-shell-banner { position: static; grid-column: 1 / -1; }
+  .mental-shell--hml { padding-top: 0; }
+}
