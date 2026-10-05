@@ -141,7 +141,6 @@ export default function Layout() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <ItemMenu label="Saúde Mental" to="/saude-mental" active={pathname.startsWith("/saude-mental")} onClick={go} />
             {isCardio ? (
               <>
                 <ItemMenu

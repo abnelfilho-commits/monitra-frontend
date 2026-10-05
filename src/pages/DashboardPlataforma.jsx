@@ -105,6 +105,23 @@ export default function DashboardPlataforma() {
               </button>
             </div>
           )}
+          {/* Saúde Mental */}
+          <div className="modulo-card">
+            <div className="modulo-label blue">Saúde Mental</div>
+            <h2 className="modulo-title">
+              Saúde mental no contexto do trabalho
+            </h2>
+            <p className="modulo-description">
+              Acompanhamento longitudinal de bem-estar e jornada assistencial
+              em contexto institucional.
+            </p>
+            <button
+              className="modulo-button blue"
+              onClick={() => navigate("/saude-mental")}
+            >
+              Acessar módulo Saúde Mental
+            </button>
+          </div>
         </div>
       </div>
     </div>
