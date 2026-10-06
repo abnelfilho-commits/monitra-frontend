@@ -33,7 +33,7 @@ export default function HabilitarAcesso({ person }) {
     lock.current = true; setBusy(true); setError(""); setResult(null);
     try {
       const r = await habilitarAcesso(person.id, { email, senha_inicial: password, instituicao_id: Number(institution), perfil_institucional: profile, ativo: active });
-      setResult(r);
+      setResult(r); setOpen(false);
     } catch (e) {
       const status = e?.response?.status;
       setError(errors[e?.response?.data?.detail?.code] || ({401: "Sessão expirada.",403: "Operação exclusiva do ADMIN global.",404: "Pessoa ou instituição não encontrada.",409: "Conflito: nenhuma sobrescrita foi realizada.",422: "Confira e-mail, senha (até 72 bytes), instituição e perfil."}[status]) || "Resultado não confirmado. Solicite conferência antes de repetir.");
@@ -41,9 +41,9 @@ export default function HabilitarAcesso({ person }) {
     } finally { setPassword(""); setBusy(false); lock.current = false; }
   }
   return <section style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, marginBottom: 20 }}>
-    <h2>Acesso institucional</h2>
-    <p>Habilitar acesso não concede autoridade, participação ou acesso clínico. O perfil institucional não concede capabilities.</p>
-    <Button disabled={!person.ativo || busy} variant="secondary" onClick={() => { setOpen(!open); setPassword(""); setError(""); }}> {open ? "Fechar acesso" : "Habilitar acesso"}</Button>
+    <h2>Acesso à plataforma</h2>
+    <p>Possuir acesso à plataforma não concede autoridade, participação ou acesso clínico. O perfil institucional não concede capabilities.</p>
+    {!result && <Button disabled={!person.ativo || busy} variant="secondary" onClick={() => { setOpen(!open); setPassword(""); setError(""); }}> {open ? "Fechar acesso" : "Habilitar acesso"}</Button>}
     {!person.ativo && <p>Pessoa inativa: habilitação indisponível.</p>}
     {open && <form onSubmit={submit}>
       <p>{person.nome_completo} — Pessoa #{person.id} — {person.ativo ? "Ativa" : "Inativa"}</p>
@@ -60,7 +60,16 @@ export default function HabilitarAcesso({ person }) {
         <Button type="submit">Confirmar habilitação</Button>
       </fieldset>
       {busy && <p role="status">Habilitando acesso...</p>}
-      {result && <p role="status">Acesso preparado — instituição {institutions?.find(i => i.id === result.autorizacao.instituicao_id)?.razao_social || `#${result.autorizacao.instituicao_id}`} — {result.autorizacao.perfil_institucional} — autorização {result.autorizacao.ativo ? "ativa" : "inativa"}. Nenhuma autorização clínica foi concedida.</p>}
+
     </form>}
+    {result && <div>
+      <dl>
+        <dt>E-mail de acesso</dt><dd>{result.email}</dd>
+        <dt>Instituição</dt><dd>{institutions?.find(i => i.id === result.autorizacao.instituicao_id)?.razao_social || `#${result.autorizacao.instituicao_id}`}</dd>
+        <dt>Perfil institucional</dt><dd>{result.autorizacao.perfil_institucional}</dd>
+        <dt>Status da autorização institucional</dt><dd>{result.autorizacao.ativo ? "Ativo" : "Inativo"}</dd>
+      </dl>
+      <p role="status">Acesso institucional habilitado. Nenhuma autorização clínica foi concedida.</p>
+    </div>}
   </section>;
 }

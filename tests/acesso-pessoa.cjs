@@ -4,7 +4,7 @@ const FRONT=process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true});
  try {
-  const page=await browser.newPage(); let conflict=false, pending;const writes=[];
+  const page=await browser.newPage(); let conflict=false, pending;const writes=[], unexpected=[];
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   await page.route('**/*',async route=>{
    const req=route.request(),u=new URL(req.url());if(u.origin===FRONT)return route.continue();
@@ -20,6 +20,7 @@ const FRONT=process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
     await new Promise(resolve=>{pending=resolve;});
     return reply({pessoa_id:10,usuario_id:20,email:'native@example.com',usuario_ativo:true,autorizacao:{id:30,usuario_id:20,instituicao_id:2,perfil_institucional:'SUPORTE',ativo:true}});
    }
+   if(req.method()!=='GET')unexpected.push(u.pathname);
    return reply([]);
   });
   await page.goto(FRONT+'/admin/pessoas');
@@ -37,10 +38,23 @@ const FRONT=process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
   await page.getByLabel('Autorização institucional ativa').check();
   await page.getByRole('button',{name:'Confirmar habilitação'}).click();
   await page.getByText('Habilitando acesso...', {exact:true}).waitFor();pending();
-  await page.getByRole('status').filter({hasText:'Acesso preparado'}).waitFor();
-  assert.equal(await page.getByLabel('Senha inicial',{exact:true}).inputValue(),'');
+  await page.getByRole('status').filter({hasText:'Acesso institucional habilitado'}).waitFor();
+  assert.equal(await form.count(),0);
+  assert.equal(await page.getByLabel('Senha inicial',{exact:true}).count(),0);
+  assert.equal(await page.getByRole('button',{name:'Confirmar habilitação'}).count(),0);
+  const summary=page.locator('section').filter({has:page.getByRole('heading',{name:'Acesso à plataforma',exact:true})});
+  for(const value of ['native@example.com','Instituição local','SUPORTE','Ativo'])await summary.getByText(value,{exact:true}).waitFor();
+  await summary.getByText(/Nenhuma autorização clínica foi concedida/).waitFor();
+  assert.deepEqual(unexpected,[]);
+  assert.equal(writes.length,1);
   assert.deepEqual(Object.keys(writes[0]).sort(),['email','senha_inicial','instituicao_id','perfil_institucional','ativo'].sort());
   conflict=true;
+  await page.reload();
+  await page.getByRole('button',{name:'Ver / Editar'}).click();
+  await page.getByRole('button',{name:'Habilitar acesso',exact:true}).click();
+  await page.getByLabel('E-mail de acesso').fill('native@example.com');
+  await page.getByLabel('Instituição do acesso').selectOption('2');
+  await page.getByLabel('Perfil institucional',{exact:true}).selectOption('SUPORTE');
   await page.getByLabel('Senha inicial',{exact:true}).fill('Synthetic-local-password');
   await page.getByRole('button',{name:'Confirmar habilitação'}).click();
   await page.getByRole('alert').filter({hasText:'Já existe autorização'}).waitFor();
