@@ -5,6 +5,7 @@ import PageLayout from "../components/layouts/PageLayout";
 import Button from "../components/ui/Button";
 import { listarInstituicoes } from "../services/instituicoes";
 import * as api from "../services/pessoas";
+import HabilitarAcesso from "../components/HabilitarAcesso";
 
 const fields = { nome_completo: "Nome completo", nome_social: "Nome social", data_nascimento: "Data de nascimento", sexo: "Sexo", email: "E-mail", telefone: "Telefone" };
 const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 16 };
@@ -108,6 +109,7 @@ function Editor({ id, close }) {
       {lookup?.encontrada === false && <form onSubmit={e => { e.preventDefault(); run(() => identity(false), true); }}><p>CPF não encontrado. Preencha o cadastro.</p><Fields form={form} setForm={setForm} /><label>Motivo do cadastro *<textarea style={input} required maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} /></label><Button type="submit">Criar Pessoa</Button></form>}
     </section>}
     {person && <><section style={panel}><h2>Dados da Pessoa</h2><p>CPF: {maskedCpf(person.cpf)} — não editável</p><p>Estado cadastral: {person.ativo ? "Ativa" : "Inativa"}</p><form onSubmit={e => { e.preventDefault(); run(async () => { const next = personal(form), original = personal(formOf(person)); const patch = Object.fromEntries(Object.entries(next).filter(([k,v]) => v !== original[k])); if (!Object.keys(patch).length) { setSuccess("Nenhuma alteração cadastral."); return; } const p = await api.atualizarPessoa(person.id, patch); setPerson(p); setForm(formOf(p)); setSuccess("Cadastro atualizado."); }, true); }}><Fields form={form} setForm={setForm} /><Button type="submit">Salvar cadastro</Button></form></section>
+      <HabilitarAcesso person={person} />
       {!patient && <section style={panel}><h2>Vínculos institucionais</h2><p>Prepare explicitamente o papel de Paciente para consultar ou estabelecer vínculos. Um papel já associado será reutilizado. Esta ação não cria conta ou autorização.</p>{!person.cpf ? <p>O cadastro legado não possui CPF. A preparação exige regularização explícita; nenhum CPF será fabricado.</p> : <form onSubmit={e => { e.preventDefault(); run(() => identity(true), true); }}><label>Motivo da preparação *<textarea style={input} required maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} /></label><Button type="submit">Preparar papel assistencial</Button></form>}</section>}
       {patient && <Institutional patient={patient} onBusy={setBusy} onUncertain={() => setUncertain(true)} />}
     </>}

@@ -10,3 +10,5 @@ export const criarVinculoPessoa = dados => api.post("/admin/vinculos-institucion
 export const criarContextoPessoa = dados => api.post("/admin/contextos-assistenciais/", dados).then(r => r.data);
 export const adicionarSaudeMental = (id, instituicao_id) => api.post(`/admin/contextos-assistenciais/${id}/linhas`, { modulo_id: 3 }, { params: { instituicao_id } }).then(r => r.data);
 export const obterContextoPessoa = (id, instituicao_id) => api.get(`/admin/contextos-assistenciais/${id}`, { params: { instituicao_id } }).then(r => r.data);
+
+export const habilitarAcesso = (id, dados) => api.post(`/admin/pessoas/${id}/acesso`, dados).then(r => r.data);
