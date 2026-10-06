@@ -15,3 +15,7 @@ export const habilitarAcesso = (id, dados) => api.post(`/admin/pessoas/${id}/ace
 
 export const obterAcessosPessoa = id => api.get(`/admin/pessoas/${id}/acessos`).then(r => r.data);
 export const obterVinculosPessoa = id => api.get(`/admin/pessoas/${id}/vinculos`).then(r => r.data);
+
+export const ativarProfissionalPessoa = id => api.post(`/admin/identidades/pessoas/${id}/profissional/ativar`).then(r => r.data);
+export const inativarProfissionalPessoa = id => api.post(`/admin/identidades/pessoas/${id}/profissional/inativar`).then(r => r.data);
+export const criarVinculoProfissional = dados => api.post("/admin/vinculos-institucionais/profissionais", dados).then(r => r.data);

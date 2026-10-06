@@ -6,6 +6,7 @@ import Button from "../components/ui/Button";
 import { listarInstituicoes } from "../services/instituicoes";
 import * as api from "../services/pessoas";
 import HabilitarAcesso from "../components/HabilitarAcesso";
+import ProfissionalPessoa from "../components/ProfissionalPessoa";
 
 const fields = { nome_completo: "Nome completo", nome_social: "Nome social", data_nascimento: "Data de nascimento", sexo: "Sexo", email: "E-mail", telefone: "Telefone" };
 const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(min(100%,220px),1fr))", gap: 16 };
@@ -137,6 +138,12 @@ function VinculosPessoa({ person, preparedPatient, onBusy, onUncertain, children
         <thead><tr>{["Instituição", "Papel", "Tipo / Ocupação", "Início", "Término", "Registro"].map(h => <th key={h} style={cell}>{h}</th>)}</tr></thead>
         <tbody>{rows.map(l => <tr key={`${l.papel}:${l.id}`}><td style={cell}>{l.instituicao_nome}{!l.instituicao_ativa && " (inativa)"}</td><td style={cell}>{l.papel}</td><td style={cell}>{l.tipo}</td><td style={cell}>{date(l.data_inicio)}</td><td style={cell}>{date(l.data_fim)}</td><td style={cell}>{l.ativo ? "Válido" : "Invalidado"}</td></tr>)}</tbody>
       </table></div>}
+      <ProfissionalPessoa person={person} data={data} onBusy={onBusy} onUncertain={onUncertain} onReload={async () => {
+        const next = await api.obterVinculosPessoa(person.id);
+        if (next.pessoa_id !== person.id || !Array.isArray(next.pacientes) || !Array.isArray(next.profissionais)) throw Error("Invalid links response");
+        setData(next);
+        return next;
+      }} />
       {!data.paciente_id ? children : <>
         <Button variant="secondary" onClick={() => setAdding(v => !v)}>{adding ? "Fechar preparação de vínculo" : "Adicionar vínculo institucional / preparar contexto"}</Button>
         {adding && <Institutional patient={data.paciente_id} onBusy={onBusy} onUncertain={onUncertain} onCreated={() => refresh(n => n + 1)} />}
