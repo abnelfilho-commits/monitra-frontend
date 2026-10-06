@@ -193,6 +193,10 @@ export default function Layout() {
               />
             )}
 
+            {isAdminGlobal && (
+              <ItemMenu label="Pessoas" to="/admin/pessoas" active={pathname.startsWith("/admin/pessoas")} onClick={go} />
+            )}
+
             {!isProfissional && (
               <ItemMenu
                 label="Clínicas"

@@ -11,6 +11,7 @@ import SaudeMentalLayout from "./components/SaudeMentalLayout";
 
 import Usuarios from "./pages/Usuarios";
 import Instituicoes from "./pages/Instituicoes";
+import Pessoas from "./pages/Pessoas";
 
 /* Plataforma */
 import DashboardPlataforma from "./pages/DashboardPlataforma";
@@ -105,6 +106,7 @@ export default function App() {
 
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/admin/instituicoes" element={<Instituicoes />} />
+              <Route path="/admin/pessoas" element={<Pessoas />} />
 
               <Route path="/pacientes" element={<Pacientes />} />
               <Route path="/pacientes/novo" element={<NovoPaciente />} />
