@@ -88,6 +88,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
     </>}
     {!loading && !error && result && detail && <ProntuarioSaudeMental
       jornada={result}
+      onRefresh={() => { setSaved(false); setRetry(n => n + 1); }}
       onSaved={() => { setSaved(true); setRetry(n => n + 1); }}
     />}
   </>;

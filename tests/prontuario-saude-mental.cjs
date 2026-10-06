@@ -41,16 +41,23 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     await page.getByRole('heading', { name: 'Ações clínicas' }).waitFor();
     assert.equal(await page.getByRole('button', { name: 'Realizar Check-in Inicial' }).isDisabled(), true);
     assert.equal(await page.locator('.mental-record__summary').getByText('Indisponível', { exact: true }).count(), 1);
+    assert.equal(await page.getByRole('button', { name: 'Check-in de Bem-Estar', exact: true }).isDisabled(), true);
     allow = true;
-    await page.reload();
+    const beforeRefresh = requests.length;
+    await page.getByRole('button', { name: 'Atualizar', exact: true }).click();
     await page.locator('.mental-record__summary').getByText('Disponível', { exact: true }).waitFor();
+    assert.equal(requests.length, beforeRefresh + 1);
     await page.screenshot({ path: '/tmp/w3a-prontuario-desktop.png', fullPage: true });
-    await page.getByRole('button', { name: 'Realizar Check-in Inicial' }).click();
+    await page.getByRole('button', { name: 'Check-in de Bem-Estar', exact: true }).click();
     await page.getByRole('heading', { name: 'Check-in Inicial — Nome social sintético' }).waitFor();
     await page.getByText('Modalidade assistida · Portal Profissional').waitFor();
     for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'PTS', 'Intervenção', 'Gerar relatório']) {
-      assert.equal(await page.getByRole('button', { name, exact: true }).count(), 0);
+      assert.equal(await page.getByRole('button', { name, exact: true }).isDisabled(), true);
+      assert.equal(await page.getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
     }
+    assert.equal(await page.getByRole('button', { name: 'Atualizar', exact: true }).isDisabled(), true);
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    assert.equal(await page.getByRole('button', { name: 'Atualizar', exact: true }).isEnabled(), true);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: '/tmp/w3a-prontuario-mobile.png', fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);

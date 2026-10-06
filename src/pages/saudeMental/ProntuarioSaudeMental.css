@@ -25,3 +25,6 @@
   .mental-record__identity, .mental-record__actions { padding: 18px; }
   .mental-record__person h2 { font-size: 24px; }
 }
+
+.mental-record__toolbar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; margin-top: 20px; }
+.mental-record__planned-note { margin: 12px 0 0; color: #6b7280; font-size: 12px; }

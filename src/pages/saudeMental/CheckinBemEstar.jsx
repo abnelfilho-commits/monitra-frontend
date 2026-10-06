@@ -3,8 +3,7 @@ import AssessmentField from "../../components/assessments/AssessmentField";
 import Button from "../../components/ui/Button";
 import { registrarCheckin, erroCheckin } from "../../services/saudeMental";
 
-export default function CheckinBemEstar({ jornada, onSaved }) {
-  const [open, setOpen] = useState(false);
+export default function CheckinBemEstar({ jornada, onSaved, open, setOpen }) {
   const [answers, setAnswers] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
