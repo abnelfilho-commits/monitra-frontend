@@ -7,6 +7,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 import Layout from "./components/Layout";
+import AdministracaoLayout from "./components/AdministracaoLayout";
 import SaudeMentalLayout from "./components/SaudeMentalLayout";
 
 import Usuarios from "./pages/Usuarios";
@@ -99,16 +100,27 @@ export default function App() {
             {/* Jornada assistencial: autorização permanece no backend. */}
             <Route element={<SaudeMentalLayout />}>
               <Route path="/saude-mental" element={<SaudeMental />} />
-              <Route path="/operacao-assistencial" element={<OperacaoAssistencial />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId" element={<SaudeMental />} />
+            </Route>
+
+            {/* Capacidades transversais: URLs e guards existentes preservados. */}
+            <Route element={<AdministracaoLayout />}>
+              <Route path="/gestao-institucional" element={null} />
+              <Route path="/admin/instituicoes" element={<Instituicoes />} />
+              <Route path="/admin/pessoas" element={<Pessoas />} />
+              <Route path="/usuarios" element={<Usuarios />} />
+              <Route path="/profissionais" element={<Profissionais />} />
+              <Route path="/profissionais/novo" element={<NovoProfissional />} />
+              <Route path="/profissionais/:id/editar" element={<EditarProfissional />} />
+              <Route path="/dimensionamento" element={<DimensionamentoEquipe />} />
+              <Route path="/financeiro/institucional" element={<FinanceiroInstitucional />} />
+              <Route path="/operacao-assistencial" element={<OperacaoAssistencial />} />
             </Route>
 
             {/* Neuro */}
             <Route element={<Layout />}>
 
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/admin/instituicoes" element={<Instituicoes />} />
-              <Route path="/admin/pessoas" element={<Pessoas />} />
 
               <Route path="/pacientes" element={<Pacientes />} />
               <Route path="/pacientes/novo" element={<NovoPaciente />} />
@@ -139,14 +151,6 @@ export default function App() {
                 element={<EditarIntervencao />}
               />
 
-              <Route path="/profissionais" element={<Profissionais />} />
-              <Route path="/profissionais/novo" element={<NovoProfissional />} />
-
-              <Route
-                path="/profissionais/:id/editar"
-                element={<EditarProfissional />}
-              />
-
               <Route path="/clinicas" element={<Clinicas />} />
               <Route path="/clinicas/nova" element={<NovaClinica />} />
 
@@ -170,11 +174,6 @@ export default function App() {
                 element={<Responsaveis />}
               />
 
-              <Route
-                path="/usuarios"
-                element={<Usuarios />}
-              />
-
               <Route 
                 path="/pacientes/:id/pts" 
                 element={<PTS />}
@@ -193,11 +192,6 @@ export default function App() {
               <Route
                 path="/ocupacoes-profissionais/nova"
                 element={<NovaOcupacaoProfissional />}
-              />
-
-              <Route
-                path="/dimensionamento"
-                element={<DimensionamentoEquipe />}
               />
               <Route
                 path="/prontuario/evento/:tipo/:id"
@@ -225,11 +219,6 @@ export default function App() {
                 element={<AgendaAssistencial />}
               />
 
-              {/* Financeiro Institucional */}
-              <Route
-                path="/financeiro/institucional"
-                element={<FinanceiroInstitucional />}
-              />
             </Route>
 
             {/* Cardiometabólico */}
@@ -288,10 +277,6 @@ export default function App() {
               <Route
                 path="/ocupacoes-profissionais/nova"
                 element={<NovaOcupacaoProfissional />}
-              />
-              <Route
-                path="/dimensionamento"
-                element={<DimensionamentoEquipe />}
               />
               <Route
                 path="/prontuario/evento/:tipo/:id"

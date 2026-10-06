@@ -61,10 +61,6 @@ export default function Layout() {
 
   const moduloQuery = isCardio ? "?modulo=cardiometabolico" : "";
 
-  const perfil = localStorage.getItem("perfil");
-  const isAdmin =
-    user?.perfil === "ADMIN_CLINICA";
-  const isSuporte = user?.perfil === "SUPORTE";
   const isAdminGlobal = user?.perfil === "ADMIN";
 
   const isProfissional = user?.perfil === "PROFISSIONAL";
@@ -140,6 +136,7 @@ export default function Layout() {
             </div>
           </div>
 
+          <strong>{isCardio ? "Cardiometabólico" : "Neurodesenvolvimento"}</strong>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {isCardio ? (
               <>
@@ -175,42 +172,11 @@ export default function Layout() {
               </>
             )}
 
-            {isAdminGlobal && (
-              <ItemMenu
-                label="Usuários"
-                to={`/usuarios${moduloQuery}`}
-                active={pathname.startsWith("/usuarios")}
-                onClick={go}
-              />
-            )}
-
-            {isAdminGlobal && (
-              <ItemMenu
-                label="Instituições"
-                to="/admin/instituicoes"
-                active={pathname.startsWith("/admin/instituicoes")}
-                onClick={go}
-              />
-            )}
-
-            {isAdminGlobal && (
-              <ItemMenu label="Pessoas" to="/admin/pessoas" active={pathname.startsWith("/admin/pessoas")} onClick={go} />
-            )}
-
             {!isProfissional && (
               <ItemMenu
-                label="Clínicas"
+                label="Clínicas (legado)"
                 to={`/clinicas${moduloQuery}`}
                 active={pathname.startsWith("/clinicas")}
-                onClick={go}
-              />
-            )}
-
-            {!isProfissional && (
-              <ItemMenu
-                label="Profissionais"
-                to={`/profissionais${moduloQuery}`}
-                active={pathname.startsWith("/profissionais")}
                 onClick={go}
               />
             )}
@@ -231,24 +197,6 @@ export default function Layout() {
               onClick={go}
             />
 
-            {!isProfissional && (
-              <ItemMenu
-                label="Dimensionamento"
-                to={`/dimensionamento${moduloQuery}`}
-                active={pathname.startsWith("/dimensionamento")}
-                onClick={go}
-              />
-            )}
-
-            {(isAdminGlobal || isAdmin) && (
-              <ItemMenu
-                label="Financeiro Institucional"
-                to="/financeiro/institucional"
-                active={pathname.startsWith("/financeiro/institucional")}
-                onClick={go}
-              />
-            )}
-
           </div>
 
           <div
@@ -268,7 +216,7 @@ export default function Layout() {
                     fontWeight: 600,
                   }}
                 >
-                  Ações rápidas
+                  Ações do legado
                 </div>
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -276,13 +224,6 @@ export default function Layout() {
                     label="+ Nova Clínica"
                     to={`/clinicas/nova${moduloQuery}`}
                     active={pathname === "/clinicas/nova"}
-                    onClick={go}
-                  />
-
-                  <ItemMenu
-                    label="+ Novo Profissional"
-                    to={`/profissionais/novo${moduloQuery}`}
-                    active={pathname === "/profissionais/novo"}
                     onClick={go}
                   />
 
@@ -302,6 +243,7 @@ export default function Layout() {
             }}
           />
 
+          <ItemMenu label="Voltar à Plataforma" to="/plataforma" active={false} onClick={go} />
           <div>
             <Button
               variant="danger"

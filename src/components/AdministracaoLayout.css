@@ -1,0 +1,26 @@
+.institutional-shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100vh; background: #f8fafc; }
+.institutional-shell--hml { padding-top: 30px; }
+.institutional-shell-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: #f97316; color: white; text-align: center; font-weight: 800; font-size: 13px; padding: 6px 10px; letter-spacing: 1px; }
+.institutional-shell-sidebar { border-right: 1px solid #e5e7eb; padding: 16px; background: #fff; display: flex; flex-direction: column; gap: 18px; }
+.institutional-shell-brand { text-align: center; }
+.institutional-shell-brand img { width: 260px; max-width: 100%; height: auto; object-fit: contain; }
+.institutional-shell-brand div { font-size: 12px; color: #000001; margin-top: 8px; }
+.institutional-shell-module { border-top: 1px solid #e5e7eb; padding-top: 18px; color: #111827; }
+.institutional-shell-module p, .institutional-shell-note { font-size: 12px; line-height: 1.5; color: #6b7280; margin: 8px 0 0; }
+.institutional-shell-navigation { display: flex; flex-direction: column; gap: 8px; }
+.institutional-shell-item { box-sizing: border-box; width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid #e5e7eb; background: #fff; font-weight: 500; color: #111827; text-decoration: none; transition: all 0.15s ease; }
+.institutional-shell-item:hover { background: #f9fafb; }
+.institutional-shell-item[aria-current="page"] { border-color: #bbf7d0; background: #ecfdf5; font-weight: 700; }
+.institutional-shell-item:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.institutional-shell-separator { height: 1px; background: #e5e7eb; }
+.institutional-shell-content { min-width: 0; }
+@media (max-width: 700px) {
+  .institutional-shell { grid-template-columns: minmax(0, 1fr); }
+  .institutional-shell-sidebar { border-right: 0; border-bottom: 1px solid #e5e7eb; }
+  .institutional-shell-banner { position: static; grid-column: 1 / -1; }
+  .institutional-shell--hml { padding-top: 0; }
+}
+
+.institutional-shell-caption { color: #6b7280; font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.institutional-shell-intro { max-width: 900px; margin: 24px auto; padding: 24px; }
+.institutional-shell-notice { margin: 16px 24px 0; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: #475569; font-size: 13px; line-height: 1.6; }

@@ -14,6 +14,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
    if(u.origin===FRONT)return route.continue();
    const reply=(data,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
    if(u.pathname==='/me')return reply({id:99,nome:'Profissional sintético',perfil:role,modulos:[{id:1,slug:'neurodesenvolvimento'},{id:2,slug:'cardiometabolico'}]});
+   if(u.pathname==='/operacao-assistencial/instituicoes'){assert.equal(req.method(),'GET');return reply([]);}
    assert.ok(u.pathname.startsWith('/saude-mental/'),'Unexpected API '+u.pathname);
    calls.push({method:req.method(),path:u.pathname,query:u.search});
    if(delay)await new Promise(r=>setTimeout(r,300));
@@ -37,6 +38,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   await page.getByText('Inteligência clínica em tempo real',{exact:true}).waitFor();
   assert.equal(await nav.getByRole('link',{name:'Visão Geral',exact:true}).getAttribute('aria-current'),'page');
   await nav.getByRole('link',{name:'Pessoas',exact:true}).click();
+  await nav.getByRole('link',{name:'Pessoas',exact:true}).and(page.locator('[aria-current="page"]')).waitFor();
   assert.equal(await nav.getByRole('link',{name:'Pessoas',exact:true}).getAttribute('aria-current'),'page');
   assert.equal(await nav.locator('[aria-current="page"]').count(),1);
   for (const label of ['Cockpit Neuro','Responsáveis','Clínicas','Atividades Terapêuticas','Usuários','Organizacional','Gestão Institucional']) {

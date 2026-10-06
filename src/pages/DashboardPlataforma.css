@@ -115,3 +115,9 @@
     align-items: flex-start;
   }
 }
+
+.plataforma-section-title { color: #334155; font-size: 18px; margin: 0 0 18px; }
+.plataforma-gestao { margin-top: 36px; border-top: 1px solid #cbd5e1; padding-top: 28px; }
+.gestao-card { background: #fff; border: 1px solid #cbd5e1; border-radius: 16px; padding: 24px; max-width: 620px; }
+.gestao-card h3 { margin: 0; color: #0f172a; font-size: 23px; }
+.gestao-card p { color: #475569; line-height: 1.6; }

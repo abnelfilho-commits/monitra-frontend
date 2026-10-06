@@ -3,9 +3,11 @@ import { meRequest } from "../services/auth";// ajuste o caminho conforme seu pr
 
 import { useNavigate } from "react-router-dom";
 import "./DashboardPlataforma.css";
+import useInstitutionalNavigation from "../hooks/useInstitutionalNavigation";
 
 export default function DashboardPlataforma() {
   const navigate = useNavigate();
+  const institutionalItems = useInstitutionalNavigation();
   const [usuario, setUsuario] = useState(null);
 
   const temNeuro =
@@ -53,6 +55,7 @@ export default function DashboardPlataforma() {
           </div>
         </div>
 
+        <h2 className="plataforma-section-title">Linhas de cuidado</h2>
         <div className="modulos-grid">
 
           {/* Neuro */}
@@ -123,6 +126,10 @@ export default function DashboardPlataforma() {
             </button>
           </div>
         </div>
+        {institutionalItems.length > 0 && <section className="plataforma-gestao" aria-labelledby="gestao-title">
+          <h2 id="gestao-title" className="plataforma-section-title">Gestão</h2>
+          <div className="gestao-card"><h3>Gestão Institucional / Administração</h3><p>Cadastros, operação contextual e capacidades transversais. Não é uma linha de cuidado e não concede acesso clínico.</p><button className="modulo-button blue" onClick={() => navigate("/gestao-institucional")}>Acessar Gestão Institucional</button></div>
+        </section>}
       </div>
     </div>
   );
