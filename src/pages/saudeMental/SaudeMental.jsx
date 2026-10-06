@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import PageLayout from "../../components/layouts/PageLayout/PageLayout";
-import CheckinBemEstar from "./CheckinBemEstar";
+import ProntuarioSaudeMental from "./ProntuarioSaudeMental";
 import Button from "../../components/ui/Button";
 import { instituicoesMentais, pessoasMentais, jornadaMental, erroMental } from "../../services/saudeMental";
 
@@ -61,7 +61,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
   }, [institution, pessoaId, contextoId, offset, detail, retry]);
 
   return <>
-    <header style={{ marginBottom: 24 }}><h1>Saúde Mental</h1><p>Jornada assistencial da Pessoa, com contexto institucional explícito.</p></header>
+    <header style={{ marginBottom: 24 }}><h1>{detail ? "Prontuário Saúde Mental 360°" : "Saúde Mental"}</h1><p>{detail ? "Acompanhamento assistencial no contexto da Pessoa." : "Jornada assistencial da Pessoa, com contexto institucional explícito."}</p></header>
     {detail ? <Link to={`/saude-mental?instituicao_id=${encodeURIComponent(institution)}`}>← Pessoas</Link> : <section id="pessoas" style={card}>
       <p><Link to="/operacao-assistencial">Operação contextual — consultar minhas atribuições</Link></p>
       <h2>Pessoas</h2><label htmlFor="mental-institution">Instituição</label>{" "}
@@ -86,12 +86,9 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
         {result.tem_mais && <Button onClick={() => setSearch({ instituicao_id: institution, offset: String(offset + 50) })}>Próxima</Button>}
       </nav>
     </>}
-    {!loading && !error && result && detail && <>
-      <section style={{ ...card, marginTop: 16 }}><h2>{result.nome_social || result.nome_completo}</h2><p>Pessoa #{result.pessoa_id} · Jornada de Saúde Mental</p><Status item={result} /></section>
-      <section style={card}><h2>Visão Geral</h2>
-        {result.linha_estado === "ATIVA" ? <p>Linha Saúde Mental ativa neste contexto. Esta é a área inicial da jornada.</p> : <p>{result.linha_estado === "AUSENTE" ? "A linha Saúde Mental ainda não foi vinculada a este contexto." : "A linha Saúde Mental está inativa neste contexto."} O início ou a ativação da linha não está disponível nesta tela.</p>}
-      </section>
-      <div style={card}><CheckinBemEstar jornada={result} onSaved={() => { setSaved(true); setRetry(n => n + 1); }} /></div>
-    </>}
+    {!loading && !error && result && detail && <ProntuarioSaudeMental
+      jornada={result}
+      onSaved={() => { setSaved(true); setRetry(n => n + 1); }}
+    />}
   </>;
 }
