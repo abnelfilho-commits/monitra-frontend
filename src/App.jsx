@@ -12,6 +12,7 @@ import SaudeMentalLayout from "./components/SaudeMentalLayout";
 import Usuarios from "./pages/Usuarios";
 import Instituicoes from "./pages/Instituicoes";
 import Pessoas from "./pages/Pessoas";
+import OperacaoAssistencial from "./pages/OperacaoAssistencial";
 
 /* Plataforma */
 import DashboardPlataforma from "./pages/DashboardPlataforma";
@@ -98,6 +99,7 @@ export default function App() {
             {/* Jornada assistencial: autorização permanece no backend. */}
             <Route element={<SaudeMentalLayout />}>
               <Route path="/saude-mental" element={<SaudeMental />} />
+              <Route path="/operacao-assistencial" element={<OperacaoAssistencial />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId" element={<SaudeMental />} />
             </Route>
 

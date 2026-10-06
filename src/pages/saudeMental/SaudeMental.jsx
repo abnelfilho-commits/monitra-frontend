@@ -63,6 +63,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
   return <>
     <header style={{ marginBottom: 24 }}><h1>Saúde Mental</h1><p>Jornada assistencial da Pessoa, com contexto institucional explícito.</p></header>
     {detail ? <Link to={`/saude-mental?instituicao_id=${encodeURIComponent(institution)}`}>← Pessoas</Link> : <section id="pessoas" style={card}>
+      <p><Link to="/operacao-assistencial">Operação contextual — consultar minhas atribuições</Link></p>
       <h2>Pessoas</h2><label htmlFor="mental-institution">Instituição</label>{" "}
       <select id="mental-institution" value={institution} disabled={loading} onChange={e => setSearch(e.target.value ? { instituicao_id: e.target.value } : {})}>
         <option value="">Selecione uma instituição</option>
