@@ -12,3 +12,6 @@ export const adicionarSaudeMental = (id, instituicao_id) => api.post(`/admin/con
 export const obterContextoPessoa = (id, instituicao_id) => api.get(`/admin/contextos-assistenciais/${id}`, { params: { instituicao_id } }).then(r => r.data);
 
 export const habilitarAcesso = (id, dados) => api.post(`/admin/pessoas/${id}/acesso`, dados).then(r => r.data);
+
+export const obterAcessosPessoa = id => api.get(`/admin/pessoas/${id}/acessos`).then(r => r.data);
+export const obterVinculosPessoa = id => api.get(`/admin/pessoas/${id}/vinculos`).then(r => r.data);

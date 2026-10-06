@@ -4,7 +4,7 @@ const FRONT=process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true});
  try {
-  const page=await browser.newPage(); let conflict=false, pending;const writes=[], unexpected=[];
+  const page=await browser.newPage(); let conflict=false, pending, persisted=null;const writes=[], unexpected=[];
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   await page.route('**/*',async route=>{
    const req=route.request(),u=new URL(req.url());if(u.origin===FRONT)return route.continue();
@@ -13,11 +13,14 @@ const FRONT=process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
    const person={id:10,nome_completo:'Pessoa local',cpf:null,ativo:true};
    if(u.pathname==='/admin/pessoas/')return reply([person]);
    if(u.pathname==='/admin/pessoas/10')return reply(person);
+   if(u.pathname==='/admin/pessoas/10/acessos')return reply(persisted || {pessoa_id:10,usuario:null,autorizacoes:[]});
+   if(u.pathname==='/admin/pessoas/10/vinculos')return reply({pessoa_id:10,paciente_id:null,profissional_id:null,pacientes:[],profissionais:[]});
    if(u.pathname==='/admin/instituicoes/')return reply([{id:2,razao_social:'Instituição local',ativo:true}]);
    if(u.pathname==='/admin/pessoas/10/acesso'){
     writes.push(req.postDataJSON());
     if(conflict)return reply({detail:{code:'ACCESS_CONFLICT'}},409);
     await new Promise(resolve=>{pending=resolve;});
+    persisted={pessoa_id:10,usuario:{id:20,email:'native@example.com',ativo:true},autorizacoes:[{id:30,usuario_id:20,instituicao_id:2,instituicao_nome:'Instituição local',instituicao_ativa:true,perfil_institucional:'SUPORTE',ativo:true}]};
     return reply({pessoa_id:10,usuario_id:20,email:'native@example.com',usuario_ativo:true,autorizacao:{id:30,usuario_id:20,instituicao_id:2,perfil_institucional:'SUPORTE',ativo:true}});
    }
    if(req.method()!=='GET')unexpected.push(u.pathname);
@@ -38,17 +41,21 @@ const FRONT=process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
   await page.getByLabel('Autorização institucional ativa').check();
   await page.getByRole('button',{name:'Confirmar habilitação'}).click();
   await page.getByText('Habilitando acesso...', {exact:true}).waitFor();pending();
-  await page.getByRole('status').filter({hasText:'Acesso institucional habilitado'}).waitFor();
+  await page.getByRole('status').filter({hasText:'Acesso institucional habilitado e consultado'}).waitFor();
   assert.equal(await form.count(),0);
   assert.equal(await page.getByLabel('Senha inicial',{exact:true}).count(),0);
   assert.equal(await page.getByRole('button',{name:'Confirmar habilitação'}).count(),0);
   const summary=page.locator('section').filter({has:page.getByRole('heading',{name:'Acesso à plataforma',exact:true})});
-  for(const value of ['native@example.com','Instituição local','SUPORTE','Ativo'])await summary.getByText(value,{exact:true}).waitFor();
+  for(const value of ['native@example.com','Instituição local','Perfil: SUPORTE · Autorização: Ativa','Ativa'])await summary.getByText(value,{exact:true}).waitFor();
   await summary.getByText(/Nenhuma autorização clínica foi concedida/).waitFor();
   assert.deepEqual(unexpected,[]);
   assert.equal(writes.length,1);
   assert.deepEqual(Object.keys(writes[0]).sort(),['email','senha_inicial','instituicao_id','perfil_institucional','ativo'].sort());
-  conflict=true;
+  await page.reload();
+  await page.getByRole('button',{name:'Ver / Editar'}).click();
+  await page.getByText('native@example.com',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Habilitar acesso',exact:true}).count(),0);
+  conflict=true; persisted=null;
   await page.reload();
   await page.getByRole('button',{name:'Ver / Editar'}).click();
   await page.getByRole('button',{name:'Habilitar acesso',exact:true}).click();

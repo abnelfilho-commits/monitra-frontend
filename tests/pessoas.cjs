@@ -7,7 +7,7 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
   const page = await browser.newPage(); page.setDefaultTimeout(10000);
   let role='ADMIN', lookupExists=false, failure=null, unknown=false;
   const rows=Array.from({length:21},(_,i)=>({id:i+1,nome_completo:`Pessoa sintética ${i+1}`,cpf:'52998224725',nome_social:null,data_nascimento:null,sexo:null,email:null,telefone:null,ativo:true}));
-  const calls=[], errors=[]; let links=[];
+  const calls=[], errors=[]; let links=[]; const patients=new Map();
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   await page.route('**/*',async route=>{
@@ -18,11 +18,16 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
    if(!u.pathname.startsWith('/admin/'))return reply([]);
    const body=req.postDataJSON(); calls.push({method:req.method(),path:u.pathname,query:u.search,body});
    if(failure?.path===u.pathname)return reply({detail:{code:failure.code}},failure.status);
+   if(/^\/admin\/pessoas\/\d+\/acessos$/.test(u.pathname))return reply({pessoa_id:Number(u.pathname.split('/')[3]),usuario:null,autorizacoes:[]});
+   if(/^\/admin\/pessoas\/\d+\/vinculos$/.test(u.pathname)){
+    const id=Number(u.pathname.split('/')[3]),pid=patients.get(id)||null;
+    return reply({pessoa_id:id,paciente_id:pid,profissional_id:null,pacientes:links.filter(l=>l.paciente_id===pid).map(l=>({...l,instituicao_nome:'Empresa sintética',instituicao_ativa:true})),profissionais:[]});
+   }
    if(u.pathname==='/admin/pessoas/')return reply(rows.slice(Number(u.searchParams.get('offset')),Number(u.searchParams.get('offset'))+Number(u.searchParams.get('limit'))));
    if(/^\/admin\/pessoas\/\d+$/.test(u.pathname)){const row=rows.find(r=>r.id===Number(u.pathname.split('/').at(-1)));if(req.method()==='PATCH')Object.assign(row,body);return reply(row);}
    if(u.pathname==='/admin/identidades/localizar')return reply(lookupExists?{encontrada:true,pessoa:rows[0]}:{encontrada:false});
    if(u.pathname==='/admin/identidades/pessoas'){rows.push({id:30,ativo:true,...body.pessoa});return reply({pessoa_id:30,resultado:'PESSOA_CRIADA'});}
-   if(u.pathname==='/admin/identidades/papeis')return reply({pessoa_id:1,paciente_id:71,resultado:'PAPEL_REUTILIZADO'});
+   if(u.pathname==='/admin/identidades/papeis'){const id=rows.find(r=>r.cpf===body.pessoa.cpf).id;patients.set(id,71);return reply({pessoa_id:id,paciente_id:71,resultado:'PAPEL_REUTILIZADO'});}
    if(u.pathname==='/admin/instituicoes/')return reply([{id:4,razao_social:'Empresa sintética',ativo:true},{id:5,razao_social:'Outra empresa',ativo:true}]);
    if(u.pathname==='/admin/vinculos-institucionais/pacientes'){
     if(req.method()==='GET')return reply(links.filter(l=>l.instituicao_id===Number(u.searchParams.get('instituicao_id'))));
@@ -67,6 +72,7 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
   await page.getByRole('alert').filter({hasText:'divergência cadastral'}).waitFor();
   failure=null;
   await page.getByRole('button',{name:'Preparar papel assistencial',exact:true}).click();
+  await page.getByRole('button',{name:'Adicionar vínculo institucional / preparar contexto',exact:true}).click();
   await page.getByLabel('Instituição *',{exact:true}).selectOption('4');
   await page.getByText('Nenhum vínculo encontrado nesta instituição.',{exact:true}).waitFor();
   const commands=calls.filter(c=>c.path==='/admin/identidades/papeis');
@@ -126,7 +132,7 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
   assert.equal(await page.getByLabel('Motivo da preparação *',{exact:true}).inputValue(),'');
   await page.getByLabel('Motivo da preparação *',{exact:true}).fill('Papel independente');
   await page.getByRole('button',{name:'Preparar papel assistencial',exact:true}).click();
-  await page.getByLabel('Instituição *',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Adicionar vínculo institucional / preparar contexto',exact:true}).waitFor();
   assert.equal(calls.filter(c=>c.path==='/admin/identidades/papeis').at(-1).body.motivo,'Papel independente');
   for(const perfil of ['ADMIN_CLINICA','PROFISSIONAL','SUPORTE']){role=perfil;const count=calls.length;await page.goto(FRONT+'/admin/pessoas');await page.waitForURL('**/dashboard');assert.equal(calls.length,count);}
   for(const c of calls){if(c.body){assert.equal('ator_usuario_id' in c.body,false);assert.equal('clinica_id' in c.body,false);assert.equal('senha' in c.body,false);}}

@@ -95,7 +95,7 @@ function Operations({ institution, context }) {
         <h3>Autoridades</h3>{!state.autoridades.length && <p>Nenhuma autoridade registrada para este escopo.</p>}{state.autoridades.map(a => <p key={a.id}>{a.nome || "Conta indisponível"} · {labels[a.capacidade_delegavel]} · {a.revogado_em ? "Revogada" : "Não revogada"}</p>)}
         <h3>Participações</h3>{!state.participacoes.length && <p>Nenhuma participação registrada.</p>}{state.participacoes.map(p => <p key={p.id}>{state.profissionais.find(x => x.id === p.profissional_instituicao_id)?.profissional || "Vínculo profissional registrado"} · {p.data_inicio} → {p.data_fim || "aberto"} · {p.invalidado_em ? "Invalidada" : p.encerrado_em ? "Encerrada" : "Não encerrada"}</p>)}
         <h3>Capacidades concedidas</h3>{!state.grants.length && <p>Nenhuma capacidade concedida neste contexto.</p>}{state.grants.map(g => <div key={g.id}><p>{g.nome || "Conta indisponível"} · {labels[g.capacidade]} · {g.revogado_em ? "Revogada" : "Não revogada"}</p>{g.pode_revogar && <Button variant="danger" disabled={!reason.trim()} onClick={() => { if (window.confirm("Revogar esta capacidade contextual?")) write(`grants/${g.id}/revogar`, {motivo:reason}); }}>Revogar {labels[g.capacidade]}</Button>}</div>)}
-        <p>Um registro não revogado não prova acesso efetivo: conta, raiz, Pessoa, vínculo, participação e demais requisitos continuam sendo verificados pelo backend.</p>
+        <p>Uma autorização ativa não garante acesso por si só. A plataforma verifica automaticamente todos os requisitos necessários antes de permitir o acesso.</p>
       </section>
     </fieldset>}{busy && <p role="status">Executando operação explícita...</p>}
   </>;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Button from "./ui/Button";
 import { listarInstituicoes } from "../services/instituicoes";
-import { habilitarAcesso } from "../services/pessoas";
+import { habilitarAcesso, obterAcessosPessoa } from "../services/pessoas";
 
 const input = { display: "block", width: "100%", boxSizing: "border-box", padding: 10, margin: "6px 0 16px" };
 const errors = {
@@ -19,7 +19,17 @@ export default function HabilitarAcesso({ person }) {
   const [institution, setInstitution] = useState(""), [profile, setProfile] = useState("");
   const [active, setActive] = useState(false), [busy, setBusy] = useState(false);
   const [error, setError] = useState(""), [result, setResult] = useState(null), [unknown, setUnknown] = useState(false);
+  const [revision, refresh] = useState(0), [readError, setReadError] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
   const lock = useRef(false);
+  useEffect(() => {
+    let current = true;
+    obterAcessosPessoa(person.id).then(data => {
+      if (data.pessoa_id !== person.id || !Array.isArray(data.autorizacoes) || !("usuario" in data)) throw Error("Invalid access response");
+      if (current) { setResult(data); setReadError(""); }
+    }).catch(() => { if (current) setReadError("Não foi possível consultar o acesso persistido. Nenhuma ausência de conta foi confirmada."); });
+    return () => { current = false; };
+  }, [person.id, revision]);
   useEffect(() => {
     if (!open) return;
     let current = true;
@@ -29,11 +39,11 @@ export default function HabilitarAcesso({ person }) {
   }, [open]);
   async function submit(e) {
     e.preventDefault();
-    if (lock.current || unknown) return;
-    lock.current = true; setBusy(true); setError(""); setResult(null);
+    if (lock.current || unknown || !result || readError || result.usuario) return;
+    lock.current = true; setBusy(true); setError("");
     try {
-      const r = await habilitarAcesso(person.id, { email, senha_inicial: password, instituicao_id: Number(institution), perfil_institucional: profile, ativo: active });
-      setResult(r); setOpen(false);
+      await habilitarAcesso(person.id, { email, senha_inicial: password, instituicao_id: Number(institution), perfil_institucional: profile, ativo: active });
+      setOpen(false); setConfirmed(true); setResult(null); setReadError(""); refresh(n => n + 1);
     } catch (e) {
       const status = e?.response?.status;
       setError(errors[e?.response?.data?.detail?.code] || ({401: "Sessão expirada.",403: "Operação exclusiva do ADMIN global.",404: "Pessoa ou instituição não encontrada.",409: "Conflito: nenhuma sobrescrita foi realizada.",422: "Confira e-mail, senha (até 72 bytes), instituição e perfil."}[status]) || "Resultado não confirmado. Solicite conferência antes de repetir.");
@@ -43,9 +53,12 @@ export default function HabilitarAcesso({ person }) {
   return <section style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, marginBottom: 20 }}>
     <h2>Acesso à plataforma</h2>
     <p>Possuir acesso à plataforma não concede autoridade, participação ou acesso clínico. O perfil institucional não concede capabilities.</p>
-    {!result && <Button disabled={!person.ativo || busy} variant="secondary" onClick={() => { setOpen(!open); setPassword(""); setError(""); }}> {open ? "Fechar acesso" : "Habilitar acesso"}</Button>}
+    {readError && <p role="alert">{readError}</p>}
+    {!result && !readError && <p role="status">Consultando acesso persistido...</p>}
+    <Button variant="secondary" disabled={busy} onClick={() => { setOpen(false); setPassword(""); setResult(null); setReadError(""); refresh(n => n + 1); }}>Atualizar acesso</Button>
+    {result && !readError && !result.usuario && !confirmed && <Button disabled={!person.ativo || busy} variant="secondary" onClick={() => { setOpen(!open); setPassword(""); setError(""); }}> {open ? "Fechar acesso" : "Habilitar acesso"}</Button>}
     {!person.ativo && <p>Pessoa inativa: habilitação indisponível.</p>}
-    {open && <form onSubmit={submit}>
+    {open && result && !result.usuario && !readError && <form onSubmit={submit}>
       <p>{person.nome_completo} — Pessoa #{person.id} — {person.ativo ? "Ativa" : "Inativa"}</p>
       <p>A senha inicial é usada somente para uma nova conta. Uma conta compatível será reutilizada sem troca de senha. O estado abaixo refere-se à autorização nesta instituição.</p>
       {error && <p role="alert">{error}</p>}
@@ -62,14 +75,19 @@ export default function HabilitarAcesso({ person }) {
       {busy && <p role="status">Habilitando acesso...</p>}
 
     </form>}
-    {result && <div>
+    {result && !readError && result.usuario && <div>
       <dl>
-        <dt>E-mail de acesso</dt><dd>{result.email}</dd>
-        <dt>Instituição</dt><dd>{institutions?.find(i => i.id === result.autorizacao.instituicao_id)?.razao_social || `#${result.autorizacao.instituicao_id}`}</dd>
-        <dt>Perfil institucional</dt><dd>{result.autorizacao.perfil_institucional}</dd>
-        <dt>Status da autorização institucional</dt><dd>{result.autorizacao.ativo ? "Ativo" : "Inativo"}</dd>
+        <dt>Conta</dt><dd>{result.usuario.email}</dd>
+        <dt>Status da conta</dt><dd>{result.usuario.ativo ? "Ativa" : "Inativa"}</dd>
       </dl>
-      <p role="status">Acesso institucional habilitado. Nenhuma autorização clínica foi concedida.</p>
+      <h3>Autorizações institucionais</h3>
+      {!result.autorizacoes.length && <p>Nenhuma autorização institucional registrada.</p>}
+      {result.autorizacoes.map(a => <div key={a.id} style={{ borderTop: "1px solid #e5e7eb", padding: "12px 0" }}>
+        <strong>{a.instituicao_nome}</strong>{!a.instituicao_ativa && <span> · Instituição inativa</span>}
+        <p>Perfil: {a.perfil_institucional} · Autorização: {a.ativo ? "Ativa" : "Inativa"}</p>
+      </div>)}
+      {confirmed && <p role="status">Acesso institucional habilitado e consultado. Nenhuma autorização clínica foi concedida.</p>}
     </div>}
+    {result && !result.usuario && confirmed && <p role="alert">A conta não foi encontrada na reconsulta. Solicite conferência administrativa antes de repetir.</p>}
   </section>;
 }
