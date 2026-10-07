@@ -1,0 +1,69 @@
+const assert = require('node:assert/strict');
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
+(async () => {
+  const { wellbeingSeries, wellbeingEvents, wellbeingDimensions } = await import('../src/pages/saudeMental/bemEstarPresentation.js');
+  const make = (id, date, respostas) => ({id, data_hora: date, baseline: id === 1, respondente_pessoa_id: 18, registrador_profissional_id: 8, canal: 'PORTAL_PROFISSIONAL', modalidade: 'ASSISTIDO', respostas});
+  const samples = [make(3, '2026-10-06T15:00:00Z', {humor:'BOM', trabalho:'MUITO_BOM'}), make(1, '2026-10-01T12:00:00Z', {humor:'RUIM', trabalho:'REGULAR'}), make(2, '2026-10-03T12:00:00Z', {humor:'REGULAR', trabalho:'NAO_SE_APLICA', pedido_ajuda:'SIM'})];
+  const series = wellbeingSeries(samples, wellbeingDimensions[0]);
+  assert.deepEqual(series.map(x => x.value), ['RUIM','REGULAR','BOM']);
+  assert.deepEqual(samples.map(x=>x.id), [3,1,2]); // adapter never mutates DTO
+  assert.deepEqual(wellbeingSeries(samples, wellbeingDimensions[6]).map(x=>x.value), ['REGULAR',null,'MUITO_BOM']);
+  assert.ok(!wellbeingDimensions.some(x=>['pedido_ajuda','evento_relevante','evento_descricao'].includes(x.key)));
+  assert.deepEqual(wellbeingEvents(samples,'Pessoa teste',18).map(x=>x.id), ['CHECKIN:3','CHECKIN:2','CHECKIN:1']);
+  assert.deepEqual(wellbeingSeries([],wellbeingDimensions[0]),[]);
+  assert.equal(wellbeingSeries([make(4,'2026-10-07T12:00:00Z',{humor:'UNKNOWN'})],wellbeingDimensions[0])[0].value,null);
+  const browser = await chromium.launch({ channel:'chrome', headless:true });
+  try {
+    const page = await browser.newPage({viewport:{width:1440,height:1000}});
+    page.setDefaultTimeout(10000);
+    await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
+    let records=[], denied=false;
+    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.route('**/*',route=>{
+      const u=new URL(route.request().url()); if(u.origin===FRONT)return route.continue();
+      const reply=(body,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+      if(u.pathname==='/me')return reply({id:99,nome:'Synthetic',perfil:'PROFISSIONAL',modulos:[]});
+      assert.equal(route.request().method(),'GET');
+      assert.match(u.pathname,/^\/saude-mental\/pessoas\/\d+\/contextos\/\d+$/);
+      assert.equal(u.searchParams.get('instituicao_id'),'5');
+      if(denied)return reply({detail:'Forbidden'},403);
+      const other=u.pathname.includes('/19/')||u.pathname.endsWith('/10');
+      return reply({pessoa_id:other?19:18,nome_completo:other?'Outra pessoa':'Pessoa teste',paciente_id:24,instituicao_id:5,instituicao_nome:'Instituição teste',contexto_assistencial_id:other?10:9,modulo_id:3,contexto_estado:'ABERTO',linha_estado:'ATIVA',data_inicio:'2026-01-01',data_fim:null,bem_estar:{pode_registrar:false,formulario:null,checkins:other?[]:records}});
+    });
+    const url=FRONT+'/saude-mental/pessoas/18/contextos/9?instituicao_id=5';
+    await page.goto(url);
+    await page.getByText('Nenhum Check-in registrado neste contexto.',{exact:true}).waitFor();
+    const timeline=page.locator('.mental-record__timeline');
+    await timeline.getByText('Nenhum evento encontrado.').waitFor();
+    records=[samples[1]];await page.reload();
+    await page.getByText('Um Check-in registrado.',{exact:false}).waitFor();
+    assert.equal(await page.locator('.mental-record__series-table tbody tr').count(),1);
+    assert.equal(await timeline.locator('article').count(),1);
+    records=samples;await page.reload();
+    await page.locator('.mental-record__series-table tbody tr').nth(2).waitFor();
+    assert.deepEqual(await page.locator('.mental-record__series-table tbody tr td:nth-child(2)').allTextContents(),['Ruim','Regular','Bom']);
+    assert.equal(await page.locator('.mental-record__chart .recharts-line-dots circle').count(),3);
+    assert.deepEqual(await page.locator('.mental-record__chart .recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value').allTextContents(), ['Muito ruim','Ruim','Regular','Bom','Muito bom']);
+    await timeline.locator('article').first().getByText('Detalhes do registro').click();
+    await timeline.locator('article').first().getByText('Humor: Bom',{exact:true}).waitFor();
+    assert.ok((await timeline.innerText()).includes('Respondente: Pessoa teste'));
+    assert.ok((await timeline.innerText()).includes('Canal: Portal Profissional'));
+    await page.locator('#wellbeing-dimension').selectOption('trabalho');
+    assert.deepEqual(await page.locator('.mental-record__series-table tbody tr td:nth-child(2)').allTextContents(),['Regular','Não se aplica','Muito bom']);
+    assert.equal(await page.locator('.mental-record__chart .recharts-line-dots circle').count(),2);
+    await page.screenshot({path:'/tmp/w3-longitudinal-desktop.png',fullPage:true});
+    await page.setViewportSize({width:390,height:844});
+    await page.waitForFunction(()=>document.documentElement.scrollWidth<=window.innerWidth);
+    await page.screenshot({path:'/tmp/w3-longitudinal-mobile.png',fullPage:true});
+    for(const path of ['/saude-mental/pessoas/18/contextos/10','/saude-mental/pessoas/19/contextos/9']) {
+      await page.goto(FRONT+path+'?instituicao_id=5');
+      await page.getByText('Nenhum Check-in registrado neste contexto.',{exact:true}).waitFor();
+      assert.equal(await page.locator('.mental-record__timeline article').count(),0);
+    }
+    denied=true;await page.goto(url);await page.getByRole('alert').waitFor();
+    assert.equal(await page.locator('.mental-record__timeline').count(),0);
+    assert.deepEqual(errors,[]);
+    console.log('LONGITUDINAL_PASS: zero/um/múltiplos, série ordinal sem score, lacunas, Timeline ordenada, proveniência, troca Pessoa/contexto, negação, somente GET contextual e responsividade.');
+  } finally {await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1)});

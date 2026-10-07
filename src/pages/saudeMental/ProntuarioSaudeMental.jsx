@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Button from "../../components/ui/Button";
 import StatCard from "../../components/ui/StatCard/StatCard";
+import LongitudinalBemEstar from "./LongitudinalBemEstar";
 import CheckinBemEstar from "./CheckinBemEstar";
 import "./ProntuarioSaudeMental.css";
 
@@ -69,7 +70,8 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
         <h2 id="mental-actions-title">Ações clínicas</h2>
         <p>Registro assistido e acompanhamento de Bem-Estar nesta jornada.</p>
       </header>
-      <CheckinBemEstar jornada={jornada} onSaved={onSaved} open={checkinOpen} setOpen={setCheckinOpen} />
+      <CheckinBemEstar jornada={jornada} onSaved={onSaved} open={checkinOpen} setOpen={setCheckinOpen} showHistory={false} />
     </section>
+    <LongitudinalBemEstar jornada={jornada} />
   </div>;
 }

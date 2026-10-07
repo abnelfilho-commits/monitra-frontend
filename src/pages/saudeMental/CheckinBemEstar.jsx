@@ -1,9 +1,10 @@
 import { useRef, useEffect, useState } from "react";
+import { responseLabels, valueLabels } from "./bemEstarPresentation";
 import AssessmentField from "../../components/assessments/AssessmentField";
 import Button from "../../components/ui/Button";
 import { registrarCheckin, erroCheckin } from "../../services/saudeMental";
 
-export default function CheckinBemEstar({ jornada, onSaved, open, setOpen }) {
+export default function CheckinBemEstar({ jornada, onSaved, open, setOpen, showHistory = true }) {
   const [answers, setAnswers] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -54,7 +55,7 @@ export default function CheckinBemEstar({ jornada, onSaved, open, setOpen }) {
         {uncertain && <Button type="button" onClick={() => window.location.reload()}>Atualizar jornada</Button>}
       </div>
     </form>}
-    {checkins.map(item => <article key={item.id} style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
+    {showHistory && checkins.map(item => <article key={item.id} style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
       <h3>{item.baseline ? "Check-in Inicial · Baseline" : "Check-in de Bem-Estar"}</h3>
       <p>{new Date(item.data_hora).toLocaleString("pt-BR")} · {item.modalidade === "ASSISTIDO" ? "Modalidade assistida" : item.modalidade}</p>
       <dl>{Object.entries(item.respostas).map(([name, value]) => {
@@ -64,7 +65,3 @@ export default function CheckinBemEstar({ jornada, onSaved, open, setOpen }) {
     </article>)}
   </section>;
 }
-
-// Display labels only; no score, inference or clinical interpretation.
-const responseLabels = { humor: "Humor", ansiedade: "Ansiedade / tensão", estresse: "Estresse percebido", sono: "Sono", energia: "Energia", funcionamento: "Funcionamento", trabalho: "Percepção relacionada ao trabalho", evento_relevante: "Evento relevante", evento_descricao: "Descrição do evento", pedido_ajuda: "Pedido de apoio" };
-const valueLabels = { SIM: "Sim", NAO: "Não", MUITO_RUIM: "Muito ruim", RUIM: "Ruim", REGULAR: "Regular", BOM: "Bom", MUITO_BOM: "Muito bom", NENHUMA: "Nenhuma", POUCA: "Pouca", MODERADA: "Moderada", MUITA: "Muita", EXTREMA: "Extrema", NAO_SE_APLICA: "Não se aplica" };
