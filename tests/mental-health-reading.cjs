@@ -43,6 +43,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
       await block.getByText('Descrição recebida do backend.',{exact:true}).waitFor();
       assert.equal(await block.locator('script').count(),0);
       assert.equal(await page.locator('.mental-record__timeline article').count(),count);
+      await page.locator('#wellbeing-dimension').selectOption('humor');
       assert.equal(await page.locator('.mental-record__series-table tbody tr').count(),count);
     }
     for(const name of ['Registrar Diagnóstico','PHQ-9','GAD-7','CBI','PTS','Intervenção','Gerar relatório'])

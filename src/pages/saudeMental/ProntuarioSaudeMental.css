@@ -34,3 +34,9 @@
 .mental-panel__attention { margin-top: 14px; padding: 14px; border: 1px solid #e3d3b5; border-inline-start: 4px solid #a47b36; border-radius: 12px; color: #664f2c; background: #fcf8f0; overflow-wrap: anywhere; }
 .mental-reading, .mental-panel { min-width: 0; overflow-wrap: anywhere; }
 .mental-reading > div > div { min-width: 0; }
+
+.mental-record__chart--overview { height: 400px; }
+.mental-evolution-tooltip { max-width: min(310px, 75vw); padding: 12px; border: 1px solid #d1d5db; border-radius: 10px; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.08); font-size: 12px; }
+.mental-evolution-tooltip ul { list-style: none; margin: 8px 0 0; padding: 0; }
+.mental-evolution-tooltip li { margin-top: 5px; }
+@media (max-width: 600px) { .mental-record__chart--overview { height: 480px; } }

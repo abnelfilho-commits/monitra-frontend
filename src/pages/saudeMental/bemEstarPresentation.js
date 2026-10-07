@@ -30,6 +30,21 @@ export function wellbeingSeries(checkins, dimension) {
   }));
 }
 
+// Common orientation is visual only; each dimension retains its real answer.
+export function wellbeingOverview(checkins = []) {
+  return orderedCheckins(checkins).filter(item => Number.isFinite(Date.parse(item.data_hora))).map(item => {
+    const row = { id: item.id, timestamp: Date.parse(item.data_hora), answers: {} };
+    wellbeingDimensions.forEach(dimension => {
+      const answer = item.respostas[dimension.key];
+      const position = dimension.categories.indexOf(answer);
+      row[dimension.key] = position < 0 ? null
+        : ["ansiedade", "estresse"].includes(dimension.key) ? dimension.categories.length - 1 - position : position;
+      row.answers[dimension.key] = valueLabels[answer] || "Não informado";
+    });
+    return row;
+  });
+}
+
 // Adapter for the existing pure TimelineEvents renderer; no legacy data acquisition.
 export function wellbeingEvents(checkins, personName, personId) {
   return orderedCheckins(checkins).sort((a, b) => {
