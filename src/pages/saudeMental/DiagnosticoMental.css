@@ -1,0 +1,11 @@
+.mental-diagnosis__identity { display:flex; align-items:center; gap:16px; padding:22px; border:1px solid #e2e8f0; border-radius:20px; background:white; box-shadow:0 8px 24px rgba(15,23,42,.05); overflow-wrap:anywhere; }
+.mental-diagnosis__identity h2 { margin:4px 0; color:#0f172a; font-size:22px; }
+.mental-diagnosis__identity p { margin:6px 0 0; color:#64748b; }
+.mental-diagnosis__avatar { padding:14px; border-radius:16px; background:#eff6ff; font-size:28px; }
+@media (max-width:600px) {
+  .mental-diagnosis { padding:20px 12px 36px !important; }
+  .mental-diagnosis form fieldset > section { padding:16px !important; gap:10px !important; flex-direction:column; }
+  .mental-diagnosis form fieldset > section:first-child button { min-width:0; }
+  .mental-diagnosis form fieldset > section:first-child > div:last-child > div { grid-template-columns:1fr !important; }
+  .mental-diagnosis__context { grid-template-columns:1fr !important; }
+}

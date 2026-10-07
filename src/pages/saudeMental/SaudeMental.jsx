@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import PageLayout from "../../components/layouts/PageLayout/PageLayout";
 import ProntuarioSaudeMental from "./ProntuarioSaudeMental";
 import Button from "../../components/ui/Button";
@@ -36,7 +36,8 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  const [saved, setSaved] = useState(false);
+  const location = useLocation();
+  const [saved, setSaved] = useState(() => location.state?.diagnosisSaved ? "Diagnóstico registrado com sucesso." : false);
   useEffect(() => {
     let current = true;
     async function load() {

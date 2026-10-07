@@ -75,6 +75,7 @@ import AgendaAssistencial from "./pages/AgendaAssistencial";
 import FinanceiroInstitucional from "./pages/financeiro/FinanceiroInstitucional";
 
 
+import DiagnosticoMental from "./pages/saudeMental/DiagnosticoMental";
 import SaudeMental from "./pages/saudeMental/SaudeMental";
 
 export default function App() {
@@ -99,6 +100,7 @@ export default function App() {
 
             {/* Jornada assistencial: autorização permanece no backend. */}
             <Route element={<SaudeMentalLayout />}>
+              <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/diagnosticos/novo" element={<DiagnosticoMental />} />
               <Route path="/saude-mental" element={<SaudeMental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId" element={<SaudeMental />} />
             </Route>

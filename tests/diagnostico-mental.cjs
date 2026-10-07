@@ -29,21 +29,37 @@ const FRONT='http://127.0.0.1:5177';
    bem_estar:{pode_registrar:false,checkins:[{id:2,data_hora:'2026-10-01T12:00:00Z',baseline:true,respondente_pessoa_id:18,canal:'PORTAL_PROFISSIONAL',modalidade:'ASSISTIDO',respostas:{humor:'BOM'}}]}});
  });
  await page.goto(FRONT+'/saude-mental/pessoas/18/contextos/9?instituicao_id=5');
+ assert.equal(await page.locator('form').count(),0);
  await page.getByRole('button',{name:'Registrar Diagnóstico',exact:true}).click();
+ await page.waitForURL('**/diagnosticos/novo?instituicao_id=5');
+ await page.getByRole('heading',{name:'🩺 Registrar Diagnóstico',exact:true}).waitFor();
+ await page.getByText('Pessoa sintética',{exact:true}).waitFor();
+ await page.getByText('Instituição teste · Contexto #9 · Saúde Mental',{exact:true}).waitFor();
+ assert.equal(await page.locator('select').count(),0);
+ await page.getByRole('button',{name:'Cancelar',exact:true}).click();
+ await page.waitForURL('**/contextos/9?instituicao_id=5');
+ await page.getByRole('button',{name:'Registrar Diagnóstico',exact:true}).click();
+ await page.getByRole('heading',{name:'🩺 Registrar Diagnóstico',exact:true}).waitFor();
  for(const width of [1440,768,390]){
   await page.setViewportSize({width,height:900});await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);
   await page.screenshot({path:'/tmp/diagnostico-form-'+width+'.png',fullPage:true});
  }
- await page.getByRole('button',{name:'Salvar diagnóstico',exact:true}).click();assert.equal(posts,0);
- await page.getByLabel('Tipo',{exact:true}).selectOption('DIAGNOSTICO');
+ assert.equal(await page.getByRole('button',{name:'🩺 Registrar Diagnóstico',exact:true}).isDisabled(),true);assert.equal(posts,0);
+ for (const label of ['Hipótese','Revisão','Diagnóstico']) {
+  const button=page.getByRole('button',{name:new RegExp(label)}).filter({has:page.locator('[style]')});
+  await button.click();assert.equal(await button.getAttribute('aria-pressed'),'true');
+ }
  await page.getByLabel('Data do diagnóstico',{exact:true}).fill('2026-10-07');
- await page.getByLabel('Descrição clínica',{exact:true}).fill('Diagnóstico sintético');
- await page.getByLabel('Nome do médico',{exact:true}).fill('Médico sintético');
- await page.getByRole('button',{name:'Salvar diagnóstico',exact:true}).click();
+ await page.getByLabel('Descrição clínica *',{exact:true}).fill('Diagnóstico sintético');
+ await page.getByLabel('Nome do médico relacionado ao diagnóstico *',{exact:true}).fill('Médico sintético');
+ await page.getByRole('button',{name:'🩺 Registrar Diagnóstico',exact:true}).click();
  await page.getByRole('alert').getByText('Revise os campos do diagnóstico.').waitFor();
  failure=0;
- await page.getByRole('button',{name:'Salvar diagnóstico',exact:true}).click();
+ await page.getByLabel('CID',{exact:true}).fill('F00');
+ await page.getByRole('button',{name:'🩺 Registrar Diagnóstico',exact:true}).click();
  await page.getByText('Diagnóstico registrado com sucesso.',{exact:true}).waitFor();
+ await page.waitForURL('**/contextos/9?instituicao_id=5');
+ assert.equal(await page.locator('form').count(),0);
  assert.equal(posts,2);
  const timeline=page.locator('.mental-record__timeline');
  await timeline.getByText('Diagnóstico sintético',{exact:true}).waitFor();
@@ -59,6 +75,9 @@ const FRONT='http://127.0.0.1:5177';
  }
  allowed=false;await page.reload();await page.getByRole('button',{name:'Registrar Diagnóstico',exact:true}).waitFor();
  assert.equal(await page.getByRole('button',{name:'Registrar Diagnóstico',exact:true}).isDisabled(),true);
+ await page.goto(FRONT+'/saude-mental/pessoas/18/contextos/9/diagnosticos/novo?instituicao_id=5');
+ await page.getByRole('alert').getByText('Registro não autorizado neste contexto.').waitFor();
+ assert.equal(await page.locator('form').count(),0);
  assert.deepEqual(errors,[]);console.log('DIAGNOSIS_FRONT_PASS: contextual save/error/refresh; authored real timeline; filters; no legacy; responsive; authorization flag.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});
