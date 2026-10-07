@@ -46,3 +46,20 @@
 .mental-evolution-legend__button:hover { background: #f3f4f6; }
 .mental-evolution-legend__button:focus-visible { outline: 2px solid #356b9b; outline-offset: 2px; }
 .mental-evolution-legend__button[aria-pressed="false"] { text-decoration: line-through; opacity: .55; }
+
+.mental-timeline__header, .mental-timeline-event__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.mental-timeline__header h2 { margin: 0; }
+.mental-timeline__filters, .mental-timeline-event__provenance { display: flex; flex-wrap: wrap; gap: 8px; }
+.mental-timeline__events { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+.mental-timeline-event { border: 1px solid #d8e1eb; border-radius: 12px; padding: 16px; background: #fff; overflow-wrap: anywhere; }
+.mental-timeline-event--checkin { border-inline-start: 4px solid #6e92b4; background: #f7faff; }
+.mental-timeline-event h3 { margin: 0 0 8px; font-size: 16px; color: #294e70; }
+.mental-timeline-event__dates { font-size: 12px; color: #566479; line-height: 1.7; }
+.mental-timeline-event__provenance { margin-top: 12px; }
+.mental-timeline__badge { display: inline-block; padding: 4px 8px; border: 1px solid #d8e1eb; border-radius: 8px; background: #fff; color: #425a72; font-size: 12px; }
+.mental-timeline__badge--baseline { background: #eaf0f8; }
+.mental-timeline-event__respondent { color: #334155; font-size: 14px; }
+.mental-timeline-event__details { border-top: 1px solid #d8e1eb; padding-top: 12px; font-size: 14px; }
+.mental-timeline-event__details summary { cursor: pointer; color: #294e70; font-weight: 600; }
+.mental-timeline-event__details li { margin-top: 6px; }
+.mental-timeline__empty { padding: 16px; border: 1px dashed #d1d5db; border-radius: 10px; color: #64748b; }

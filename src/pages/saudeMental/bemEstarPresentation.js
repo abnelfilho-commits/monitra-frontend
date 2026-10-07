@@ -45,7 +45,7 @@ export function wellbeingOverview(checkins = []) {
   });
 }
 
-// Adapter for the existing pure TimelineEvents renderer; no legacy data acquisition.
+// Timeline presentation adapter; no legacy data acquisition.
 export function wellbeingEvents(checkins, personName, personId) {
   return orderedCheckins(checkins).sort((a, b) => {
     const left = Date.parse(a.data_hora), right = Date.parse(b.data_hora);
@@ -55,6 +55,8 @@ export function wellbeingEvents(checkins, personName, personId) {
     nome: item.baseline ? "Check-in Inicial · Baseline" : null,
     created_at: Number.isFinite(Date.parse(item.data_hora)) ? item.data_hora : null,
     origem: item.canal === "PORTAL_PROFISSIONAL" ? "Portal Profissional" : item.canal,
+    respondente: item.respondente_pessoa_id === personId ? personName : "Identificação não disponível",
+    modalidade: item.modalidade === "ASSISTIDO" ? "Assistida" : item.modalidade,
     descricao: `Respondente: ${item.respondente_pessoa_id === personId ? personName : "Identificação não disponível"}\nModalidade: ${item.modalidade === "ASSISTIDO" ? "Assistida" : item.modalidade}`,
     metadata: { answers: [
       ...Object.entries(item.respostas).map(([name, value]) => ({ field_id: name, name: responseLabels[name] || name, values: { resposta: valueLabels[value] || value } })),

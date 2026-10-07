@@ -47,6 +47,12 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     assert.equal(await cards.nth(3).innerText(),'Resumo recente\n-');
     const timeline=page.locator('.mental-record__timeline');
     await timeline.getByText('Nenhum evento encontrado.').waitFor();
+    const filters=timeline.getByRole('group',{name:'Filtrar eventos'});
+    assert.equal(await filters.getByRole('button',{name:'Todos',exact:true}).getAttribute('aria-pressed'),'true');
+    assert.equal(await filters.getByRole('button').count(),2);
+    await filters.getByRole('button',{name:'Check-ins',exact:true}).click();
+    await timeline.getByText('Nenhum Check-in encontrado para este filtro.').waitFor();
+    await filters.getByRole('button',{name:'Todos',exact:true}).click();
     records=[samples[1]];await page.reload();
     await page.getByText('Um Check-in registrado.',{exact:false}).waitFor();
     assert.equal(await page.locator('#wellbeing-dimension').inputValue(),'all');
@@ -70,6 +76,15 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     assert.equal(await cards.nth(3).innerText(),'Resumo recente\nDescrição factual do último evento');
     assert.equal(await page.locator('.mental-record__chart .recharts-line-dots circle').count(),3);
     assert.deepEqual(await page.locator('.mental-record__chart .recharts-yAxis-tick-labels .recharts-cartesian-axis-tick-value').allTextContents(), ['Muito ruim','Ruim','Regular','Bom','Muito bom']);
+    const timelineBefore=await timeline.locator('article').allTextContents();
+    assert.equal(await timeline.locator('.mental-timeline-event--checkin').count(),3);
+    assert.equal(await timeline.getByText('Check-in Inicial · Baseline',{exact:true}).count(),1);
+    await timeline.locator('article').last().getByText('Check-in Inicial · Baseline',{exact:true}).waitFor();
+    assert.equal(await timeline.getByText('Modalidade: Assistida',{exact:true}).count(),3);
+    for(const label of ['Check-ins','Todos']){
+      await filters.getByRole('button',{name:label,exact:true}).click();
+      assert.deepEqual(await timeline.locator('article').allTextContents(),timelineBefore);
+    }
     await timeline.locator('article').first().getByText('Detalhes do registro').click();
     await timeline.locator('article').first().getByText('Humor: Bom',{exact:true}).waitFor();
     assert.ok((await timeline.innerText()).includes('Respondente: Pessoa teste'));
@@ -130,6 +145,20 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
       await page.setViewportSize({width,height:900});
       await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);
       await page.screenshot({path:'/tmp/mental-multidimensional-'+width+'.png',fullPage:true});
+    }
+    // Provenance is not inferred from the currently viewed person or clinician.
+    records=[{...make(7,'2026-10-07T12:00:00Z',{evento_descricao:'Texto extenso '.repeat(80),humor:'BOM'}),baseline:false,respondente_pessoa_id:999,canal:'CANAL_ORIGINAL',modalidade:'MODALIDADE_ORIGINAL'}];
+    await page.reload();
+    await timeline.getByText('Respondente: Identificação não disponível',{exact:true}).waitFor();
+    await timeline.getByText('Canal: CANAL_ORIGINAL',{exact:true}).waitFor();
+    await timeline.getByText('Modalidade: MODALIDADE_ORIGINAL',{exact:true}).waitFor();
+    assert.equal(await timeline.getByText('Check-in Inicial · Baseline',{exact:true}).count(),0);
+    await timeline.getByText('Detalhes do registro').click();
+    await timeline.getByText('Identificação do profissional registrador: 8',{exact:true}).waitFor();
+    for(const width of [1440,768,390]){
+      await page.setViewportSize({width,height:900});
+      await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);
+      await page.screenshot({path:'/tmp/mental-timeline-'+width+'.png',fullPage:true});
     }
     for(const path of ['/saude-mental/pessoas/18/contextos/10','/saude-mental/pessoas/19/contextos/9']) {
       await page.goto(FRONT+path+'?instituicao_id=5');

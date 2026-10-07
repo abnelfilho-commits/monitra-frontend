@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { TimelineEvents } from "../cardiometabolico/TimelineCardiometabolico";
+import TimelineBemEstar from "./TimelineBemEstar";
 import { wellbeingDimensions, wellbeingOverview, wellbeingSeries, wellbeingEvents, valueLabels, displayTimestamp } from "./bemEstarPresentation";
 
 const dimensionColors = ["#356b9b", "#8765a5", "#b2793d", "#438c89", "#64749a", "#a56283", "#79803f"];
@@ -62,10 +62,6 @@ export default function LongitudinalBemEstar({ jornada }) {
           {series.length < records.length && <p>Há registros sem data/hora válida; eles não foram posicionados no gráfico.</p>}
         </>}
     </section>
-    <section className="mental-record__actions mental-record__timeline" aria-labelledby="mental-timeline-title">
-      <h2 id="mental-timeline-title">Timeline Clínica</h2>
-      <p>Check-ins deste contexto, do mais recente para o mais antigo.</p>
-      {!Array.isArray(records) ? <p>Histórico de Check-ins não disponível nesta consulta.</p> : <TimelineEvents events={events} />}
-    </section>
+    <TimelineBemEstar events={events} available={Array.isArray(records)} />
   </>;
 }
