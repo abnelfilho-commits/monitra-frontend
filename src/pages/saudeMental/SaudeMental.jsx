@@ -37,7 +37,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const location = useLocation();
-  const [saved, setSaved] = useState(() => location.state?.phq9Saved ? "PHQ-9 registrado com sucesso." : location.state?.interventionSaved ? "Intervenção registrada com sucesso." : location.state?.diagnosisSaved ? "Diagnóstico registrado com sucesso." : location.state?.checkinSaved ? "Check-in registrado com sucesso." : false);
+  const [saved, setSaved] = useState(() => location.state?.gad7Saved ? "GAD-7 registrado com sucesso." : location.state?.phq9Saved ? "PHQ-9 registrado com sucesso." : location.state?.interventionSaved ? "Intervenção registrada com sucesso." : location.state?.diagnosisSaved ? "Diagnóstico registrado com sucesso." : location.state?.checkinSaved ? "Check-in registrado com sucesso." : false);
   useEffect(() => {
     let current = true;
     async function load() {

@@ -103,3 +103,18 @@ export function phq9Events(items = []) {
     ] },
   }));
 }
+
+// GAD-7 uses the same Timeline renderer; only persisted instrument data is presented.
+export function gad7Events(items = []) {
+  return items.map(item => ({
+    id: `GAD7:${item.id}`, tipo: "GAD-7", created_at: item.data_hora,
+    resultado: item.resultado,
+    metadata: { answers: [
+      ...Object.entries(item.resultado.metadata?.respostas || {}).map(([key, value]) => ({
+        field_id: key, name: `Questão ${key.replace("gad7_", "")}`, values: { resposta: ({ 0: "Nenhuma vez", 1: "Vários dias", 2: "Mais da metade dos dias", 3: "Quase todos os dias" })[value] ?? value },
+      })),
+      { field_id: "autor", name: "Profissional registrador", values: { id: item.registrador_profissional_id } },
+      { field_id: "versao", name: "Versão do instrumento", values: { versao: item.resultado.versao } },
+    ] },
+  }));
+}

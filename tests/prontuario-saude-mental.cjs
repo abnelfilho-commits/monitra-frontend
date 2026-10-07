@@ -60,7 +60,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     await page.getByRole('heading', { name: 'Pessoa: Nome social sintético' }).waitFor();
     for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'PTS', 'Intervenção', 'Gerar relatório']) {
       assert.equal(await page.getByLabel('Ações clínicas').getByRole('button', { name, exact: true }).isDisabled(), true);
-      if (!['Registrar Diagnóstico', 'Intervenção', 'PHQ-9'].includes(name)) assert.equal(await page.getByLabel('Ações clínicas').getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
+      if (!['Registrar Diagnóstico', 'Intervenção', 'PHQ-9', 'GAD-7'].includes(name)) assert.equal(await page.getByLabel('Ações clínicas').getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
     }
     assert.equal(await page.getByRole('button', { name: 'Intervenção', exact: true }).getAttribute('title'), 'Registro indisponível nesta consulta');
     assert.equal(await page.getByRole('button', { name: 'Atualizar', exact: true }).isEnabled(), true);
