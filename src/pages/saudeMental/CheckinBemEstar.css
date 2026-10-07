@@ -1,0 +1,21 @@
+.mental-checkin__identity { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:22px; border:1px solid #dbeafe; border-radius:20px; background:linear-gradient(135deg,#eff6ff,#fff); box-shadow:0 8px 24px rgba(15,23,42,.05); overflow-wrap:anywhere; }
+.mental-checkin__identity h2 { margin:4px 0; color:#0f172a; font-size:22px; }
+.mental-checkin__identity p { margin:6px 0 0; color:#64748b; }
+.mental-checkin__avatar { padding:14px; border-radius:16px; background:#dbeafe; font-size:28px; }
+.mental-checkin__label { color:#64748b; font-size:12px; font-weight:800; text-transform:uppercase; }
+.mental-checkin__badge { margin-left:auto; border-radius:999px; padding:9px 12px; background:#dcfce7; color:#166534; font-size:12px; font-weight:700; }
+.mental-checkin__notice { margin:20px 0; padding:18px; border:1px solid #e2e8f0; border-radius:16px; background:#fff; color:#475569; line-height:1.5; }
+.mental-checkin__notice h2 { margin:0; color:#0f172a; font-size:18px; }
+.mental-checkin__fields { border:0; padding:0; margin:0; min-width:0; }
+.mental-checkin__options { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr)); gap:12px; margin-top:18px; }
+.mental-checkin__option { display:flex; align-items:center; gap:10px; padding:14px; border:1px solid #e2e8f0; border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:#334155; cursor:pointer; overflow-wrap:anywhere; }
+.mental-checkin__option.is-selected { border-color:#2563eb; background:#eff6ff; }
+.mental-checkin__option input { flex-shrink:0; }
+.mental-checkin__description { display:flex; flex-direction:column; gap:7px; margin-top:18px; font-size:13px; font-weight:800; color:#334155; }
+.mental-checkin__description textarea { box-sizing:border-box; width:100%; padding:12px 14px; border:1px solid #cbd5e1; border-radius:12px; font:inherit; font-weight:400; line-height:1.5; resize:vertical; }
+.mental-checkin__error { padding:15px; border:1px solid #fecaca; border-radius:14px; background:#fef2f2; color:#991b1b; }
+@media(max-width:600px) {
+  .mental-checkin > main { padding:20px 12px 36px !important; }
+  .mental-checkin__fields > section { padding:16px !important; gap:10px !important; flex-direction:column; }
+  .mental-checkin__badge { margin-left:0; }
+}

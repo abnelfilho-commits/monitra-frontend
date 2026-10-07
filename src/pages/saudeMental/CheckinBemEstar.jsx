@@ -1,31 +1,58 @@
 import { useRef, useEffect, useState } from "react";
-import { responseLabels, valueLabels } from "./bemEstarPresentation";
-import AssessmentField from "../../components/assessments/AssessmentField";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import ClinicalPageLayout from "../../components/clinical/ClinicalPageLayout";
+import ClinicalSection from "../../components/clinical/ClinicalSection";
+import ClinicalFooter from "../../components/clinical/ClinicalFooter";
 import Button from "../../components/ui/Button";
-import { registrarCheckin, erroCheckin } from "../../services/saudeMental";
+import { jornadaMental, erroMental, registrarCheckin, erroCheckin } from "../../services/saudeMental";
+import "./CheckinBemEstar.css";
 
-export default function CheckinBemEstar({ jornada, onSaved, open, setOpen, showHistory = true }) {
+export default function CheckinBemEstar() {
+  const { pessoaId, contextoId } = useParams();
+  const [search] = useSearchParams();
+  const institution = search.get("instituicao_id") || "";
+  return <CheckinPage key={`${institution}:${pessoaId}:${contextoId}`} {...{ institution, pessoaId, contextoId }} />;
+}
+
+function CheckinPage({ institution, pessoaId, contextoId }) {
+  const navigate = useNavigate();
+  const back = `/saude-mental/pessoas/${pessoaId}/contextos/${contextoId}?instituicao_id=${encodeURIComponent(institution)}`;
+  const [jornada, setJornada] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [answers, setAnswers] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [uncertain, setUncertain] = useState(false);
   const mounted = useRef(true);
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-  const data = jornada.bem_estar;
+  useEffect(() => {
+    mounted.current = true;
+    async function load() {
+      try {
+        if (!institution) throw { response: { status: 422 } };
+        const result = await jornadaMental(institution, pessoaId, contextoId);
+        if (mounted.current) setJornada(result);
+      } catch (e) { if (mounted.current) setLoadError(erroMental(e)); }
+      finally { if (mounted.current) setLoading(false); }
+    }
+    load();
+    return () => { mounted.current = false; };
+  }, [institution, pessoaId, contextoId]);
+  const data = jornada?.bem_estar;
   const fields = data?.formulario?.campos || [];
   const canWrite = data?.pode_registrar === true && fields.length > 0;
   const checkins = data?.checkins || [];
   const update = (name, value) => setAnswers(previous => ({ ...previous, [name]: value, ...(name === "evento_relevante" && value === "NAO" ? { evento_descricao: "" } : {}) }));
   async function submit(event) {
     event.preventDefault();
-    if (saving || uncertain) return;
+    if (saving || uncertain || !canWrite) return;
     if (fields.some(f => f.obrigatorio && !answers[f.nome_campo])) { setError("Responda todas as perguntas obrigatórias."); return; }
     setSaving(true); setError("");
     try {
       await registrarCheckin(jornada.instituicao_id, jornada.pessoa_id, jornada.contexto_assistencial_id, {
         paciente_id: jornada.paciente_id, modulo_id: jornada.modulo_id, formulario_id: data.formulario.id, respostas: answers,
       });
-      if (mounted.current) { setOpen(false); setAnswers({}); onSaved(); }
+      if (mounted.current) { navigate(back, { replace: true, state: { checkinSaved: true } }); }
     } catch (e) {
       if (mounted.current) {
         setError(erroCheckin(e));
@@ -34,32 +61,50 @@ export default function CheckinBemEstar({ jornada, onSaved, open, setOpen, showH
       }
     } finally { if (mounted.current) setSaving(false); }
   }
-  return <section>
-    <p>As respostas devem refletir a percepção da própria pessoa. O profissional está apenas auxiliando no registro.</p>
-    <p>Este Check-in não é um instrumento diagnóstico nem um canal de emergência.</p>
-    {!canWrite && <p>Registro indisponível: é necessário contexto aberto, linha ativa e autorização para registrar.</p>}
-    {open && <form onSubmit={submit}>
-      <h3>{checkins.length === 0 ? "Check-in Inicial" : "Check-in de Bem-Estar — Acompanhamento"} — {jornada.nome_social || jornada.nome_completo}</h3>
-      <p>Modalidade assistida · Portal Profissional</p>
-      <fieldset disabled={saving || uncertain} style={{ border: 0, padding: 0 }}>
-        {fields.filter(f => f.tipo_campo !== "textarea").map((f, index) => <AssessmentField key={f.id} campo={f} numero={index + 1} valor={answers[f.nome_campo]} onChange={update} />)}
-        {answers.evento_relevante === "SIM" && <label>Descrição do evento (opcional)<textarea name="evento_descricao" maxLength={2000} value={answers.evento_descricao || ""} onChange={e => update("evento_descricao", e.target.value)} style={{ display: "block", width: "100%", minHeight: 90 }} /></label>}
-      </fieldset>
-      {error && <p role="alert">{error}</p>}
-      {saving && <p role="status">Salvando Check-in…</p>}
-      <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-        <Button type="submit" disabled={saving || uncertain}>Salvar Check-in</Button>
-        <Button type="button" variant="secondary" disabled={saving} onClick={() => { setOpen(false); setAnswers({}); setError(""); }}>Cancelar</Button>
-        {uncertain && <Button type="button" onClick={() => window.location.reload()}>Atualizar jornada</Button>}
-      </div>
-    </form>}
-    {showHistory && checkins.map(item => <article key={item.id} style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
-      <h3>{item.baseline ? "Check-in Inicial · Baseline" : "Check-in de Bem-Estar"}</h3>
-      <p>{new Date(item.data_hora).toLocaleString("pt-BR")} · {item.modalidade === "ASSISTIDO" ? "Modalidade assistida" : item.modalidade}</p>
-      <dl>{Object.entries(item.respostas).map(([name, value]) => {
-        const f = fields.find(field => field.nome_campo === name);
-        return <div key={name}><dt>{f?.label || responseLabels[name] || name}</dt><dd>{f?.opcoes?.find(o => o.valor === value)?.label || valueLabels[value] || value}</dd></div>;
-      })}</dl>
-    </article>)}
-  </section>;
+  return <div className="mental-checkin"><ClinicalPageLayout
+    titulo="Check-in de Bem-Estar"
+    subtitulo="Registre a percepção da Pessoa e mantenha sua jornada assistencial atualizada."
+    badge="Jornada Assistencial">
+    {loading ? <p role="status">Preparando o Check-in…</p> : loadError || !canWrite ? <>
+      <p role="alert">{loadError || "Registro indisponível: é necessário contexto aberto, linha ativa e autorização para registrar."}</p>
+      <Button variant="secondary" onClick={() => navigate(back)}>Voltar ao prontuário</Button>
+    </> : <>
+      <section className="mental-checkin__identity">
+        <span className="mental-checkin__avatar" aria-hidden="true">👤</span>
+        <div><span className="mental-checkin__label">Pessoa</span>
+          <h2>{jornada.nome_social || jornada.nome_completo}</h2>
+          <p>{jornada.instituicao_nome} · Contexto #{jornada.contexto_assistencial_id} · Saúde Mental</p>
+        </div>
+        <span className="mental-checkin__badge">✓ Identificada pela jornada</span>
+      </section>
+      <section className="mental-checkin__notice">
+        <h2>{checkins.length === 0 ? "Check-in Inicial" : "Check-in de Bem-Estar — Acompanhamento"} — {jornada.nome_social || jornada.nome_completo}</h2>
+        <p>Modalidade assistida · Portal Profissional</p>
+        <p>Respondente: {jornada.nome_social || jornada.nome_completo}. Profissional registrador identificado pela sessão autenticada.</p>
+        <p>As respostas devem refletir a percepção da própria pessoa. O profissional está apenas auxiliando no registro.</p>
+        <p>Este Check-in não é um instrumento diagnóstico nem um canal de emergência.</p>
+      </section>
+      <form onSubmit={submit}>
+        <fieldset disabled={saving || uncertain} className="mental-checkin__fields">
+          {fields.filter(f => f.tipo_campo !== "textarea").map((f, index) => <ClinicalSection key={f.id} numero={index + 1} titulo={f.label}>
+            <div role="radiogroup" aria-label={f.label} aria-required={f.obrigatorio} className="mental-checkin__options">
+              {f.opcoes?.map(option => <label key={option.valor} className={`mental-checkin__option${answers[f.nome_campo] === option.valor ? " is-selected" : ""}`}>
+                <input type="radio" name={f.nome_campo} value={option.valor} checked={answers[f.nome_campo] === option.valor} onChange={e => update(f.nome_campo, e.target.value)} />
+                {option.label}
+              </label>)}
+            </div>
+            {f.nome_campo === "evento_relevante" && answers.evento_relevante === "SIM" && <label className="mental-checkin__description">Descrição do evento (opcional)
+              <textarea name="evento_descricao" maxLength={2000} value={answers.evento_descricao || ""} onChange={e => update("evento_descricao", e.target.value)} rows={4} />
+            </label>}
+          </ClinicalSection>)}
+        </fieldset>
+        {error && <p role="alert" className="mental-checkin__error">{error}</p>}
+        {saving && <p role="status">Salvando Check-in…</p>}
+        <ClinicalFooter loading={saving} disabled={uncertain} onCancel={() => navigate(back)} submitLabel="Salvar Check-in">
+          <span aria-hidden="true">↗</span><div><strong>Depois de registrar</strong><p>Você retornará ao prontuário desta Pessoa, com a jornada atualizada no mesmo contexto.</p></div>
+        </ClinicalFooter>
+        {uncertain && <Button type="button" onClick={() => navigate(back)}>Consultar jornada antes de tentar novamente</Button>}
+      </form>
+    </>}
+  </ClinicalPageLayout></div>;
 }

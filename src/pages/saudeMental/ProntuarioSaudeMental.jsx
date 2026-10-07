@@ -1,8 +1,6 @@
-import { useRef, useState } from "react";
 import Button from "../../components/ui/Button";
 import LongitudinalBemEstar from "./LongitudinalBemEstar";
 import { useNavigate } from "react-router-dom";
-import CheckinBemEstar from "./CheckinBemEstar";
 import { wellbeingEvents, displayTimestamp, wellbeingDimensions, valueLabels } from "./bemEstarPresentation";
 import "./ProntuarioSaudeMental.css";
 
@@ -22,10 +20,8 @@ const lineLabels = { ATIVA: "Ativa", INATIVA: "Inativa", AUSENTE: "Não vinculad
 const cardStyle = { border: "1px solid #ddd", borderRadius: 12, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" };
 const labelStyle = { fontSize: 13, opacity: 0.75 };
 
-export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
+export default function ProntuarioSaudeMental({ jornada, onRefresh }) {
   const navigate = useNavigate();
-  const [checkinOpen, setCheckinOpen] = useState(false);
-  const checkinSection = useRef(null);
   const name = jornada.nome_social || jornada.nome_completo;
   const wellbeing = jornada.bem_estar;
   const reading = jornada.clinical_reading;
@@ -45,15 +41,12 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
         {jornada.data_inicio && <p style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>Início: {jornada.data_inicio.split("-").reverse().join("/")}{jornada.data_fim ? ` · Encerramento: ${jornada.data_fim.split("-").reverse().join("/")}` : ""}</p>}
       </div>
       <div className="mental-record__toolbar" role="group" aria-label="Ações clínicas" style={{ flex: "1 1 420px", minWidth: 320, display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
-        <Button disabled={!checkinAvailable || checkinOpen} title={!checkinAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => {
-          setCheckinOpen(true);
-          requestAnimationFrame(() => checkinSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
-        }}>Check-in de Bem-Estar</Button>
-        <Button variant="secondary" disabled={jornada.diagnosticos?.pode_registrar !== true || checkinOpen} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/diagnosticos/novo?instituicao_id=${jornada.instituicao_id}`)}>Registrar Diagnóstico</Button>
+        <Button disabled={!checkinAvailable} title={!checkinAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/check-ins/novo?instituicao_id=${jornada.instituicao_id}`)}>Check-in de Bem-Estar</Button>
+        <Button variant="secondary" disabled={jornada.diagnosticos?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/diagnosticos/novo?instituicao_id=${jornada.instituicao_id}`)}>Registrar Diagnóstico</Button>
         {["PHQ-9", "GAD-7", "CBI", "PTS", "Intervenção", "Gerar relatório"].map(action =>
           <span key={action} title="Em implementação"><Button variant="secondary" disabled title="Em implementação">{action}</Button></span>
         )}
-        <Button variant="secondary" disabled={checkinOpen} title={checkinOpen ? "Conclua ou cancele o Check-in antes de atualizar" : "Consultar novamente esta jornada"} onClick={onRefresh}>Atualizar</Button>
+        <Button variant="secondary" title="Consultar novamente esta jornada" onClick={onRefresh}>Atualizar</Button>
       </div>
     </div>
     <div className="mental-record__summary" style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
@@ -105,9 +98,6 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
         <ul style={{ marginBottom: 0 }}>{reading.alerts.map((alert, index) => <li key={index}>{alert}</li>)}</ul>
       </div>}
     </section>
-    <div hidden={!checkinOpen} ref={checkinSection} style={{ ...cardStyle, marginTop: 20 }}>
-      <CheckinBemEstar jornada={jornada} onSaved={onSaved} open={checkinOpen} setOpen={setCheckinOpen} showHistory={false} />
-    </div>
     <LongitudinalBemEstar jornada={jornada} />
   </div>;
 }

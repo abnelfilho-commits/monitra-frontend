@@ -37,7 +37,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const location = useLocation();
-  const [saved, setSaved] = useState(() => location.state?.diagnosisSaved ? "Diagnóstico registrado com sucesso." : false);
+  const [saved, setSaved] = useState(() => location.state?.diagnosisSaved ? "Diagnóstico registrado com sucesso." : location.state?.checkinSaved ? "Check-in registrado com sucesso." : false);
   useEffect(() => {
     let current = true;
     async function load() {
@@ -91,7 +91,6 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
     {!loading && !error && result && detail && <ProntuarioSaudeMental
       jornada={result}
       onRefresh={() => { setSaved(false); setRetry(n => n + 1); }}
-      onSaved={(message = "Check-in registrado com sucesso.") => { setSaved(message); setRetry(n => n + 1); }}
     />}
   </>;
 }
