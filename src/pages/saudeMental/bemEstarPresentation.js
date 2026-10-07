@@ -78,3 +78,13 @@ export function diagnosisEvents(diagnoses = []) {
     ] },
   }));
 }
+
+// Real interventions: presentation only, with no effect on clinical reading or evolution.
+export function interventionEvents(interventions = []) {
+  return interventions.map(item => ({
+    id: `INTERVENCAO:${item.id}`, tipo: "Intervenção", nome: item.tipo,
+    data_hora: item.data_intervencao, created_at: item.created_at, descricao: item.descricao,
+    metadata: { answers: [{ field_id: "registrador", name: "Profissional registrador",
+      values: { nome: item.registrador_nome || "Identificação não disponível" } }] },
+  }));
+}

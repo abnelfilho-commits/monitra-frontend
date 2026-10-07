@@ -60,8 +60,9 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     await page.getByRole('heading', { name: 'Pessoa: Nome social sintético' }).waitFor();
     for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'PTS', 'Intervenção', 'Gerar relatório']) {
       assert.equal(await page.getByRole('button', { name, exact: true }).isDisabled(), true);
-      if (name !== 'Registrar Diagnóstico') assert.equal(await page.getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
+      if (!['Registrar Diagnóstico', 'Intervenção'].includes(name)) assert.equal(await page.getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
     }
+    assert.equal(await page.getByRole('button', { name: 'Intervenção', exact: true }).getAttribute('title'), 'Registro indisponível nesta consulta');
     assert.equal(await page.getByRole('button', { name: 'Atualizar', exact: true }).isEnabled(), true);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: '/tmp/w3a-prontuario-mobile.png', fullPage: true });

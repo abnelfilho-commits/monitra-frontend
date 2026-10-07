@@ -15,3 +15,5 @@ export function erroCheckin(error) {
 }
 
 export const registrarDiagnosticoMental = async (instituicao, pessoa, contexto, payload) => (await api.post(`/saude-mental/pessoas/${pessoa}/contextos/${contexto}/diagnosticos`, payload, { params: { instituicao_id: instituicao } })).data;
+
+export const registrarIntervencaoMental = async (instituicao, pessoa, contexto, payload) => (await api.post(`/saude-mental/pessoas/${pessoa}/contextos/${contexto}/intervencoes`, payload, { params: { instituicao_id: instituicao } })).data;

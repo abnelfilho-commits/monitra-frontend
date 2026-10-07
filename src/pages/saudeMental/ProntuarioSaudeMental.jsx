@@ -43,14 +43,15 @@ export default function ProntuarioSaudeMental({ jornada, onRefresh }) {
       <div className="mental-record__toolbar" role="group" aria-label="Ações clínicas" style={{ flex: "1 1 420px", minWidth: 320, display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
         <Button disabled={!checkinAvailable} title={!checkinAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/check-ins/novo?instituicao_id=${jornada.instituicao_id}`)}>Check-in de Bem-Estar</Button>
         <Button variant="secondary" disabled={jornada.diagnosticos?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/diagnosticos/novo?instituicao_id=${jornada.instituicao_id}`)}>Registrar Diagnóstico</Button>
-        {["PHQ-9", "GAD-7", "CBI", "PTS", "Intervenção", "Gerar relatório"].map(action =>
+        {["PHQ-9", "GAD-7", "CBI", "PTS", "Gerar relatório"].map(action =>
           <span key={action} title="Em implementação"><Button variant="secondary" disabled title="Em implementação">{action}</Button></span>
         )}
+        <Button variant="secondary" disabled={jornada.intervencoes?.pode_registrar !== true} title={jornada.intervencoes?.pode_registrar !== true ? "Registro indisponível nesta consulta" : undefined} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/intervencoes/nova?instituicao_id=${jornada.instituicao_id}`)}>Intervenção</Button>
         <Button variant="secondary" title="Consultar novamente esta jornada" onClick={onRefresh}>Atualizar</Button>
       </div>
     </div>
     <div className="mental-record__summary" style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-      <div style={cardStyle}><div style={labelStyle}>Intervenções</div><div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>-</div></div>
+      <div style={cardStyle}><div style={labelStyle}>Intervenções</div><div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>{jornada.intervencoes?.total ?? "-"}</div></div>
       <div style={cardStyle}><div style={labelStyle}>Check-ins de Bem-Estar</div><div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>{Array.isArray(records) ? records.length : "-"}</div></div>
       <div style={cardStyle}><div style={labelStyle}>Último evento</div><div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{latest ? "Check-in de Bem-Estar" : "-"}</div><div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>{latest ? displayTimestamp(latest.created_at) : "-"}</div></div>
       <div style={cardStyle}><div style={labelStyle}>Resumo recente</div><div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflowWrap: "anywhere" }}>{description ? description.length > 70 ? `${description.slice(0, 70)}...` : description : "-"}</div></div>

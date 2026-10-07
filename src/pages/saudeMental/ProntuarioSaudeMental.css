@@ -65,3 +65,5 @@
 .mental-timeline__empty { padding: 16px; border: 1px dashed #d1d5db; border-radius: 10px; color: #64748b; }
 
 .mental-timeline-event--diagnosis { border-inline-start: 4px solid #8c7a9d; background: #faf8fc; }
+
+.mental-timeline-event--intervention { border-left-color: #438c89; background: #f4fafa; }

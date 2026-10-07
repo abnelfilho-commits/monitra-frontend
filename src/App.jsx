@@ -1,3 +1,4 @@
+import IntervencaoMental from "./pages/saudeMental/IntervencaoMental";
 import ScrollManager from "./components/navigation/ScrollManager";
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
@@ -102,6 +103,7 @@ export default function App() {
             {/* Jornada assistencial: autorização permanece no backend. */}
             <Route element={<SaudeMentalLayout />}>
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/check-ins/novo" element={<CheckinBemEstar />} />
+              <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/intervencoes/nova" element={<IntervencaoMental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/diagnosticos/novo" element={<DiagnosticoMental />} />
               <Route path="/saude-mental" element={<SaudeMental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId" element={<SaudeMental />} />

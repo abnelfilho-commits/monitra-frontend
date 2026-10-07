@@ -1,0 +1,13 @@
+.mental-intervention { min-width: 0; overflow-wrap: anywhere; }
+.mental-intervention__identity { display: flex; gap: 16px; align-items: center; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; }
+.mental-intervention__identity > span { font-size: 30px; }
+.mental-intervention__identity h2 { margin: 4px 0; color: #0f172a; }
+.mental-intervention__identity p { margin: 4px 0; color: #64748b; }
+.mental-intervention__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.mental-intervention label { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.mental-intervention label > span { color: #334155; font-size: 13px; font-weight: 800; }
+.mental-intervention input, .mental-intervention textarea { width: 100%; min-width: 0; box-sizing: border-box; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #0f172a; font: inherit; }
+.mental-intervention textarea { padding: 15px; border-radius: 14px; resize: vertical; line-height: 1.6; }
+.mental-intervention small { color: #64748b; font-size: 12px; line-height: 1.5; }
+.mental-intervention__context { padding: 15px; border: 1px solid #e2e8f0; border-radius: 13px; background: #f8fafc; }
+.mental-intervention__context strong { display: block; margin-top: 4px; color: #0f172a; font-size: 14px; }
