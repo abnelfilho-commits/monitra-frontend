@@ -13,3 +13,5 @@ export const registrarCheckin = async (instituicao, pessoa, contexto, payload) =
 export function erroCheckin(error) {
   return ({401: "Sua sessão expirou. Entre novamente.", 403: "O registro não está autorizado neste contexto. Atualize a jornada.", 409: "Não foi possível confirmar o registro. Atualize a jornada antes de tentar novamente.", 422: "Revise as respostas e o contexto do formulário.", 503: "O formulário está indisponível neste ambiente."})[error?.response?.status] || "Não foi possível confirmar o registro. Atualize a jornada antes de tentar novamente.";
 }
+
+export const registrarDiagnosticoMental = async (instituicao, pessoa, contexto, payload) => (await api.post(`/saude-mental/pessoas/${pessoa}/contextos/${contexto}/diagnosticos`, payload, { params: { instituicao_id: instituicao } })).data;

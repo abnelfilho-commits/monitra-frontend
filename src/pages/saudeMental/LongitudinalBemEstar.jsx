@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import TimelineBemEstar from "./TimelineBemEstar";
-import { wellbeingDimensions, wellbeingOverview, wellbeingSeries, wellbeingEvents, valueLabels, displayTimestamp } from "./bemEstarPresentation";
+import { wellbeingDimensions, wellbeingOverview, wellbeingSeries, wellbeingEvents, diagnosisEvents, valueLabels, displayTimestamp } from "./bemEstarPresentation";
 
 const dimensionColors = ["#356b9b", "#8765a5", "#b2793d", "#438c89", "#64749a", "#a56283", "#79803f"];
 function OverviewTooltip({ active, payload, hidden }) {
@@ -23,7 +23,11 @@ export default function LongitudinalBemEstar({ jornada }) {
   const dimension = wellbeingDimensions.find(item => item.key === dimensionKey);
   const all = dimensionKey === "all";
   const series = all ? wellbeingOverview(records || []) : wellbeingSeries(records || [], dimension);
-  const events = wellbeingEvents(records || [], jornada.nome_social || jornada.nome_completo, jornada.pessoa_id);
+  const events = [...wellbeingEvents(records || [], jornada.nome_social || jornada.nome_completo, jornada.pessoa_id),
+    ...diagnosisEvents(jornada.diagnosticos?.itens || [])].sort((a, b) => {
+      const left = Date.parse(a.created_at), right = Date.parse(b.created_at);
+      return (Number.isFinite(right) ? right : -Infinity) - (Number.isFinite(left) ? left : -Infinity) || Number(b.id.split(":")[1]) - Number(a.id.split(":")[1]);
+    });
   const hasValues = series.some(item => all ? wellbeingDimensions.some(d => item[d.key] !== null) : item.value !== null);
   return <>
     <section className="mental-record__actions" aria-labelledby="mental-evolution-title">

@@ -72,7 +72,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
       </select>
       <p>A instituição selecionada não concede acesso clínico. Somente contextos autorizados são exibidos.</p>
     </section>}
-    {saved && <p role="status">Check-in registrado com sucesso.</p>}
+    {saved && <p role="status">{saved}</p>}
     {loading && <p role="status">Carregando Saúde Mental…</p>}
     {error && <div role="alert" style={card}><p>{error}</p><Button onClick={() => setRetry(n => n + 1)}>Tentar novamente</Button></div>}
     {!loading && !error && !detail && !institution && <p>{institutions.length ? "Selecione explicitamente uma instituição para consultar Pessoas." : "Nenhuma instituição disponível para esta conta. Solicite a verificação do acesso institucional."}</p>}
@@ -90,7 +90,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
     {!loading && !error && result && detail && <ProntuarioSaudeMental
       jornada={result}
       onRefresh={() => { setSaved(false); setRetry(n => n + 1); }}
-      onSaved={() => { setSaved(true); setRetry(n => n + 1); }}
+      onSaved={(message = "Check-in registrado com sucesso.") => { setSaved(message); setRetry(n => n + 1); }}
     />}
   </>;
 }

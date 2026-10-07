@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Button from "../../components/ui/Button";
 import LongitudinalBemEstar from "./LongitudinalBemEstar";
+import DiagnosticoMental from "./DiagnosticoMental";
 import CheckinBemEstar from "./CheckinBemEstar";
 import { wellbeingEvents, displayTimestamp, wellbeingDimensions, valueLabels } from "./bemEstarPresentation";
 import "./ProntuarioSaudeMental.css";
@@ -22,6 +23,7 @@ const cardStyle = { border: "1px solid #ddd", borderRadius: 12, padding: 16, bac
 const labelStyle = { fontSize: 13, opacity: 0.75 };
 
 export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
+  const [diagnosisOpen, setDiagnosisOpen] = useState(false);
   const [checkinOpen, setCheckinOpen] = useState(false);
   const checkinSection = useRef(null);
   const name = jornada.nome_social || jornada.nome_completo;
@@ -43,14 +45,15 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
         {jornada.data_inicio && <p style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>Início: {jornada.data_inicio.split("-").reverse().join("/")}{jornada.data_fim ? ` · Encerramento: ${jornada.data_fim.split("-").reverse().join("/")}` : ""}</p>}
       </div>
       <div className="mental-record__toolbar" role="group" aria-label="Ações clínicas" style={{ flex: "1 1 420px", minWidth: 320, display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
-        <Button disabled={!checkinAvailable || checkinOpen} title={!checkinAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => {
+        <Button disabled={!checkinAvailable || checkinOpen || diagnosisOpen} title={!checkinAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => {
           setCheckinOpen(true);
           requestAnimationFrame(() => checkinSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
         }}>Check-in de Bem-Estar</Button>
-        {["Registrar Diagnóstico", "PHQ-9", "GAD-7", "CBI", "PTS", "Intervenção", "Gerar relatório"].map(action =>
+        <Button variant="secondary" disabled={jornada.diagnosticos?.pode_registrar !== true || checkinOpen || diagnosisOpen} onClick={() => setDiagnosisOpen(true)}>Registrar Diagnóstico</Button>
+        {["PHQ-9", "GAD-7", "CBI", "PTS", "Intervenção", "Gerar relatório"].map(action =>
           <span key={action} title="Em implementação"><Button variant="secondary" disabled title="Em implementação">{action}</Button></span>
         )}
-        <Button variant="secondary" disabled={checkinOpen} title={checkinOpen ? "Conclua ou cancele o Check-in antes de atualizar" : "Consultar novamente esta jornada"} onClick={onRefresh}>Atualizar</Button>
+        <Button variant="secondary" disabled={checkinOpen || diagnosisOpen} title={checkinOpen || diagnosisOpen ? "Conclua ou cancele o Check-in antes de atualizar" : "Consultar novamente esta jornada"} onClick={onRefresh}>Atualizar</Button>
       </div>
     </div>
     <div className="mental-record__summary" style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
@@ -105,6 +108,7 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
     <div hidden={!checkinOpen} ref={checkinSection} style={{ ...cardStyle, marginTop: 20 }}>
       <CheckinBemEstar jornada={jornada} onSaved={onSaved} open={checkinOpen} setOpen={setCheckinOpen} showHistory={false} />
     </div>
+    <DiagnosticoMental jornada={jornada} open={diagnosisOpen} setOpen={setDiagnosisOpen} onSaved={onSaved} />
     <LongitudinalBemEstar jornada={jornada} />
   </div>;
 }

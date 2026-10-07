@@ -64,3 +64,17 @@ export function wellbeingEvents(checkins, personName, personId) {
     ] },
   }));
 }
+
+// Real diagnosis events from the authorized contextual aggregate only.
+export function diagnosisEvents(diagnoses = []) {
+  return diagnoses.map(item => ({
+    id: `DIAGNOSTICO:${item.id}`, tipo: "Diagnóstico", nome: ({ HIPOTESE: "Hipótese", DIAGNOSTICO: "Diagnóstico", REVISAO: "Revisão" })[item.tipo] || item.tipo, data: item.data_diagnostico,
+    created_at: item.created_at, descricao: item.descricao_clinica,
+    metadata: { answers: [
+      { field_id: "tipo", name: "Tipo", values: { valor: ({ HIPOTESE: "Hipótese", DIAGNOSTICO: "Diagnóstico", REVISAO: "Revisão" })[item.tipo] || item.tipo } },
+      { field_id: "status", name: "Status", values: { valor: item.status } },
+      ...[["cid", "CID"], ["medico_nome", "Médico informado"], ["medico_especialidade", "Especialidade"], ["medico_crm", "CRM"], ["observacoes", "Observações"], ["registrador_usuario_id", "Conta registradora"], ["registrador_profissional_id", "Profissional registrador"]]
+        .filter(([key]) => item[key] != null && item[key] !== "").map(([key, name]) => ({ field_id: key, name, values: { valor: item[key] } })),
+    ] },
+  }));
+}

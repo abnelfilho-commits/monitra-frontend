@@ -56,7 +56,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     await page.getByText('Modalidade assistida · Portal Profissional').waitFor();
     for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'PTS', 'Intervenção', 'Gerar relatório']) {
       assert.equal(await page.getByRole('button', { name, exact: true }).isDisabled(), true);
-      assert.equal(await page.getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
+      if (name !== 'Registrar Diagnóstico') assert.equal(await page.getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
     }
     assert.equal(await page.getByRole('button', { name: 'Atualizar', exact: true }).isDisabled(), true);
     await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
