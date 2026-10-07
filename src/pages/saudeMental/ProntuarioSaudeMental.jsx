@@ -17,8 +17,8 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
   const wellbeing = jornada.bem_estar;
   const reading = jornada.clinical_reading;
   const records = wellbeing?.checkins;
-  const initialAvailable = wellbeing?.pode_registrar === true
-    && wellbeing.formulario?.campos?.length > 0 && records?.length === 0;
+  const checkinAvailable = wellbeing?.pode_registrar === true
+    && wellbeing.formulario?.campos?.length > 0;
   const latest = wellbeingEvents(records || [], name, jornada.pessoa_id)[0];
   const latestRecord = records?.find(item => `CHECKIN:${item.id}` === latest?.id);
   const description = latestRecord?.respostas?.evento_descricao?.trim();
@@ -32,7 +32,7 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
         {jornada.data_inicio && <p style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>Início: {jornada.data_inicio.split("-").reverse().join("/")}{jornada.data_fim ? ` · Encerramento: ${jornada.data_fim.split("-").reverse().join("/")}` : ""}</p>}
       </div>
       <div className="mental-record__toolbar" role="group" aria-label="Ações clínicas" style={{ flex: "1 1 420px", minWidth: 320, display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
-        <Button disabled={!initialAvailable || checkinOpen} title={!initialAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => {
+        <Button disabled={!checkinAvailable || checkinOpen} title={!checkinAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => {
           setCheckinOpen(true);
           requestAnimationFrame(() => checkinSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
         }}>Check-in de Bem-Estar</Button>

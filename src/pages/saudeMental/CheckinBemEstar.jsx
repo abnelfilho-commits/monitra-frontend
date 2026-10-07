@@ -39,7 +39,7 @@ export default function CheckinBemEstar({ jornada, onSaved, open, setOpen, showH
     <p>Este Check-in não é um instrumento diagnóstico nem um canal de emergência.</p>
     {!canWrite && <p>Registro indisponível: é necessário contexto aberto, linha ativa e autorização para registrar.</p>}
     {open && <form onSubmit={submit}>
-      <h3>Check-in Inicial — {jornada.nome_social || jornada.nome_completo}</h3>
+      <h3>{checkins.length === 0 ? "Check-in Inicial" : "Check-in de Bem-Estar — Acompanhamento"} — {jornada.nome_social || jornada.nome_completo}</h3>
       <p>Modalidade assistida · Portal Profissional</p>
       <fieldset disabled={saving || uncertain} style={{ border: 0, padding: 0 }}>
         {fields.filter(f => f.tipo_campo !== "textarea").map((f, index) => <AssessmentField key={f.id} campo={f} numero={index + 1} valor={answers[f.nome_campo]} onChange={update} />)}
