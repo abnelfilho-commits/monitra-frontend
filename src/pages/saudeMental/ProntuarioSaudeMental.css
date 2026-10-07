@@ -12,3 +12,25 @@
 .mental-record__timeline .cardio-timeline-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 12px; background: white; }
 .mental-record__timeline h3 { margin-top: 0; }
 .mental-record__timeline li { overflow-wrap: anywhere; }
+
+/* ClinicalReading presentation: colors describe observed categories, not risk. */
+.mental-reading { --reading-ink: #4b5563; --reading-border: #d1d5db; --reading-bg: #f3f4f6; margin-top: 20px; border: 1px solid var(--reading-border); border-radius: 16px; padding: 18px; background: linear-gradient(180deg, var(--reading-bg), #fff); box-shadow: 0 8px 24px rgba(15,23,42,.05); }
+.mental-reading--observed { --reading-ink: #245875; --reading-border: #bdd8e6; --reading-bg: #edf6fb; }
+.mental-reading--longitudinal { --reading-ink: #485c82; --reading-border: #c9d3e6; --reading-bg: #f0f3fa; }
+.mental-reading--attention { border-inline-start: 4px solid #a47b36; }
+.mental-reading__eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--reading-ink); }
+.mental-reading__state { color: var(--reading-ink); font-weight: 700; }
+.mental-panel { margin-top: 20px; padding: 18px; border: 1px solid #d1d5db; border-radius: 16px; background: #fff; box-shadow: 0 8px 24px rgba(15,23,42,.05); }
+.mental-dimension { --dimension-ink: #4b5563; --dimension-edge: #d1d5db; border: 1px solid #e5e7eb; border-top: 3px solid var(--dimension-edge); border-radius: 12px; padding: 14px; background: #fff; min-width: 0; }
+.mental-dimension--soft { --dimension-ink: #365c73; --dimension-edge: #b8d1df; background: #f8fbfd; }
+.mental-dimension--midpoint { --dimension-ink: #526079; --dimension-edge: #c9d1df; background: #fafbfc; }
+.mental-dimension--emphasis { --dimension-ink: #654f72; --dimension-edge: #cbbbd4; background: #faf8fc; }
+.mental-dimension__value { margin-top: 8px; font-size: 20px; font-weight: 800; color: var(--dimension-ink); }
+.mental-comparison { margin-top: 10px; padding: 5px 8px; border-radius: 6px; font-size: 12px; line-height: 1.5; color: #586171; background: #f3f4f6; width: fit-content; }
+.mental-comparison--improvement { color: #365c73; background: #edf5fa; }
+.mental-comparison--worsening { color: #654f72; background: #f2ecf6; }
+.mental-comparison--stable { color: #48566b; background: #edf0f5; }
+.mental-comparison--oscillation { color: #5e5575; background: #f0edf6; }
+.mental-panel__attention { margin-top: 14px; padding: 14px; border: 1px solid #e3d3b5; border-inline-start: 4px solid #a47b36; border-radius: 12px; color: #664f2c; background: #fcf8f0; overflow-wrap: anywhere; }
+.mental-reading, .mental-panel { min-width: 0; overflow-wrap: anywhere; }
+.mental-reading > div > div { min-width: 0; }

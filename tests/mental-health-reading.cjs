@@ -49,6 +49,8 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
       assert.equal(await page.getByRole('button',{name,exact:true}).isDisabled(),true);
     await page.screenshot({path:'/tmp/w3-reading-desktop.png',fullPage:true});
     await page.setViewportSize({width:390,height:844});
+    // Recharts resizes asynchronously after the viewport changes.
+    await page.waitForFunction(()=>document.documentElement.scrollWidth<=window.innerWidth);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),true);
     await page.screenshot({path:'/tmp/w3-reading-mobile.png',fullPage:true});
     denied=true;await page.getByRole('button',{name:'Atualizar',exact:true}).click();

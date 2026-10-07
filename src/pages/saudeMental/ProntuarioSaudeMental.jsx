@@ -6,6 +6,16 @@ import { wellbeingEvents, displayTimestamp, wellbeingDimensions, valueLabels } f
 import "./ProntuarioSaudeMental.css";
 
 const comparisonLabels = { MELHORA_OBSERVACIONAL: "Melhora observacional", PIORA_OBSERVACIONAL: "Piora observacional", ESTABILIDADE_OBSERVACIONAL: "Estável", OSCILACAO: "Oscilação", INSUFICIENTE: "Dados insuficientes para comparação" };
+const readingTones = { MOMENTO_OBSERVADO: "observed", LEITURA_DESCRITIVA: "longitudinal" };
+const comparisonTones = { MELHORA_OBSERVACIONAL: "improvement", PIORA_OBSERVACIONAL: "worsening", ESTABILIDADE_OBSERVACIONAL: "stable", OSCILACAO: "oscillation" };
+// Presentation of existing ordinal categories only, never a score or risk assessment.
+function dimensionTone(key, categories, observation) {
+  if (observation?.reported_value === "NAO_SE_APLICA") return "neutral";
+  const position = categories.indexOf(observation?.value);
+  if (position < 0) return "neutral";
+  const tones = ["emphasis", "emphasis", "midpoint", "soft", "soft"];
+  return tones[["ansiedade", "estresse"].includes(key) ? categories.length - 1 - position : position];
+}
 const contextLabels = { ABERTO: "Aberto", ENCERRADO: "Encerrado", PROGRAMADO: "Programado" };
 const lineLabels = { ATIVA: "Ativa", INATIVA: "Inativa", AUSENTE: "Não vinculada" };
 const cardStyle = { border: "1px solid #ddd", borderRadius: 12, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" };
@@ -49,12 +59,12 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
       <div style={cardStyle}><div style={labelStyle}>Último evento</div><div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{latest ? "Check-in de Bem-Estar" : "-"}</div><div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>{latest ? displayTimestamp(latest.created_at) : "-"}</div></div>
       <div style={cardStyle}><div style={labelStyle}>Resumo recente</div><div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflowWrap: "anywhere" }}>{description ? description.length > 70 ? `${description.slice(0, 70)}...` : description : "-"}</div></div>
     </div>
-    <section aria-label="Resumo clínico automático" style={{ marginTop: 20, border: "1px solid #d1d5db", borderRadius: 16, padding: 18, background: "linear-gradient(180deg, #f3f4f6 0%, #ffffff 100%)", boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)" }}>
+    <section aria-label="Resumo clínico automático" className={`mental-reading mental-reading--${readingTones[reading?.clinical_state?.status] || "neutral"}${reading?.alerts?.length > 0 ? " mental-reading--attention" : ""}`}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase", color: "#4b5563" }}>Inteligência clínica</div>
+          <div className="mental-reading__eyebrow">Inteligência clínica</div>
           <h3 style={{ marginTop: 6, marginBottom: 6 }}>Resumo clínico automático</h3>
-          {reading?.clinical_state?.titulo && <div style={{ color: "#4b5563", fontWeight: 700 }}>{reading.clinical_state.titulo}</div>}
+          {reading?.clinical_state?.titulo && <div className="mental-reading__state">{reading.clinical_state.titulo}</div>}
           {reading?.clinical_state?.descricao && <div style={{ marginTop: 6, color: "#4b5563", maxWidth: 760 }}>{reading.clinical_state.descricao}</div>}
         </div>
         <div style={{ padding: "8px 12px", borderRadius: 999, background: "#ffffff", border: "1px solid #e5e7eb", fontSize: 12, fontWeight: 700, color: "#374151" }}>
@@ -65,29 +75,29 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
         <p style={{ margin: 0, lineHeight: 1.7, fontSize: 15, color: "#1f2937" }}>{reading?.summary || "Leitura clínica indisponível nesta consulta."}</p>
       </div>
     </section>
-    <section aria-label="Painel Clínico Inteligente" style={{ marginTop: 20, border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" }}>
+    <section aria-label="Painel Clínico Inteligente" className="mental-panel">
       <h3 style={{ marginTop: 0 }}>Painel Clínico Inteligente</h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 12 }}>
-        {wellbeingDimensions.map(({ key, label }) => {
+        {wellbeingDimensions.map(({ key, label, categories }) => {
           const dimension = reading?.evidence?.dimensions?.[key];
           // The provider returns observations chronologically; never fall back to an older value.
           const observation = dimension?.observations?.at(-1);
           const value = observation?.reported_value === "NAO_SE_APLICA" ? "Não se aplica" : valueLabels[observation?.value] || "Sem dados";
           const auxiliary = reading?.metadata?.total_registros === 1 ? "Estado no Check-in mais recente"
             : reading?.metadata?.total_registros > 1 ? comparisonLabels[dimension?.state] || "Comparação indisponível" : "Sem observações nesta leitura";
-          return <div key={key} style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, background: "#ffffff" }}>
+          return <div key={key} className={`mental-dimension mental-dimension--${dimensionTone(key, categories, observation)}`}>
             <div style={labelStyle}>{label}</div>
-            <div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: "#374151" }}>{value}</div>
-            <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>{auxiliary}</div>
+            <div className="mental-dimension__value">{value}</div>
+            <div className={`mental-comparison mental-comparison--${reading?.metadata?.total_registros > 1 ? comparisonTones[dimension?.state] || "neutral" : "neutral"}`}>{auxiliary}</div>
           </div>;
         })}
-        <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, background: "#ffffff" }}>
+        <div className="mental-dimension mental-dimension--neutral">
           <div style={labelStyle}>Base clínica</div>
-          <div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: "#374151" }}>{reading?.metadata?.total_registros === 0 ? "Sem dados" : Number.isInteger(reading?.metadata?.total_registros) ? `${reading.metadata.total_registros} ${reading.metadata.total_registros === 1 ? "registro" : "registros"}` : "Indisponível"}</div>
+          <div className="mental-dimension__value">{reading?.metadata?.total_registros === 0 ? "Sem dados" : Number.isInteger(reading?.metadata?.total_registros) ? `${reading.metadata.total_registros} ${reading.metadata.total_registros === 1 ? "registro" : "registros"}` : "Indisponível"}</div>
           <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>Check-ins considerados nesta leitura</div>
         </div>
       </div>
-      {reading?.alerts?.length > 0 && <div style={{ marginTop: 14, padding: 14, border: "1px solid #e5e7eb", borderRadius: 12, color: "#374151" }}>
+      {reading?.alerts?.length > 0 && <div className="mental-panel__attention">
         <h4 style={{ marginTop: 0 }}>Atenção assistencial</h4>
         <ul style={{ marginBottom: 0 }}>{reading.alerts.map((alert, index) => <li key={index}>{alert}</li>)}</ul>
       </div>}
