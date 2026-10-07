@@ -96,6 +96,36 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     assert.ok(tooltip.includes('Humor: Muito ruim'));
     assert.ok(tooltip.includes('Ansiedade / tensão: Nenhuma'));
     assert.ok(!tooltip.includes('score'));
+    const legend=page.getByRole('group',{name:'Séries visíveis',exact:true});
+    assert.equal(await legend.locator('button[aria-pressed="true"]').count(),7);
+    const positions=()=>page.locator('.mental-record__chart .recharts-line-dots').evaluateAll(groups=>groups.map(g=>[...g.querySelectorAll('circle')].map(c=>[c.getAttribute('cx'),c.getAttribute('cy')])));
+    const original=await positions();
+    assert.deepEqual(original[0],original[3]); // Humor and Sono overlap exactly.
+    await legend.getByRole('button',{name:'Humor',exact:true}).click();
+    assert.equal(await page.locator('.recharts-line').count(),6);
+    assert.equal(await legend.getByRole('button',{name:'Humor',exact:true}).getAttribute('aria-pressed'),'false');
+    assert.deepEqual(await positions(),original.slice(1));
+    await page.locator('.mental-record__chart .recharts-line-dots circle').first().hover({force:true});
+    await page.locator('.mental-evolution-tooltip').waitFor();
+    assert.ok(!(await page.locator('.mental-evolution-tooltip').innerText()).includes('Humor:'));
+    assert.ok((await page.locator('.mental-evolution-tooltip').innerText()).includes('Ansiedade / tensão: Nenhuma'));
+    await page.locator('#wellbeing-dimension').selectOption('humor');
+    assert.equal(await page.locator('.recharts-line').count(),1);
+    assert.equal(await page.locator('.mental-record__series-table tbody tr').count(),2);
+    await page.locator('#wellbeing-dimension').selectOption('all');
+    assert.equal(await legend.getByRole('button',{name:'Humor',exact:true}).getAttribute('aria-pressed'),'false');
+    await legend.getByRole('button',{name:'Humor',exact:true}).focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('.recharts-line').count(),7);
+    assert.deepEqual(await positions(),original);
+    await page.locator('.mental-record__chart .recharts-line-dots circle').first().hover({force:true});
+    await page.locator('.mental-evolution-tooltip').waitFor();
+    assert.ok((await page.locator('.mental-evolution-tooltip').innerText()).includes('Humor: Muito ruim'));
+    // All hidden remains recoverable through the legend.
+    for(const button of await legend.getByRole('button').all())await button.click();
+    assert.equal(await page.locator('.recharts-line').count(),0);
+    for(const button of await legend.getByRole('button').all())await button.click();
+    assert.equal(await page.locator('.recharts-line').count(),7);
     for(const width of [1440,768,390]){
       await page.setViewportSize({width,height:900});
       await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth);

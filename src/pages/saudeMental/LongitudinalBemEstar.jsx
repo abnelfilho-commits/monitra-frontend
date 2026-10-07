@@ -4,12 +4,12 @@ import { TimelineEvents } from "../cardiometabolico/TimelineCardiometabolico";
 import { wellbeingDimensions, wellbeingOverview, wellbeingSeries, wellbeingEvents, valueLabels, displayTimestamp } from "./bemEstarPresentation";
 
 const dimensionColors = ["#356b9b", "#8765a5", "#b2793d", "#438c89", "#64749a", "#a56283", "#79803f"];
-function OverviewTooltip({ active, payload }) {
+function OverviewTooltip({ active, payload, hidden }) {
   const row = payload?.[0]?.payload;
-  if (!active || !row) return null;
+  if (!active || !row?.answers) return null;
   return <div className="mental-evolution-tooltip">
     <strong>{displayTimestamp(row.timestamp)}</strong>
-    <ul>{wellbeingDimensions.map((dimension, index) => <li key={dimension.key}>
+    <ul>{wellbeingDimensions.map((dimension, index) => !hidden.includes(dimension.key) && <li key={dimension.key}>
       <span style={{ color: dimensionColors[index] }}>{dimension.label}:</span>{" "}{row.answers[dimension.key]}
     </li>)}</ul>
   </div>;
@@ -17,6 +17,8 @@ function OverviewTooltip({ active, payload }) {
 
 export default function LongitudinalBemEstar({ jornada }) {
   const [dimensionKey, setDimensionKey] = useState("all");
+  const [hidden, setHidden] = useState([]);
+  const toggleSeries = key => setHidden(current => current.includes(key) ? current.filter(item => item !== key) : [...current, key]);
   const records = jornada.bem_estar?.checkins;
   const dimension = wellbeingDimensions.find(item => item.key === dimensionKey);
   const all = dimensionKey === "all";
@@ -36,15 +38,19 @@ export default function LongitudinalBemEstar({ jornada }) {
             {wellbeingDimensions.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
           </select>
           <p>{all ? "Na visão geral, posições superiores representam categorias mais favoráveis em cada dimensão. " : ""}“Não se aplica” e respostas ausentes permanecem como lacunas.</p>
-          {hasValues ? <div className={`mental-record__chart${all ? " mental-record__chart--overview" : ""}`} role="img" aria-label={all ? "Histórico de todas as dimensões; categorias reais no tooltip" : `Histórico de ${dimension.label}; valores detalhados na tabela abaixo`}>
+          {hasValues ? <div className={`mental-record__chart${all ? " mental-record__chart--overview" : ""}`} role={all ? "group" : "img"} aria-label={all ? "Histórico de todas as dimensões; categorias reais no tooltip" : `Histórico de ${dimension.label}; valores detalhados na tabela abaixo`}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={series} margin={{ top: 16, right: 24, bottom: 24, left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="timestamp" type="number" domain={["dataMin", "dataMax"]} tickFormatter={value => new Date(value).toLocaleDateString("pt-BR")} />
                 <YAxis type="number" domain={[0, 4]} ticks={all ? [0, 2, 4] : dimension.categories.map((_, index) => index)} tickFormatter={value => all ? ({ 0: "Menos favorável", 2: "Intermediário", 4: "Mais favorável" }[value] || "") : valueLabels[dimension.categories[value]] || ""} width={100} tick={{ fontSize: 11 }} />
-                {all ? <Tooltip content={<OverviewTooltip />} /> : <Tooltip labelFormatter={value => displayTimestamp(value)} formatter={(_, __, entry) => [entry.payload.answer, dimension.label]} />}
-                {all && <Legend wrapperStyle={{ fontSize: 12 }} />}
-                {all ? wellbeingDimensions.map((item, index) => <Line key={item.key} type="linear" dataKey={item.key} name={item.label} stroke={dimensionColors[index]} strokeWidth={2} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />)
+                {all ? <Tooltip content={<OverviewTooltip hidden={hidden} />} /> : <Tooltip labelFormatter={value => displayTimestamp(value)} formatter={(_, __, entry) => [entry.payload.answer, dimension.label]} />}
+                {all && <Legend content={<div className="mental-evolution-legend" role="group" aria-label="Séries visíveis">
+                  {wellbeingDimensions.map((item, index) => <button type="button" className="mental-evolution-legend__button recharts-legend-item" key={item.key} aria-pressed={!hidden.includes(item.key)} onClick={() => toggleSeries(item.key)}>
+                    <span aria-hidden="true" style={{ color: dimensionColors[index] }}>━</span> {item.label}
+                  </button>)}
+                </div>} />}
+                {all ? wellbeingDimensions.map((item, index) => <Line key={item.key} hide={hidden.includes(item.key)} type="linear" dataKey={item.key} name={item.label} stroke={dimensionColors[index]} strokeWidth={2} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />)
                   : <Line type="linear" dataKey="position" name={dimension.label} stroke="#0f766e" strokeWidth={2} dot={{ r: 4 }} connectNulls={false} isAnimationActive={false} />}
               </LineChart>
             </ResponsiveContainer>
