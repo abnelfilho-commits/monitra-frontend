@@ -15,6 +15,7 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
   const checkinSection = useRef(null);
   const name = jornada.nome_social || jornada.nome_completo;
   const wellbeing = jornada.bem_estar;
+  const reading = jornada.clinical_reading;
   const records = wellbeing?.checkins;
   const initialAvailable = wellbeing?.pode_registrar === true
     && wellbeing.formulario?.campos?.length > 0 && records?.length === 0;
@@ -47,6 +48,22 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
       <div style={cardStyle}><div style={labelStyle}>Último evento</div><div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{latest ? "Check-in de Bem-Estar" : "-"}</div><div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>{latest ? displayTimestamp(latest.created_at) : "-"}</div></div>
       <div style={cardStyle}><div style={labelStyle}>Resumo recente</div><div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflowWrap: "anywhere" }}>{description ? description.length > 70 ? `${description.slice(0, 70)}...` : description : "-"}</div></div>
     </div>
+    <section aria-label="Resumo clínico automático" style={{ marginTop: 20, border: "1px solid #d1d5db", borderRadius: 16, padding: 18, background: "linear-gradient(180deg, #f3f4f6 0%, #ffffff 100%)", boxShadow: "0 8px 24px rgba(15, 23, 42, 0.05)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.4, textTransform: "uppercase", color: "#4b5563" }}>Inteligência clínica</div>
+          <h3 style={{ marginTop: 6, marginBottom: 6 }}>Resumo clínico automático</h3>
+          {reading?.clinical_state?.titulo && <div style={{ color: "#4b5563", fontWeight: 700 }}>{reading.clinical_state.titulo}</div>}
+          {reading?.clinical_state?.descricao && <div style={{ marginTop: 6, color: "#4b5563", maxWidth: 760 }}>{reading.clinical_state.descricao}</div>}
+        </div>
+        <div style={{ padding: "8px 12px", borderRadius: 999, background: "#ffffff", border: "1px solid #e5e7eb", fontSize: 12, fontWeight: 700, color: "#374151" }}>
+          Base: {reading?.metadata?.total_registros === 0 ? "Sem dados" : Number.isInteger(reading?.metadata?.total_registros) ? `${reading.metadata.total_registros} registro(s)` : "Indisponível"}
+        </div>
+      </div>
+      <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.85)", border: "1px solid #e5e7eb" }}>
+        <p style={{ margin: 0, lineHeight: 1.7, fontSize: 15, color: "#1f2937" }}>{reading?.summary || "Leitura clínica indisponível nesta consulta."}</p>
+      </div>
+    </section>
     <div hidden={!checkinOpen} ref={checkinSection} style={{ ...cardStyle, marginTop: 20 }}>
       <CheckinBemEstar jornada={jornada} onSaved={onSaved} open={checkinOpen} setOpen={setCheckinOpen} showHistory={false} />
     </div>
