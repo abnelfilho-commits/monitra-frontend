@@ -2,9 +2,10 @@ import { useRef, useState } from "react";
 import Button from "../../components/ui/Button";
 import LongitudinalBemEstar from "./LongitudinalBemEstar";
 import CheckinBemEstar from "./CheckinBemEstar";
-import { wellbeingEvents, displayTimestamp } from "./bemEstarPresentation";
+import { wellbeingEvents, displayTimestamp, wellbeingDimensions, valueLabels } from "./bemEstarPresentation";
 import "./ProntuarioSaudeMental.css";
 
+const comparisonLabels = { MELHORA_OBSERVACIONAL: "Melhora observacional", PIORA_OBSERVACIONAL: "Piora observacional", ESTABILIDADE_OBSERVACIONAL: "Estável", OSCILACAO: "Oscilação", INSUFICIENTE: "Dados insuficientes para comparação" };
 const contextLabels = { ABERTO: "Aberto", ENCERRADO: "Encerrado", PROGRAMADO: "Programado" };
 const lineLabels = { ATIVA: "Ativa", INATIVA: "Inativa", AUSENTE: "Não vinculada" };
 const cardStyle = { border: "1px solid #ddd", borderRadius: 12, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" };
@@ -63,6 +64,33 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
       <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: "rgba(255,255,255,0.85)", border: "1px solid #e5e7eb" }}>
         <p style={{ margin: 0, lineHeight: 1.7, fontSize: 15, color: "#1f2937" }}>{reading?.summary || "Leitura clínica indisponível nesta consulta."}</p>
       </div>
+    </section>
+    <section aria-label="Painel Clínico Inteligente" style={{ marginTop: 20, border: "1px solid #ddd", borderRadius: 14, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" }}>
+      <h3 style={{ marginTop: 0 }}>Painel Clínico Inteligente</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: 12 }}>
+        {wellbeingDimensions.map(({ key, label }) => {
+          const dimension = reading?.evidence?.dimensions?.[key];
+          // The provider returns observations chronologically; never fall back to an older value.
+          const observation = dimension?.observations?.at(-1);
+          const value = observation?.reported_value === "NAO_SE_APLICA" ? "Não se aplica" : valueLabels[observation?.value] || "Sem dados";
+          const auxiliary = reading?.metadata?.total_registros === 1 ? "Estado no Check-in mais recente"
+            : reading?.metadata?.total_registros > 1 ? comparisonLabels[dimension?.state] || "Comparação indisponível" : "Sem observações nesta leitura";
+          return <div key={key} style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, background: "#ffffff" }}>
+            <div style={labelStyle}>{label}</div>
+            <div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: "#374151" }}>{value}</div>
+            <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>{auxiliary}</div>
+          </div>;
+        })}
+        <div style={{ border: "1px solid #e5e7eb", borderRadius: 12, padding: 14, background: "#ffffff" }}>
+          <div style={labelStyle}>Base clínica</div>
+          <div style={{ marginTop: 8, fontSize: 20, fontWeight: 800, color: "#374151" }}>{reading?.metadata?.total_registros === 0 ? "Sem dados" : Number.isInteger(reading?.metadata?.total_registros) ? `${reading.metadata.total_registros} ${reading.metadata.total_registros === 1 ? "registro" : "registros"}` : "Indisponível"}</div>
+          <div style={{ marginTop: 8, fontSize: 12, color: "#6b7280" }}>Check-ins considerados nesta leitura</div>
+        </div>
+      </div>
+      {reading?.alerts?.length > 0 && <div style={{ marginTop: 14, padding: 14, border: "1px solid #e5e7eb", borderRadius: 12, color: "#374151" }}>
+        <h4 style={{ marginTop: 0 }}>Atenção assistencial</h4>
+        <ul style={{ marginBottom: 0 }}>{reading.alerts.map((alert, index) => <li key={index}>{alert}</li>)}</ul>
+      </div>}
     </section>
     <div hidden={!checkinOpen} ref={checkinSection} style={{ ...cardStyle, marginTop: 20 }}>
       <CheckinBemEstar jornada={jornada} onSaved={onSaved} open={checkinOpen} setOpen={setCheckinOpen} showHistory={false} />
