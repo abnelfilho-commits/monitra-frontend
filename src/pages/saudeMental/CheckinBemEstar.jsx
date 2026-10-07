@@ -35,10 +35,8 @@ export default function CheckinBemEstar({ jornada, onSaved, open, setOpen, showH
     } finally { if (mounted.current) setSaving(false); }
   }
   return <section>
-    <h2>Bem-Estar</h2>
     <p>As respostas devem refletir a percepção da própria pessoa. O profissional está apenas auxiliando no registro.</p>
     <p>Este Check-in não é um instrumento diagnóstico nem um canal de emergência.</p>
-    {!open && <Button disabled={!canWrite || checkins.length > 0} onClick={() => setOpen(true)}>Realizar Check-in Inicial</Button>}
     {!canWrite && <p>Registro indisponível: é necessário contexto aberto, linha ativa e autorização para registrar.</p>}
     {open && <form onSubmit={submit}>
       <h3>Check-in Inicial — {jornada.nome_social || jornada.nome_completo}</h3>

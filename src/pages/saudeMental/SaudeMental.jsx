@@ -26,7 +26,8 @@ export default function SaudeMental() {
   const offset = Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
   const detail = Boolean(pessoaId);
   // Remount on explicit scope changes: previous person's data is never reused.
-  return <PageLayout><SaudeMentalContent key={`${institution}:${pessoaId}:${contextoId}:${offset}`} {...{institution, pessoaId, contextoId, offset, detail, setSearch}} /></PageLayout>;
+  const content = <SaudeMentalContent key={`${institution}:${pessoaId}:${contextoId}:${offset}`} {...{institution, pessoaId, contextoId, offset, detail, setSearch}} />;
+  return detail ? <div style={{ padding: 24, maxWidth: 1220, margin: "0 auto" }}>{content}</div> : <PageLayout>{content}</PageLayout>;
 }
 
 function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail, setSearch }) {
@@ -61,8 +62,8 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
   }, [institution, pessoaId, contextoId, offset, detail, retry]);
 
   return <>
-    <header style={{ marginBottom: 24 }}><h1>{detail ? "Prontuário Saúde Mental 360°" : "Saúde Mental"}</h1><p>{detail ? "Acompanhamento assistencial no contexto da Pessoa." : "Jornada assistencial da Pessoa, com contexto institucional explícito."}</p></header>
-    {detail ? <Link to={`/saude-mental?instituicao_id=${encodeURIComponent(institution)}`}>← Pessoas</Link> : <section id="pessoas" style={card}>
+    {!detail && <header style={{ marginBottom: 24 }}><h1>Saúde Mental</h1><p>Jornada assistencial da Pessoa, com contexto institucional explícito.</p></header>}
+    {detail ? <Link style={{ display: "inline-block", marginBottom: 16, fontSize: 14 }} to={`/saude-mental?instituicao_id=${encodeURIComponent(institution)}`}>← Pessoas</Link> : <section id="pessoas" style={card}>
       <p><Link to="/operacao-assistencial">Operação contextual — consultar minhas atribuições</Link></p>
       <h2>Pessoas</h2><label htmlFor="mental-institution">Instituição</label>{" "}
       <select id="mental-institution" value={institution} disabled={loading} onChange={e => setSearch(e.target.value ? { instituicao_id: e.target.value } : {})}>

@@ -1,13 +1,14 @@
 import { useRef, useState } from "react";
 import Button from "../../components/ui/Button";
-import StatCard from "../../components/ui/StatCard/StatCard";
 import LongitudinalBemEstar from "./LongitudinalBemEstar";
 import CheckinBemEstar from "./CheckinBemEstar";
+import { wellbeingEvents, displayTimestamp } from "./bemEstarPresentation";
 import "./ProntuarioSaudeMental.css";
 
 const contextLabels = { ABERTO: "Aberto", ENCERRADO: "Encerrado", PROGRAMADO: "Programado" };
 const lineLabels = { ATIVA: "Ativa", INATIVA: "Inativa", AUSENTE: "Não vinculada" };
-const date = value => value ? value.split("-").reverse().join("/") : "Sem data de encerramento";
+const cardStyle = { border: "1px solid #ddd", borderRadius: 12, padding: 16, background: "white", boxShadow: "0 4px 12px rgba(0,0,0,0.04)" };
+const labelStyle = { fontSize: 13, opacity: 0.75 };
 
 export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
   const [checkinOpen, setCheckinOpen] = useState(false);
@@ -15,28 +16,22 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
   const name = jornada.nome_social || jornada.nome_completo;
   const wellbeing = jornada.bem_estar;
   const records = wellbeing?.checkins;
-  // Mirrors the existing initial check-in availability, never a global profile.
   const initialAvailable = wellbeing?.pode_registrar === true
     && wellbeing.formulario?.campos?.length > 0 && records?.length === 0;
-  const initialRecorded = Array.isArray(records) && records.length > 0;
+  const latest = wellbeingEvents(records || [], name, jornada.pessoa_id)[0];
+  const latestRecord = records?.find(item => `CHECKIN:${item.id}` === latest?.id);
+  const description = latestRecord?.respostas?.evento_descricao?.trim();
 
   return <div className="mental-record">
-    <section className="mental-record__identity" aria-labelledby="mental-person-name">
-      <div className="mental-record__person">
-        <span className="mental-record__avatar" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
-        <div><p className="mental-record__eyebrow">Pessoa · Saúde Mental</p>
-          <h2 id="mental-person-name">{name}</h2>
-          <p className="mental-record__reference">Pessoa #{jornada.pessoa_id} · Contexto #{jornada.contexto_assistencial_id}</p>
-        </div>
+    <div className="mental-record__header" style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "flex-start" }}>
+      <div className="mental-record__identity" style={{ flex: "1 1 420px", minWidth: 320 }}>
+        <h2 style={{ margin: 0 }}>Pessoa: {name}</h2>
+        <p style={{ marginTop: 6, color: "#111827" }}><b>Instituição:</b> {jornada.instituicao_nome}</p>
+        <p style={{ marginTop: 6, color: "#111827" }}><b>Contexto assistencial:</b> {contextLabels[jornada.contexto_estado]}{ " | " }<b>Linha:</b> Saúde Mental ({lineLabels[jornada.linha_estado]})</p>
+        {jornada.data_inicio && <p style={{ marginTop: 6, fontSize: 12, color: "#6b7280" }}>Início: {jornada.data_inicio.split("-").reverse().join("/")}{jornada.data_fim ? ` · Encerramento: ${jornada.data_fim.split("-").reverse().join("/")}` : ""}</p>}
       </div>
-      <dl className="mental-record__context">
-        <div><dt>Instituição</dt><dd>{jornada.instituicao_nome}</dd></div>
-        <div><dt>Contexto assistencial</dt><dd>{contextLabels[jornada.contexto_estado]}</dd>
-          <dd className="mental-record__period">{date(jornada.data_inicio)} — {date(jornada.data_fim)}</dd></div>
-        <div><dt>Linha de cuidado</dt><dd>Saúde Mental <span className="mental-record__badge">{lineLabels[jornada.linha_estado]}</span></dd></div>
-      </dl>
-      <div className="mental-record__toolbar" role="group" aria-label="Ações clínicas">
-        <Button disabled={!initialAvailable || checkinOpen} onClick={() => {
+      <div className="mental-record__toolbar" role="group" aria-label="Ações clínicas" style={{ flex: "1 1 420px", minWidth: 320, display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
+        <Button disabled={!initialAvailable || checkinOpen} title={!initialAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => {
           setCheckinOpen(true);
           requestAnimationFrame(() => checkinSection.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
         }}>Check-in de Bem-Estar</Button>
@@ -45,33 +40,16 @@ export default function ProntuarioSaudeMental({ jornada, onSaved, onRefresh }) {
         )}
         <Button variant="secondary" disabled={checkinOpen} title={checkinOpen ? "Conclua ou cancele o Check-in antes de atualizar" : "Consultar novamente esta jornada"} onClick={onRefresh}>Atualizar</Button>
       </div>
-      <p className="mental-record__planned-note">Ações planejadas aparecem desabilitadas: em implementação.</p>
-    </section>
-
-    <section aria-labelledby="mental-overview-title">
-      <h2 id="mental-overview-title">Visão Geral</h2>
-      <div className="mental-record__summary">
-        <StatCard title="Contexto assistencial" value={contextLabels[jornada.contexto_estado]}
-          description="Estado do período assistencial selecionado." />
-        <StatCard title="Linha Saúde Mental" value={lineLabels[jornada.linha_estado]}
-          description="Estado da linha neste contexto." />
-        <StatCard title="Check-in inicial" value={initialRecorded ? "Registrado" : initialAvailable ? "Disponível" : "Indisponível"}
-          description={initialRecorded ? "Consulte o registro de Bem-Estar abaixo." : initialAvailable ? "Registro assistido disponível nesta jornada." : "Registro não disponível nesta consulta."} />
-      </div>
-      <p className="mental-record__line-note">{jornada.linha_estado === "ATIVA"
-        ? "Linha Saúde Mental ativa neste contexto."
-        : jornada.linha_estado === "AUSENTE"
-          ? "A linha Saúde Mental ainda não foi vinculada a este contexto."
-          : "A linha Saúde Mental está inativa neste contexto."}</p>
-    </section>
-
-    <section ref={checkinSection} className="mental-record__actions" aria-labelledby="mental-actions-title">
-      <header><p className="mental-record__eyebrow">Atendimento</p>
-        <h2 id="mental-actions-title">Ações clínicas</h2>
-        <p>Registro assistido e acompanhamento de Bem-Estar nesta jornada.</p>
-      </header>
+    </div>
+    <div className="mental-record__summary" style={{ marginTop: 20, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+      <div style={cardStyle}><div style={labelStyle}>Intervenções</div><div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>-</div></div>
+      <div style={cardStyle}><div style={labelStyle}>Check-ins de Bem-Estar</div><div style={{ fontSize: 28, fontWeight: 700, marginTop: 6 }}>{Array.isArray(records) ? records.length : "-"}</div></div>
+      <div style={cardStyle}><div style={labelStyle}>Último evento</div><div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{latest ? "Check-in de Bem-Estar" : "-"}</div><div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>{latest ? displayTimestamp(latest.created_at) : "-"}</div></div>
+      <div style={cardStyle}><div style={labelStyle}>Resumo recente</div><div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflowWrap: "anywhere" }}>{description ? description.length > 70 ? `${description.slice(0, 70)}...` : description : "-"}</div></div>
+    </div>
+    <div hidden={!checkinOpen} ref={checkinSection} style={{ ...cardStyle, marginTop: 20 }}>
       <CheckinBemEstar jornada={jornada} onSaved={onSaved} open={checkinOpen} setOpen={setCheckinOpen} showHistory={false} />
-    </section>
+    </div>
     <LongitudinalBemEstar jornada={jornada} />
   </div>;
 }

@@ -51,22 +51,22 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   await page.getByRole('status').waitFor();
   await page.getByRole('heading',{name:'Pessoa sintética',exact:true}).waitFor();delay=false;
   await page.getByRole('link',{name:'Abrir jornada'}).click();
-  await page.getByRole('heading',{name:'Visão Geral'}).waitFor();
-  await page.getByText('Linha Saúde Mental ativa neste contexto.').waitFor();
-  const button=page.getByRole('button',{name:'Realizar Check-in Inicial'});
+  await page.getByRole('heading',{name:'Pessoa: Pessoa sintética',exact:true}).waitFor();
+  await page.getByText('Saúde Mental (Ativa)', {exact:false}).waitFor();
+  const button=page.getByRole('button',{name:'Check-in de Bem-Estar'});
   assert.equal(await button.isDisabled(),true);
   await page.screenshot({path:'/tmp/w2a-jornada-desktop.png',fullPage:true});
   for(const state of ['INATIVA','AUSENTE']){
-   line=state;await page.reload();await page.getByText(state==='INATIVA'?'A linha Saúde Mental está inativa neste contexto.':'A linha Saúde Mental ainda não foi vinculada a este contexto.',{exact:false}).waitFor();
+   line=state;await page.reload();await page.getByText(state==='INATIVA'?'Saúde Mental (Inativa)':'Saúde Mental (Não vinculada)',{exact:false}).waitFor();
   }
   for(const status of [401,403,404,422,500,503]){
    failure=status;await page.reload();await page.getByRole('alert').waitFor();
-   assert.equal(await page.getByRole('heading',{name:'Pessoa sintética',exact:true}).count(),0);
+   assert.equal(await page.getByRole('heading',{name:'Pessoa: Pessoa sintética',exact:true}).count(),0);
   }
   failure=null;empty=true;await page.goto(FRONT+'/saude-mental?instituicao_id=5');
   await page.getByRole('heading',{name:'Nenhum contexto acessível'}).waitFor();
   empty=false;line='ATIVA';await page.reload();await page.getByRole('link',{name:'Abrir jornada'}).click();
-  await page.getByRole('heading',{name:'Visão Geral'}).waitFor();
+  await page.getByRole('heading',{name:'Pessoa: Pessoa sintética',exact:true}).waitFor();
   await page.setViewportSize({width:768,height:900});await page.screenshot({path:'/tmp/w2a-jornada-tablet.png',fullPage:true});
   await page.getByRole('link',{name:'Pessoas',exact:true}).click();
   await page.waitForURL('**/saude-mental?instituicao_id=5#pessoas');
@@ -76,8 +76,8 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
    role=profile;failure=403;
    await page.goto(FRONT+'/saude-mental/pessoas/18/contextos/9?instituicao_id=5');
    await page.getByRole('alert').waitFor();
-   assert.equal(await page.getByRole('heading',{name:'Pessoa sintética',exact:true}).count(),0);
-   assert.equal(await page.getByRole('button',{name:'Realizar Check-in Inicial'}).count(),0);
+   assert.equal(await page.getByRole('heading',{name:'Pessoa: Pessoa sintética',exact:true}).count(),0);
+   assert.equal(await page.getByRole('button',{name:'Check-in de Bem-Estar'}).count(),0);
    if(profile==='ADMIN') await page.getByText('Conta de administração global.',{exact:false}).waitFor();
   }
   assert.ok(calls.every(c=>c.method==='GET'));
