@@ -1,3 +1,4 @@
+import PHQ9Mental from "./pages/saudeMental/PHQ9Mental";
 import IntervencaoMental from "./pages/saudeMental/IntervencaoMental";
 import ScrollManager from "./components/navigation/ScrollManager";
 
@@ -103,6 +104,7 @@ export default function App() {
             {/* Jornada assistencial: autorização permanece no backend. */}
             <Route element={<SaudeMentalLayout />}>
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/check-ins/novo" element={<CheckinBemEstar />} />
+              <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/phq9" element={<PHQ9Mental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/intervencoes/nova" element={<IntervencaoMental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/diagnosticos/novo" element={<DiagnosticoMental />} />
               <Route path="/saude-mental" element={<SaudeMental />} />

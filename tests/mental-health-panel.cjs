@@ -54,7 +54,7 @@ const FRONT=process.env.MENTAL_FRONT_URL||'http://127.0.0.1:5177';
  for(const [i,tone] of ['improvement','worsening','stable','oscillation'].entries())assert.equal(await cards.nth(i).locator('.mental-comparison--'+tone).count(),1);
  for(const i of [4,5,6])assert.match(await cards.nth(i).getAttribute('class'),/--neutral/);
  assert.equal(await page.getByText('Narrativa exclusiva do resumo',{exact:true}).count(),1);
- for(const label of ['Registrar Diagnóstico','PHQ-9','GAD-7','CBI','PTS','Intervenção','Gerar relatório'])assert.equal(await page.getByRole('button',{name:label,exact:true}).isDisabled(),true);
+ for(const label of ['Registrar Diagnóstico','PHQ-9','GAD-7','CBI','PTS','Intervenção','Gerar relatório'])assert.equal(await page.getByLabel('Ações clínicas').getByRole('button',{name:label,exact:true}).isDisabled(),true);
  assert.ok(await page.evaluate(()=>{
  const p=document.querySelector('[aria-label="Painel Clínico Inteligente"]');
  return !!(document.querySelector('[aria-label="Resumo clínico automático"]').compareDocumentPosition(p)&Node.DOCUMENT_POSITION_FOLLOWING)&&!!(p.compareDocumentPosition(document.querySelector('#mental-evolution-title'))&Node.DOCUMENT_POSITION_FOLLOWING);

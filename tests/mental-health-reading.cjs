@@ -47,7 +47,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
       assert.equal(await page.locator('.mental-record__series-table tbody tr').count(),count);
     }
     for(const name of ['Registrar Diagnóstico','PHQ-9','GAD-7','CBI','PTS','Intervenção','Gerar relatório'])
-      assert.equal(await page.getByRole('button',{name,exact:true}).isDisabled(),true);
+      assert.equal(await page.getByLabel('Ações clínicas').getByRole('button',{name,exact:true}).isDisabled(),true);
     await page.screenshot({path:'/tmp/w3-reading-desktop.png',fullPage:true});
     await page.setViewportSize({width:390,height:844});
     // Recharts resizes asynchronously after the viewport changes.

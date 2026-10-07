@@ -88,3 +88,18 @@ export function interventionEvents(interventions = []) {
       values: { nome: item.registrador_nome || "Identificação não disponível" } }] },
   }));
 }
+
+// Persisted framework result only: never calculate or classify PHQ-9 in the browser.
+export function phq9Events(items = []) {
+  return items.map(item => ({
+    id: `PHQ9:${item.id}`, tipo: "PHQ-9", created_at: item.data_hora,
+    resultado: item.resultado,
+    metadata: { answers: [
+      ...Object.entries(item.resultado.metadata?.respostas || {}).map(([key, value]) => ({
+        field_id: key, name: `Questão ${key.replace("phq9_", "")}`, values: { resposta: ({ 0: "Nenhuma vez", 1: "Vários dias", 2: "Mais da metade dos dias", 3: "Quase todos os dias" })[value] ?? value },
+      })),
+      { field_id: "autor", name: "Profissional registrador", values: { id: item.registrador_profissional_id } },
+      { field_id: "versao", name: "Versão do instrumento", values: { versao: item.resultado.versao } },
+    ] },
+  }));
+}
