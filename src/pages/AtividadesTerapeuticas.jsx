@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import LinhasAtividade from "../components/LinhasAtividade";
 import Button from "../components/ui/Button";
 
 import {
   listarAtividadesTerapeuticas,
+  listarLinhasAtividade,
+  atualizarLinhasAtividade,
   listarOcupacoesProfissionais,
   listarOcupacoesDaAtividade,
   vincularOcupacaoAtividade,
@@ -32,9 +35,31 @@ export default function AtividadesTerapeuticas() {
   const [mensagem, setMensagem] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    carregarDados();
+  const [linhas, setLinhas] = useState([]);
+  const [linhasSelecionadas, setLinhasSelecionadas] = useState([]);
+  const carregarDados = useCallback(async () => {
+    try {
+      setErro("");
+      const [atividadesData, ocupacoesData, linhasData] = await Promise.all([
+        listarAtividadesTerapeuticas(moduloId), listarOcupacoesProfissionais(), listarLinhasAtividade(),
+      ]);
+      setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
+      setOcupacoes(Array.isArray(ocupacoesData) ? ocupacoesData : []);
+      setLinhas(Array.isArray(linhasData) ? linhasData : []);
+      setAtividadeSelecionada(""); setLinhasSelecionadas([]);
+    } catch { setErro("Não foi possível consultar o catálogo."); }
   }, [moduloId]);
+  useEffect(() => { carregarDados(); }, [carregarDados]);
+
+  async function salvarLinhas() {
+    if (!linhasSelecionadas.length) { setErro("Selecione pelo menos uma linha aplicável."); return; }
+    setLoading(true); setErro("");
+    try {
+      await atualizarLinhasAtividade(Number(atividadeSelecionada), linhasSelecionadas);
+      await carregarDados(); setMensagem("Linhas aplicáveis atualizadas.");
+    } catch { setErro("Não foi possível confirmar a atualização. Consulte novamente o catálogo."); }
+    finally { setLoading(false); }
+  }
 
   useEffect(() => {
     if (atividadeSelecionada) {
@@ -44,26 +69,6 @@ export default function AtividadesTerapeuticas() {
       setOcupacoesOriginais([]);
     }
   }, [atividadeSelecionada]);
-
-  async function carregarDados() {
-    try {
-      setErro("");
-
-      const [atividadesData, ocupacoesData] = await Promise.all([
-        listarAtividadesTerapeuticas(moduloId),
-        listarOcupacoesProfissionais(),
-      ]);
-
-      setAtividades(Array.isArray(atividadesData) ? atividadesData : []);
-      setOcupacoes(Array.isArray(ocupacoesData) ? ocupacoesData : []);
-    } catch (e) {
-      setErro(
-        e?.response?.data?.detail ||
-          e?.message ||
-          "Erro ao carregar dados."
-      );
-    }
-  }
 
   async function carregarVinculos(atividadeId) {
     try {
@@ -194,7 +199,7 @@ export default function AtividadesTerapeuticas() {
           <select
             style={inputStyle}
             value={atividadeSelecionada}
-            onChange={(e) => setAtividadeSelecionada(e.target.value)}
+            onChange={(e) => { setAtividadeSelecionada(e.target.value); setLinhasSelecionadas(atividades.find(a => a.id === Number(e.target.value))?.modulo_ids || []); }}
           >
             <option value="">Selecione uma atividade</option>
 
@@ -207,6 +212,8 @@ export default function AtividadesTerapeuticas() {
 
           {atividadeSelecionada && (
             <>
+              <LinhasAtividade linhas={linhas} selecionadas={linhasSelecionadas} onChange={setLinhasSelecionadas} disabled={loading} />
+              <Button onClick={salvarLinhas} disabled={loading}>Salvar linhas aplicáveis</Button>
               <div
                 style={{
                   marginTop: 20,

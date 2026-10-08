@@ -51,3 +51,11 @@ export async function removerOcupacaoAtividade(atividadeId, ocupacaoId) {
   );
   return response.data;
 }
+
+export async function listarLinhasAtividade() {
+  return (await api.get("/atividades-terapeuticas/linhas")).data;
+}
+
+export async function atualizarLinhasAtividade(id, modulo_ids) {
+  return (await api.put(`/atividades-terapeuticas/${id}/linhas`, { modulo_ids })).data;
+}

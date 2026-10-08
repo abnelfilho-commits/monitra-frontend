@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import LinhasAtividade from "../components/LinhasAtividade";
 import Button from "../components/ui/Button";
 
 import {
   criarAtividadeTerapeutica,
+  listarLinhasAtividade,
 } from "../services/atividadesTerapeuticas";
 
 export default function NovaAtividadeTerapeutica() {
@@ -18,6 +20,16 @@ export default function NovaAtividadeTerapeutica() {
 
   const isMental = searchParams.get("modulo") === "saude_mental";
   const moduloId = isMental ? 3 : isCardio ? 2 : 1;
+
+  const [linhas, setLinhas] = useState([]);
+  const [selecionadas, setSelecionadas] = useState([]);
+  useEffect(() => {
+    let current = true;
+    listarLinhasAtividade().then(rows => {
+      if (current) { setLinhas(rows); setSelecionadas(rows.some(r => r.id === moduloId) ? [moduloId] : []); }
+    }).catch(() => { if (current) setErro("Não foi possível consultar as linhas aplicáveis."); });
+    return () => { current = false; };
+  }, [moduloId]);
 
   const [form, setForm] = useState({
     nome: "",
@@ -44,6 +56,7 @@ export default function NovaAtividadeTerapeutica() {
       return;
     }
 
+    if (!selecionadas.length) { setErro("Selecione pelo menos uma linha aplicável."); return; }
     setSaving(true);
 
     try {
@@ -53,7 +66,7 @@ export default function NovaAtividadeTerapeutica() {
         duracao_minutos: form.duracao_minutos
           ? Number(form.duracao_minutos)
           : null,
-        modulo_id: moduloId,
+        modulo_ids: selecionadas,
       });
 
       setMensagem("Atividade cadastrada com sucesso.");
@@ -107,6 +120,7 @@ export default function NovaAtividadeTerapeutica() {
 
         <div style={cardStyle}>
           <form onSubmit={onSubmit}>
+            <LinhasAtividade linhas={linhas} selecionadas={selecionadas} onChange={setSelecionadas} disabled={saving} />
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Nome</label>
               <input
