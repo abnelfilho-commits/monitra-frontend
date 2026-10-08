@@ -4,6 +4,7 @@ import Button from "../../components/ui/Button";
 import ClinicalPageLayout from "../../components/clinical/ClinicalPageLayout";
 import { jornadaMental, listarPTSMental, salvarPTSMental, erroMental } from "../../services/saudeMental";
 import "./PTSMental.css";
+import PlanejamentoMental from "./PlanejamentoMental";
 
 export default function PTSMental() {
   const { pessoaId, contextoId } = useParams();
@@ -99,7 +100,7 @@ function ContextualPlan({ institution, pessoaId, contextoId }) {
       <strong>Objetivo geral</strong><p className="mental-pts__text">{plan.objetivo_geral || "—"}</p><strong>Observações</strong><p className="mental-pts__text">{plan.observacoes || "—"}</p>
       <h4>Objetivos Terapêuticos</h4>{plan.status === "ATIVO" && <Button variant="secondary" disabled={!canWrite} onClick={() => edit("objective_create",plan)}>+ Novo Objetivo</Button>}
       {plan.objetivos.length === 0 && <p>Nenhum objetivo cadastrado.</p>}
-      {plan.objetivos.map(objective => <article key={objective.id} className="mental-pts__objective"><span>{objective.prioridade || "SEM PRIORIDADE"} · {objective.status}</span><p>{objective.descricao}</p><Button variant="secondary" disabled={!canWrite} onClick={() => edit("objective_edit",plan,objective)}>Acompanhar Objetivo</Button></article>)}
+      {plan.objetivos.map(objective => <article key={objective.id} className="mental-pts__objective"><span>{objective.prioridade || "SEM PRIORIDADE"} · {objective.status}</span><p>{objective.descricao}</p><Button variant="secondary" disabled={!canWrite} onClick={() => edit("objective_edit",plan,objective)}>Acompanhar Objetivo</Button><PlanejamentoMental institution={institution} pessoaId={pessoaId} contextoId={contextoId} plan={plan} objective={objective} canWrite={canWrite} /></article>)}
     </section>)}
   </ClinicalPageLayout></div>;
 }

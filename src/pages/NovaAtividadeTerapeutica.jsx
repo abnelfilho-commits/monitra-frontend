@@ -16,7 +16,8 @@ export default function NovaAtividadeTerapeutica() {
   const isCardio =
     searchParams.get("modulo") === "cardiometabolico";
 
-  const moduloId = isCardio ? 2 : 1;
+  const isMental = searchParams.get("modulo") === "saude_mental";
+  const moduloId = isMental ? 3 : isCardio ? 2 : 1;
 
   const [form, setForm] = useState({
     nome: "",
@@ -60,7 +61,7 @@ export default function NovaAtividadeTerapeutica() {
       setTimeout(() => {
         navigate(
           `/atividades-terapeuticas${
-            isCardio ? "?modulo=cardiometabolico" : ""
+            isMental ? "?modulo=saude_mental" : isCardio ? "?modulo=cardiometabolico" : ""
           }`
         );
       }, 900);
@@ -91,7 +92,7 @@ export default function NovaAtividadeTerapeutica() {
             onClick={() =>
               navigate(
                 `/atividades-terapeuticas${
-                  isCardio ? "?modulo=cardiometabolico" : ""
+                  isMental ? "?modulo=saude_mental" : isCardio ? "?modulo=cardiometabolico" : ""
                 }`
               )
             }
@@ -146,7 +147,7 @@ export default function NovaAtividadeTerapeutica() {
                 onClick={() =>
                   navigate(
                     `/atividades-terapeuticas${
-                      isCardio ? "?modulo=cardiometabolico" : ""
+                      isMental ? "?modulo=saude_mental" : isCardio ? "?modulo=cardiometabolico" : ""
                     }`
                   )
                 }

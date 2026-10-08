@@ -9,3 +9,5 @@
 .mental-pts__objective { margin:12px 0; }
 .mental-pts [role=alert] { color:#991b1b; background:#fef2f2; padding:12px; border-radius:10px; }
 @media(max-width:600px) { .mental-pts { padding:12px; } .mental-pts__card { padding:16px; } }
+
+.mental-planning-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}

@@ -13,12 +13,13 @@ import {
 export default function AtividadesTerapeuticas() {
   const navigate = useNavigate();
 
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const isCardio =
     searchParams.get("modulo") === "cardiometabolico";
 
-  const moduloId = isCardio ? 2 : 1;
+  const isMental = searchParams.get("modulo") === "saude_mental";
+  const moduloId = isMental ? 3 : isCardio ? 2 : 1;
 
   const [atividades, setAtividades] = useState([]);
   const [ocupacoes, setOcupacoes] = useState([]);
@@ -144,7 +145,7 @@ export default function AtividadesTerapeuticas() {
   return (
     <div style={{ padding: 24 }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        <h2 style={{ marginTop: 0 }}>Atividades Terapêuticas</h2>
+        <label>Linha do catálogo<select value={isMental ? "saude_mental" : isCardio ? "cardiometabolico" : "neuro"} onChange={e => setSearchParams(e.target.value === "neuro" ? {} : {modulo:e.target.value})}><option value="neuro">Neurodesenvolvimento</option><option value="cardiometabolico">Cardiometabólico</option><option value="saude_mental">Saúde Mental</option></select></label><h2 style={{ marginTop: 0 }}>Atividades Terapêuticas</h2>
 
         {erro && (
           <div style={erroStyle}>
@@ -170,7 +171,7 @@ export default function AtividadesTerapeuticas() {
             onClick={() =>
               navigate(
                 `/atividades-terapeuticas/nova${
-                  isCardio ? "?modulo=cardiometabolico" : ""
+                  isMental ? "?modulo=saude_mental" : isCardio ? "?modulo=cardiometabolico" : ""
                 }`
               )
             }
