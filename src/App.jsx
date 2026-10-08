@@ -1,6 +1,7 @@
 import CBIMental from "./pages/saudeMental/CBIMental";
 import GAD7Mental from "./pages/saudeMental/GAD7Mental";
 import PHQ9Mental from "./pages/saudeMental/PHQ9Mental";
+import PTSMental from "./pages/saudeMental/PTSMental";
 import IntervencaoMental from "./pages/saudeMental/IntervencaoMental";
 import ScrollManager from "./components/navigation/ScrollManager";
 
@@ -110,6 +111,7 @@ export default function App() {
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/gad7" element={<GAD7Mental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/phq9" element={<PHQ9Mental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/intervencoes/nova" element={<IntervencaoMental />} />
+              <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/pts" element={<PTSMental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/diagnosticos/novo" element={<DiagnosticoMental />} />
               <Route path="/saude-mental" element={<SaudeMental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId" element={<SaudeMental />} />

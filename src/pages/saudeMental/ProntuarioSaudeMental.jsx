@@ -46,7 +46,8 @@ export default function ProntuarioSaudeMental({ jornada, onRefresh }) {
         <Button variant="secondary" disabled={jornada.phq9?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/phq9?instituicao_id=${jornada.instituicao_id}`)}>PHQ-9</Button>
         <Button variant="secondary" disabled={jornada.gad7?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/gad7?instituicao_id=${jornada.instituicao_id}`)}>GAD-7</Button>
         <Button variant="secondary" disabled={jornada.cbi?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/cbi?instituicao_id=${jornada.instituicao_id}`)}>CBI</Button>
-        {["PTS", "Gerar relatório"].map(action =>
+        <Button variant="secondary" disabled={jornada.linha_estado !== "ATIVA"} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/pts?instituicao_id=${jornada.instituicao_id}`)}>PTS</Button>
+        {["Gerar relatório"].map(action =>
           <span key={action} title="Em implementação"><Button variant="secondary" disabled title="Em implementação">{action}</Button></span>
         )}
         <Button variant="secondary" disabled={jornada.intervencoes?.pode_registrar !== true} title={jornada.intervencoes?.pode_registrar !== true ? "Registro indisponível nesta consulta" : undefined} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/intervencoes/nova?instituicao_id=${jornada.instituicao_id}`)}>Intervenção</Button>

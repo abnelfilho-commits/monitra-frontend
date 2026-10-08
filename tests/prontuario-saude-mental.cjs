@@ -58,7 +58,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     assert.equal(await page.locator('.mental-record').count(), 0);
     await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
     await page.getByRole('heading', { name: 'Pessoa: Nome social sintético' }).waitFor();
-    for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'PTS', 'Intervenção', 'Gerar relatório']) {
+    for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'Intervenção', 'Gerar relatório']) {
       assert.equal(await page.getByLabel('Ações clínicas').getByRole('button', { name, exact: true }).isDisabled(), true);
       if (!['Registrar Diagnóstico', 'Intervenção', 'PHQ-9', 'GAD-7','CBI'].includes(name)) assert.equal(await page.getByLabel('Ações clínicas').getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
     }

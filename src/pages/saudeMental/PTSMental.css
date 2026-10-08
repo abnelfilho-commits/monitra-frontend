@@ -1,0 +1,11 @@
+.mental-pts { background:#f8fafc; min-height:100%; padding:24px; overflow-wrap:anywhere; }
+.mental-pts__card { background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:24px; box-shadow:0 8px 24px rgba(15,23,42,.05); margin:18px 0; }
+.mental-pts__actions { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:space-between; }
+.mental-pts__card label { display:block; font-size:14px; font-weight:600; margin:16px 0; }
+.mental-pts__card input,.mental-pts__card textarea,.mental-pts__card select { display:block; width:100%; box-sizing:border-box; padding:12px 14px; border:1px solid #d1d5db; border-radius:12px; margin-top:6px; font:inherit; background:white; }
+.mental-pts__card textarea { min-height:100px; resize:vertical; }
+.mental-pts__card fieldset { border:0; padding:0; min-width:0; }
+.mental-pts__text,.mental-pts__objective { white-space:pre-wrap; padding:14px; background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; }
+.mental-pts__objective { margin:12px 0; }
+.mental-pts [role=alert] { color:#991b1b; background:#fef2f2; padding:12px; border-radius:10px; }
+@media(max-width:600px) { .mental-pts { padding:12px; } .mental-pts__card { padding:16px; } }
