@@ -23,10 +23,10 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5176';
    return reply([]);
   });
   const nav=()=>page.getByRole('navigation',{name:'Navegação institucional',exact:true});
-  const expected=['Instituições','Pessoas','Usuários / Acessos','Profissionais','Operação Assistencial','Dimensionamento','Financeiro Institucional'];
+  const expected=['Instituições','Pessoas','Usuários / Acessos','Atividades Terapêuticas','Profissionais','Operação Assistencial','Dimensionamento','Financeiro Institucional'];
   const noClinical=async()=>{
    await nav().waitFor();
-   for(const x of ['Cockpit Neuro','Pacientes','Responsáveis','Atividades Terapêuticas','Saúde Mental','Clínicas'])assert.equal(await nav().getByRole('link',{name:x,exact:true}).count(),0);
+   for(const x of ['Cockpit Neuro','Pacientes','Responsáveis','Saúde Mental','Clínicas'])assert.equal(await nav().getByRole('link',{name:x,exact:true}).count(),0);
    assert.equal(await page.locator('aside').count(),1);
   };
   await page.goto(FRONT+'/plataforma');

@@ -181,15 +181,6 @@ export default function Layout() {
               />
             )}
 
-            {!isProfissional && (
-              <ItemMenu
-                label="Atividades Terapêuticas"
-                to={`/atividades-terapeuticas${moduloQuery}`}
-                active={pathname.startsWith("/atividades-terapeuticas")}
-                onClick={go}
-              />
-            )}
-
             <ItemMenu
               label="Responsáveis"
               to={`/responsaveis${moduloQuery}`}

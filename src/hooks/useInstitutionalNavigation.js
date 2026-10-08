@@ -28,6 +28,7 @@ export default function useInstitutionalNavigation() {
     { label: "Pessoas", to: "/admin/pessoas" },
     { label: "Usuários / Acessos", to: "/usuarios" },
   );
+  if (["ADMIN", "ADMINISTRADOR", "ADMIN_CLINICA", "SUPORTE"].includes(profile)) items.push({ label: "Atividades Terapêuticas", to: "/atividades-terapeuticas" });
   // Preserve the legacy menu predicate; this does not confer endpoint access.
   if (user && profile !== "PROFISSIONAL") items.push({ label: "Profissionais", to: `/profissionais${cardio}` });
   if (profile === "ADMIN" || (operational?.id === id && operational?.profile === profile && operational.allowed)) {

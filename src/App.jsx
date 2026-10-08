@@ -120,6 +120,20 @@ export default function App() {
             {/* Capacidades transversais: URLs e guards existentes preservados. */}
             <Route element={<AdministracaoLayout />}>
               <Route path="/gestao-institucional" element={null} />
+              <Route
+                path="/atividades-terapeuticas"
+                element={<AtividadesTerapeuticas />}
+              />
+
+              <Route
+                path="/atividades-terapeuticas/nova"
+                element={<NovaAtividadeTerapeutica />}
+              />
+
+              <Route
+                path="/ocupacoes-profissionais/nova"
+                element={<NovaOcupacaoProfissional />}
+              />
               <Route path="/admin/instituicoes" element={<Instituicoes />} />
               <Route path="/admin/pessoas" element={<Pessoas />} />
               <Route path="/usuarios" element={<Usuarios />} />
@@ -193,20 +207,7 @@ export default function App() {
                 element={<PTS />}
               />
 
-              <Route
-                path="/atividades-terapeuticas"
-                element={<AtividadesTerapeuticas />}
-              />
 
-              <Route
-                path="/atividades-terapeuticas/nova"
-                element={<NovaAtividadeTerapeutica />}
-              />
-
-              <Route
-                path="/ocupacoes-profissionais/nova"
-                element={<NovaOcupacaoProfissional />}
-              />
               <Route
                 path="/prontuario/evento/:tipo/:id"
                 element={<ProntuarioLongitudinal />}
@@ -278,20 +279,7 @@ export default function App() {
                 element={<PTS />}
               />
 
-              <Route
-                path="/atividades-terapeuticas"
-                element={<AtividadesTerapeuticas />}
-              />
 
-              <Route
-                path="/atividades-terapeuticas/nova"
-                element={<NovaAtividadeTerapeutica />}
-              />
-
-              <Route
-                path="/ocupacoes-profissionais/nova"
-                element={<NovaOcupacaoProfissional />}
-              />
               <Route
                 path="/prontuario/evento/:tipo/:id"
                 element={<ProntuarioLongitudinal />}
