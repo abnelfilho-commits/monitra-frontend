@@ -13,6 +13,7 @@ export default function SaudeMentalLayout() {
     ? `/saude-mental?instituicao_id=${encodeURIComponent(institution)}`
     : "/saude-mental";
   const peopleActive = location.pathname.startsWith("/saude-mental/pessoas/") || location.hash === "#pessoas";
+  const agendaActive = location.pathname.startsWith("/agenda-assistencial") || location.pathname.startsWith("/sessoes-assistenciais");
   const isHml = import.meta.env.VITE_AMBIENTE === "HML";
 
   return (
@@ -28,8 +29,9 @@ export default function SaudeMentalLayout() {
           <p>Jornada assistencial · acesso sujeito à autorização contextual.</p>
         </div>
         <nav aria-label="Navegação Saúde Mental" className="mental-shell-navigation">
-          <Link className="mental-shell-item" to={overview} aria-current={!peopleActive ? "page" : undefined}>Visão Geral</Link>
+          <Link className="mental-shell-item" to={overview} aria-current={!peopleActive && !agendaActive ? "page" : undefined}>Visão Geral</Link>
           <Link className="mental-shell-item" to={`${overview}#pessoas`} aria-current={peopleActive ? "page" : undefined}>Pessoas</Link>
+          <Link className="mental-shell-item" to="/agenda-assistencial?espaco=saude-mental" aria-current={agendaActive ? "page" : undefined}>Agenda Assistencial</Link>
           <Link className="mental-shell-item" to="/plataforma">Voltar à Plataforma</Link>
         </nav>
         {user?.perfil === "ADMIN" && <p className="mental-shell-admin">Conta de administração global. Este perfil não concede acesso clínico.</p>}

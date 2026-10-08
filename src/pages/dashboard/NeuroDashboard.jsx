@@ -197,7 +197,7 @@ return (
           <button
             type="button"
             onClick={() =>
-              navigate(`/sessoes-assistenciais/${proximoAtendimento.id}`, {
+              navigate(`/sessoes-assistenciais/${proximoAtendimento.id}${proximoAtendimento.contexto ? "?espaco=saude-mental" : ""}`, {
                 state: {
                   returnTo: "/dashboard",
                 },
@@ -210,7 +210,7 @@ return (
           <button
             type="button"
             onClick={() =>
-              navigate(`/sessoes-assistenciais/${proximoAtendimento.id}/executar`, {
+              navigate(`/sessoes-assistenciais/${proximoAtendimento.id}/executar${proximoAtendimento.contexto ? "?espaco=saude-mental" : ""}`, {
                 state: {
                   returnTo: "/dashboard",
                 },

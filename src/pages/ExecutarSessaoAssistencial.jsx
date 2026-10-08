@@ -116,6 +116,10 @@ export default function ExecutarSessaoAssistencial() {
 
         if (ativo) {
           setDados(resposta);
+          if (resposta.contexto && resposta.registro_longitudinal) {
+            setNarrativa(resposta.narrativa || "");
+            setProximosPassos(resposta.proximos_passos || []);
+          }
         }
       } catch (error) {
         if (ativo) {
@@ -136,6 +140,8 @@ export default function ExecutarSessaoAssistencial() {
   }, [sessaoId]);
 
   const paciente = dados?.paciente;
+  const contextual = Boolean(dados?.contexto);
+  const suffix = contextual ? "?espaco=saude-mental" : "";
   const sessao = dados?.sessao;
   const objetivo = dados?.objetivo;
   const atividade = dados?.atividade;
@@ -150,13 +156,13 @@ export default function ExecutarSessaoAssistencial() {
   const formularioValido = Boolean(narrativa.trim());
 
   function cancelar() {
-    navigate(`/sessoes-assistenciais/${sessaoId}`);
+    navigate(`/sessoes-assistenciais/${sessaoId}${suffix}`);
   }
 
   async function salvar(event) {
     event.preventDefault();
 
-    if (!formularioValido || salvando) return;
+    if (!formularioValido || salvando || dados?.pode_registrar === false) return;
 
     try {
       setSalvando(true);
@@ -182,14 +188,20 @@ export default function ExecutarSessaoAssistencial() {
         );
       }
 
-      await registrarAtendimento(sessaoId, {
-        narrativa: narrativa.trim(),
-        proximos_passos: proximosPassos,
-      });
+      if (!contextual || !dados?.registro_longitudinal) {
+        const result = await registrarAtendimento(sessaoId, {
+          narrativa: narrativa.trim(),
+          proximos_passos: proximosPassos,
+        });
+        if (contextual) setDados(current => ({ ...current,
+          sessao: { ...current.sessao, status: "EM_ANDAMENTO" },
+          registro_longitudinal: { id: result.registro_id },
+        }));
+      }
 
       await finalizarSessaoAssistencial(sessaoId);
 
-      navigate(`/sessoes-assistenciais/${sessaoId}`);
+      navigate(`/sessoes-assistenciais/${sessaoId}${suffix}`);
     } catch (error) {
       setErro(extrairMensagemErro(error));
     } finally {
@@ -235,6 +247,7 @@ export default function ExecutarSessaoAssistencial() {
       badge="Jornada Assistencial"
     >
       <ClinicalSummaryCard
+        pessoa={dados?.pessoa}
         paciente={paciente}
         pacienteId={paciente?.id}
       />
@@ -322,10 +335,11 @@ export default function ExecutarSessaoAssistencial() {
         <ClinicalSection
           numero={2}
           titulo="Como foi o atendimento?"
-          descricao="Registre os fatos relevantes, a resposta do paciente e a evolução observada."
+          descricao={contextual ? "Registre os fatos relevantes, a resposta da Pessoa e a evolução observada." : "Registre os fatos relevantes, a resposta do paciente e a evolução observada."}
         >
           <div style={styles.campo}>
             <textarea
+              disabled={contextual && Boolean(dados.registro_longitudinal)}
               aria-label="Como foi o atendimento?"
               value={narrativa}
               onChange={(event) => setNarrativa(event.target.value)}
@@ -351,17 +365,20 @@ export default function ExecutarSessaoAssistencial() {
           titulo="Próximos passos"
           descricao="Sinalize os encaminhamentos que poderão continuar após a conclusão desta sessão."
         >
-          <ClinicalEventTypeCards
+          {contextual && dados.registro_longitudinal ? <>
+            <p>Atendimento já registrado. Finalize a sessão para concluir.</p>
+            {proximosPassos.map((value, i) => <p key={i}>{OPCOES_PROXIMOS_PASSOS.find(option => option.valor === value)?.titulo || value}</p>)}
+          </> : <ClinicalEventTypeCards
             items={OPCOES_PROXIMOS_PASSOS}
             value={proximosPassos}
             onChange={setProximosPassos}
             multiple
-          />
+          />}
         </ClinicalSection>
 
         <ClinicalFooter
           loading={salvando}
-          disabled={!formularioValido}
+          disabled={!formularioValido || dados?.pode_registrar === false}
           onCancel={cancelar}
           submitLabel="🩺 Finalizar Atendimento"
         >

@@ -5,7 +5,7 @@ import PTSMental from "./pages/saudeMental/PTSMental";
 import IntervencaoMental from "./pages/saudeMental/IntervencaoMental";
 import ScrollManager from "./components/navigation/ScrollManager";
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -84,6 +84,12 @@ import CheckinBemEstar from "./pages/saudeMental/CheckinBemEstar";
 import DiagnosticoMental from "./pages/saudeMental/DiagnosticoMental";
 import SaudeMental from "./pages/saudeMental/SaudeMental";
 
+// Visual shell only; persisted session ancestry and W1B are checked by the API.
+function SessionLayout() {
+  const [params] = useSearchParams();
+  return params.get("espaco") === "saude-mental" ? <SaudeMentalLayout /> : <Layout />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -97,6 +103,11 @@ export default function App() {
 
           {/* Protegidas */}
           <Route element={<ProtectedRoute />}>
+            <Route element={<SessionLayout />}>
+              <Route path="/agenda-assistencial" element={<AgendaAssistencial />} />
+              <Route path="/sessoes-assistenciais/:sessaoId" element={<SessaoAssistencial />} />
+              <Route path="/sessoes-assistenciais/:sessaoId/executar" element={<ExecutarSessaoAssistencial />} />
+            </Route>
 
             {/* Plataforma */}
             <Route
@@ -213,25 +224,12 @@ export default function App() {
                 element={<ProntuarioLongitudinal />}
               />
               <Route
-                path="/sessoes-assistenciais/:sessaoId"
-                element={<SessaoAssistencial />}
-              />
-
-              <Route
-                path="/sessoes-assistenciais/:sessaoId/executar"
-                element={<ExecutarSessaoAssistencial />}
-              />
-              <Route
                 path="/diagnosticos/:diagnosticoId"
                 element={<DiagnosticoDetalhe />}
               />
               <Route
                 path="/pacientes/:pacienteId/diagnosticos/novo"
                 element={<RegistrarDiagnostico />}
-              />
-              <Route
-                path="/agenda-assistencial"
-                element={<AgendaAssistencial />}
               />
 
             </Route>
@@ -285,25 +283,12 @@ export default function App() {
                 element={<ProntuarioLongitudinal />}
               />
               <Route
-                path="/sessoes-assistenciais/:sessaoId"
-                element={<SessaoAssistencial />}
-              />
-
-              <Route
-                path="/sessoes-assistenciais/:sessaoId/executar"
-                element={<ExecutarSessaoAssistencial />}
-              />
-              <Route
                 path="/diagnosticos/:diagnosticoId"
                 element={<DiagnosticoDetalhe />}
               />
               <Route
                 path="/pacientes/:pacienteId/diagnosticos/novo"
                 element={<RegistrarDiagnostico />}
-              /> 
-              <Route
-                path="/agenda-assistencial"
-                element={<AgendaAssistencial />}
               />             
             </Route>
 

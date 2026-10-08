@@ -1,49 +1,51 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import { salvarPTSMental } from "../../services/saudeMental";
 
 export default function CronogramaMental({ institution, pessoaId, contextoId, plan, objective, planning, canWrite }) {
   const [data, setData] = useState(null), [busy, setBusy] = useState(false), [error, setError] = useState("");
-  const [uncertain, setUncertain] = useState(false), [attendance, setAttendance] = useState(null);
+  const [uncertain, setUncertain] = useState(false), [review, setReview] = useState([]);
   const base = `/${plan.id}/objetivos/${objective.id}/planejamentos/${planning.id}`;
-  const call = (method, suffix, payload) => salvarPTSMental(institution, pessoaId, contextoId, method, base + suffix, payload);
+  const call = (method, payload) => salvarPTSMental(institution, pessoaId, contextoId, method, base + "/cronograma", payload);
   async function load() {
     setBusy(true); setError("");
-    try { setData(await call("GET", "/cronograma")); setUncertain(false); setAttendance(null); }
-    catch { setError("Cronograma indisponível ou consulta não autorizada neste contexto."); setData(null); }
+    try {
+      const result = await call("GET"); setData(result); setUncertain(false);
+      setReview(result.proposta.map(s => ({ numero: s.numero, data: s.data, hora_inicio: "", hora_fim: "" })));
+    } catch { setError("Cronograma indisponível ou consulta não autorizada neste contexto."); setData(null); }
     finally { setBusy(false); }
   }
-  async function write(suffix, payload) {
-    if (busy || uncertain || !canWrite || !data?.pode_registrar) return;
+  async function confirm(event) {
+    event.preventDefault();
+    if (disabled) return;
     setBusy(true); setError("");
-    try { setData(await call("POST", suffix, payload)); setAttendance(null); }
-    catch (e) { setError(e?.response?.data?.detail?.message || "Não foi possível confirmar a operação. Consulte novamente o cronograma."); setUncertain(true); }
+    try { setData(await call("POST", { cronograma: review })); }
+    catch (e) { setError(e?.response?.data?.detail?.message || "Não foi possível confirmar. Consulte novamente o cronograma antes de repetir."); setUncertain(true); }
     finally { setBusy(false); }
   }
   const disabled = busy || uncertain || !canWrite || !data?.pode_registrar;
+  const edit = (index, name, value) => setReview(rows => rows.map((r, i) => i === index ? { ...r, [name]: value } : r));
   return <section aria-label={`Cronograma do planejamento ${planning.id}`}>
-    <Button variant="secondary" disabled={busy} onClick={load}>Consultar cronograma</Button>
+    <Button variant="secondary" disabled={busy} onClick={load}>{data?.quantidade_materializada ? "Consultar cronograma" : "Sugerir Cronograma"}</Button>
     {error && <p role="alert">{error}</p>}
     {data && <>
       <p>Planejado: {data.quantidade_planejada} · Cronograma: {data.quantidade_materializada}</p>
-      <p>{data.quantidade_materializada ? "Cronograma gerado" : "Cronograma não gerado — revise as datas propostas abaixo."}</p>
       <p>{data.atividade} · {data.ocupacao} · {data.profissional}</p>
-      {data.quantidade_materializada > 0 && <p>Planejamento protegido contra alterações estruturais após a geração das sessões.</p>}
-      {!data.quantidade_materializada && <><p>Horários não definidos. A confirmação cria sessões AGENDADAS, não realizadas.</p><Button disabled={disabled} onClick={() => write("/cronograma")}>Gerar cronograma</Button></>}
-      <div style={{ overflowX: "auto" }}><table><thead><tr><th>Sessão</th><th>Data</th><th>Horário</th><th>Duração</th><th>Estado</th><th>Ações</th></tr></thead><tbody>
-        {(data.quantidade_materializada ? data.sessoes : data.proposta).map(s => <tr key={s.id || s.numero}>
-          <td>{s.numero_sessao || s.numero}</td><td>{s.data_agendada || s.data}</td><td>{s.hora_inicio || "Não definido"}{s.hora_fim ? `–${s.hora_fim}` : ""}</td><td>{s.duracao_minutos} min</td><td>{s.status || "Proposta não materializada"}</td>
-          <td>{s.status === "AGENDADA" && <Button disabled={disabled} onClick={() => write(`/sessoes/${s.id}/estado`, { acao: "confirmar" })}>Confirmar sessão {s.numero_sessao}</Button>}
-            {s.status === "CONFIRMADA" && <Button disabled={disabled} onClick={() => write(`/sessoes/${s.id}/estado`, { acao: "iniciar" })}>Iniciar sessão {s.numero_sessao}</Button>}
-            {s.status === "EM_ANDAMENTO" && (!s.registro_longitudinal_id ? <Button disabled={disabled} onClick={() => setAttendance({ id: s.id, narrativa: "", proximos: "" })}>Registrar atendimento {s.numero_sessao}</Button> : <Button disabled={disabled} onClick={() => write(`/sessoes/${s.id}/estado`, { acao: "finalizar" })}>Finalizar sessão {s.numero_sessao}</Button>)}
-            {s.narrativa && <details><summary>Registro do atendimento</summary><p style={{ whiteSpace: "pre-wrap" }}>{s.narrativa}</p>{s.proximos_passos?.map((p, i) => <p key={i}>{p}</p>)}<p>Conta registradora: #{s.autor_usuario_id}</p></details>}
-          </td></tr>)}
-      </tbody></table></div>
-      {attendance && <form onSubmit={e => { e.preventDefault(); write(`/sessoes/${attendance.id}/atendimento`, { narrativa: attendance.narrativa.trim(), proximos_passos: attendance.proximos.split("\n").map(x => x.trim()).filter(Boolean) }); }}>
-        <fieldset disabled={disabled}><legend>Registro do atendimento</legend>
-          <label>Como foi o atendimento?<textarea required value={attendance.narrativa} onChange={e => setAttendance({ ...attendance, narrativa: e.target.value })} /></label>
-          <label>Próximos passos (um por linha)<textarea value={attendance.proximos} onChange={e => setAttendance({ ...attendance, proximos: e.target.value })} /></label>
-          <Button type="submit">Salvar atendimento</Button><Button type="button" variant="secondary" onClick={() => setAttendance(null)}>Cancelar registro</Button>
+      {data.quantidade_materializada > 0 ? <>
+        <p>Cronograma confirmado. Planejamento protegido contra alterações estruturais.</p>
+        <Link to="/agenda-assistencial?espaco=saude-mental">Abrir Agenda Assistencial</Link>
+        <div style={{ overflowX: "auto" }}><table><thead><tr><th>Sessão</th><th>Data</th><th>Horário</th><th>Duração</th><th>Estado</th><th>Consulta</th></tr></thead><tbody>
+          {data.sessoes.map(s => <tr key={s.id}><td>{s.numero_sessao}</td><td>{s.data_agendada}</td><td>{s.hora_inicio || "Não definido"}{s.hora_fim ? `–${s.hora_fim}` : ""}</td><td>{s.duracao_minutos} min</td><td>{s.status}</td><td><Link to={`/sessoes-assistenciais/${s.id}?espaco=saude-mental`}>Visualizar Sessão {s.numero_sessao}</Link></td></tr>)}
+        </tbody></table></div>
+      </> : <form onSubmit={confirm}>
+        <p>Revise as datas e informe início e fim. Os horários devem respeitar a duração de {planning.duracao_minutos} minutos. Confirmar cria sessões agendadas, não realizadas.</p>
+        <fieldset disabled={disabled}><legend>Cronograma sugerido</legend>
+          <div style={{ overflowX: "auto" }}><table><thead><tr><th>Sessão</th><th>Data</th><th>Hora início</th><th>Hora fim</th></tr></thead><tbody>
+            {review.map((s, i) => <tr key={s.numero}><td>{s.numero}</td><td><input aria-label={`Data sessão ${s.numero}`} type="date" required min={planning.data_inicio} max={planning.data_fim} value={s.data} onChange={e => edit(i, "data", e.target.value)} /></td><td><input aria-label={`Início sessão ${s.numero}`} type="time" required value={s.hora_inicio} onChange={e => edit(i, "hora_inicio", e.target.value)} /></td><td><input aria-label={`Fim sessão ${s.numero}`} type="time" required value={s.hora_fim} onChange={e => edit(i, "hora_fim", e.target.value)} /></td></tr>)}
+          </tbody></table></div>
+          <Button type="submit" disabled={!review.length}>Confirmar Cronograma</Button>
+          <Button type="button" variant="secondary" onClick={() => setData(null)}>Cancelar</Button>
         </fieldset>
       </form>}
     </>}

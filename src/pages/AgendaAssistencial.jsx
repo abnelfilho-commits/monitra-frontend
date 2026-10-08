@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import Button from "../components/ui/Button";
 
@@ -21,6 +22,8 @@ function formatarHora(hora) {
 
 export default function AgendaAssistencial() {
   const navigate = useCareLineNavigate();
+  const [params] = useSearchParams();
+  const mentalSpace = params.get("espaco") === "saude-mental";
 
   const [sessoes, setSessoes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -111,7 +114,7 @@ export default function AgendaAssistencial() {
         >
           {formatarHora(sessao.hora_inicio)}
           {" • "}
-          {sessao.paciente}
+          {sessao.pessoa || sessao.paciente}
         </div>
 
         <div
@@ -130,7 +133,7 @@ export default function AgendaAssistencial() {
             fontSize: 14,
           }}
         >
-          Sessão {sessao.numero_sessao}
+          {sessao.contexto && "Saúde Mental • "}Sessão {sessao.numero_sessao}
           {" • "}
           {sessao.duracao_minutos} min
           {" • "}
@@ -149,7 +152,7 @@ export default function AgendaAssistencial() {
             type="button"
             onClick={() =>
               navigate(
-                `/sessoes-assistenciais/${sessao.id}`
+                `/sessoes-assistenciais/${sessao.id}${sessao.contexto ? "?espaco=saude-mental" : ""}`
               )
             }
           >
@@ -158,9 +161,10 @@ export default function AgendaAssistencial() {
 
           <button
             type="button"
+            disabled={sessao.pode_registrar === false}
             onClick={() =>
               navigate(
-                `/sessoes-assistenciais/${sessao.id}/executar`
+                `/sessoes-assistenciais/${sessao.id}/executar${sessao.contexto ? "?espaco=saude-mental" : ""}`
               )
             }
           >
@@ -189,7 +193,7 @@ export default function AgendaAssistencial() {
     >
       <Button
         variant="secondary"
-        onClick={() => navigate("/dashboard")}
+        onClick={() => navigate(mentalSpace ? "/saude-mental" : "/dashboard")}
       >
         ← Voltar
       </Button>

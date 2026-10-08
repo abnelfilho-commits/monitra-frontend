@@ -1,5 +1,5 @@
-export default function ClinicalSummaryCard({ paciente, pacienteId }) {
-  const nome = paciente?.nome || `Paciente #${pacienteId}`;
+export default function ClinicalSummaryCard({ paciente, pacienteId, pessoa }) {
+  const nome = pessoa?.nome || paciente?.nome || `Paciente #${pacienteId}`;
 
   const idade =
     paciente?.idade != null && paciente?.idade !== ""
@@ -45,7 +45,7 @@ export default function ClinicalSummaryCard({ paciente, pacienteId }) {
         <div style={styles.avatar}>👤</div>
 
         <div style={styles.conteudo}>
-          <div style={styles.rotulo}>Paciente</div>
+          <div style={styles.rotulo}>{pessoa ? "Pessoa" : "Paciente"}</div>
 
           <div style={styles.nomePaciente}>
             {nome}

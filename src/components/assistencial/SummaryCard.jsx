@@ -4,7 +4,7 @@ function formatarData(valor) {
   return new Date(`${valor}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
-export default function SummaryCard({ resumo }) {
+export default function SummaryCard({ resumo, showInterventions = true }) {
   if (!resumo) return null;
 
   const textoAvaliacoes =
@@ -93,10 +93,10 @@ export default function SummaryCard({ resumo }) {
           <span>{textoAvaliacoes}</span>
         </div>
 
-        <div style={itemStyle}>
+        {showInterventions && <div style={itemStyle}>
           <span>💬</span>
           <span>{textoIntervencoes}</span>
-        </div>
+        </div>}
 
         <div style={itemStyle}>
           <span>📅</span>

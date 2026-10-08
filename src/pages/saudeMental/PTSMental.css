@@ -11,3 +11,28 @@
 @media(max-width:600px) { .mental-pts { padding:12px; } .mental-pts__card { padding:16px; } }
 
 .mental-planning-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+
+/* Visual values from PTS.jsx; scoped to the contextual page only. */
+.mental-pts__container {max-width:1100px;margin:0 auto;}
+.mental-pts__header {display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+.mental-pts__header h2,.mental-pts__header h3,.mental-pts__header h4 {margin:0;}
+.mental-pts__person {margin-top:8px;font-size:18px;font-weight:700;color:#111827;}
+.mental-pts__subtitle {font-size:14px;color:#6b7280;margin-top:6px;}
+.mental-pts__buttons {display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.mental-pts__badge {display:inline-flex;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}
+.mental-pts__badge--active {background:#dcfce7;color:#166534;border-color:#86efac;margin-top:8px;}
+.mental-pts__badge--priority {background:#dbeafe;color:#1e40af;border-color:#bfdbfe;}
+.mental-pts__info {display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:18px;}
+.mental-pts strong {font-size:13px;color:#374151;}
+.mental-pts__block {margin-top:18px;}
+.mental-pts__text {margin-top:6px;padding:12px;}
+.mental-pts hr {margin:24px 0;border:0;border-top:1px solid #e5e7eb;}
+.mental-pts__objective {white-space:normal;border-radius:14px;}
+.mental-pts__description {line-height:1.6;white-space:pre-wrap;}
+.mental-pts__objective > section {margin-top:12px;}
+.mental-pts__editor {margin-top:16px;padding:16px;border-radius:14px;background:#f8fafc;border:1px solid #e5e7eb;}
+.mental-pts__actions {justify-content:flex-end;margin-top:20px;gap:10px;}
+.mental-pts__agenda {margin-top:16px;padding:16px;border:1px solid #d1d5db;border-radius:14px;background:#fff;min-width:0;}
+.mental-pts__planning-item {margin-top:12px;padding:14px;border:1px solid #e5e7eb;border-radius:12px;background:#f8fafc;}
+.mental-pts [role=status] {background:#dcfce7;border:1px solid #86efac;color:#166534;padding:12px;border-radius:10px;}
+@media(max-width:600px) {.mental-pts__agenda,.mental-pts__editor {padding:12px;} .mental-planning-grid {grid-template-columns:1fr;}}

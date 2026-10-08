@@ -58,7 +58,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5176';
   await page.getByRole('navigation',{name:'Navegação Saúde Mental',exact:true}).waitFor();
   await page.getByText('Conta de administração global. Este perfil não concede acesso clínico.',{exact:true}).waitFor();
   assert.equal(await nav().count(),0);
-  assert.deepEqual(await page.getByRole('navigation',{name:'Navegação Saúde Mental',exact:true}).getByRole('link').allTextContents(),['Visão Geral','Pessoas','Voltar à Plataforma']);
+  assert.deepEqual(await page.getByRole('navigation',{name:'Navegação Saúde Mental',exact:true}).getByRole('link').allTextContents(),['Visão Geral','Pessoas','Agenda Assistencial','Voltar à Plataforma']);
   await page.screenshot({animations:'disabled',path:'/tmp/integra-espacos/saude-mental.png',fullPage:true});
   await page.getByRole('link',{name:'Voltar à Plataforma',exact:true}).click();await page.getByRole('button',{name:'Acessar módulo Neuro',exact:true}).click();
   await page.waitForURL(/\/dashboard\?care_line=1$/);

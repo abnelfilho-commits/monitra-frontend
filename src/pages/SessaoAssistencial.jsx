@@ -324,11 +324,9 @@ export default function SessaoAssistencial() {
         <div style={{ marginTop: 16 }}>
           <Button
             variant="secondary"
-            onClick={voltar}
+            onClick={() => navigate(-1)}
           >
-            {veioDaTimeline
-              ? "← Voltar para a Timeline"
-              : "← Voltar para Agenda"}
+            ← Voltar
           </Button>
         </div>
       </div>
@@ -363,7 +361,7 @@ export default function SessaoAssistencial() {
       return;
     }
 
-    navigate("/agenda-assistencial");
+    navigate(`/agenda-assistencial${dados?.contexto ? "?espaco=saude-mental" : ""}`);
   }
 
   const {
@@ -378,6 +376,9 @@ export default function SessaoAssistencial() {
     proxima_sessao: proximaSessao,
   } = dados;
 
+  const contextual = Boolean(dados.contexto);
+  const journey = contextual ? `/saude-mental/pessoas/${dados.pessoa.id}/contextos/${dados.contexto.id}?instituicao_id=${dados.contexto.instituicao_id}` : null;
+  const suffix = contextual ? "?espaco=saude-mental" : "";
   return (
     <main
       style={{
@@ -457,14 +458,19 @@ export default function SessaoAssistencial() {
         </span>
       </header>
 
-      <SummaryCard resumo={dados.resumo} />
+      {contextual && <div style={{ marginBottom: 16 }}>
+        <p>Saúde Mental · {dados.contexto.instituicao} · Contexto #{dados.contexto.id} · PTS #{dados.contexto.pts_id}</p>
+        <Button variant="secondary" onClick={() => navigate(journey)}>Voltar ao prontuário</Button>{" "}
+        {sessao.status !== "REALIZADA" && <Button disabled={!dados.pode_registrar} onClick={() => navigate(`/sessoes-assistenciais/${sessaoId}/executar${suffix}`)}>Registrar Atendimento</Button>}
+      </div>}
+      <SummaryCard resumo={dados.resumo} showInterventions={!contextual} />
 
       <ProgressCard resumo={dados.resumo} />
 
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(320px, 100%), 1fr))",
           gap: 16,
         }}
       >
@@ -474,8 +480,8 @@ export default function SessaoAssistencial() {
           destaque
         >
           <LinhaInformacao
-            label="Paciente"
-            valor={paciente?.nome}
+            label={contextual ? "Pessoa" : "Paciente"}
+            valor={dados.pessoa?.nome || paciente?.nome}
           />
 
           <LinhaInformacao
@@ -629,14 +635,11 @@ export default function SessaoAssistencial() {
                 }
               />
 
+              {contextual && <><p style={{ whiteSpace: "pre-wrap" }}>{dados.narrativa}</p>{dados.proximos_passos?.map((p, i) => <p key={i}>{p}</p>)}<p>Conta registradora: #{dados.autor_usuario_id}</p></>}
               <div style={{ marginTop: 14 }}>
                 <Button
                   variant="secondary"
-                  onClick={() =>
-                    navigate(
-                      `/prontuario/evento/REGISTRO/${registro.id}`
-                    )
-                  }
+                  onClick={() => navigate(contextual ? journey : `/prontuario/evento/REGISTRO/${registro.id}`)}
                 >
                   👁 Visualizar Registro
                 </Button>
@@ -692,7 +695,7 @@ export default function SessaoAssistencial() {
           )}
         </Card>
 
-        <Card
+        {!contextual && <Card
           titulo="💬 Contexto de intervenções"
           subtitulo="Intervenções recentes registradas para o paciente."
         >
@@ -734,7 +737,7 @@ export default function SessaoAssistencial() {
               Nenhuma intervenção recente encontrada.
             </p>
           )}
-        </Card>
+        </Card>}
 
         <Card
           titulo="📅 Próxima sessão"
@@ -778,7 +781,7 @@ export default function SessaoAssistencial() {
                   variant="secondary"
                   onClick={() =>
                     navigate(
-                      `/sessoes-assistenciais/${proximaSessao.id}`
+                      `/sessoes-assistenciais/${proximaSessao.id}${suffix}`
                     )
                   }
                 >

@@ -24,17 +24,17 @@ const FRONT='http://127.0.0.1:5177';
    rows=[{...p,id:7,pts_id:1,objetivo_id:2,status:'PLANEJADO',quantidade_sessoes:p.quantidade_sessoes||52,atividade_nome:'Psicoterapia individual',ocupacao_nome:'Psicólogo',profissional_nome:'Executor institucional'}];return reply(rows[0],req.method()==='POST'?201:200);
   });
   const url=FRONT+base+'/pts?instituicao_id=5';await page.goto(url);
-  await page.getByRole('button',{name:'Consultar planejamentos',exact:true}).click();
-  await page.getByRole('button',{name:'+ Novo planejamento',exact:true}).click();
-  await page.getByLabel('Atividade',{exact:true}).selectOption('3');await page.getByLabel('Ocupação',{exact:true}).selectOption('4');await page.getByLabel('Profissional executor',{exact:true}).selectOption('5');
-  await page.getByLabel('Frequência semanal',{exact:true}).fill('2');await page.getByLabel('Duração da sessão (minutos)',{exact:true}).fill('50');await page.getByLabel('Data inicial',{exact:true}).fill('2026-11-01');await page.getByLabel('Data final',{exact:true}).fill('2027-04-30');
+  await page.getByRole('button',{name:'Planejar Atividade',exact:true}).click();
+  await page.getByRole('heading',{name:'Agenda de Cuidados',exact:true}).waitFor();assert.ok(await page.getByLabel('Ocupação habilitada',{exact:true}).isDisabled());assert.ok(await page.getByLabel('Profissional responsável',{exact:true}).isDisabled());
+  await page.getByLabel('Atividade Terapêutica',{exact:true}).selectOption('3');await page.getByLabel('Ocupação habilitada',{exact:true}).selectOption('4');await page.getByLabel('Profissional responsável',{exact:true}).selectOption('5');
+  await page.getByLabel('Frequência semanal',{exact:true}).fill('2');await page.getByLabel('Duração em minutos',{exact:true}).fill('50');await page.getByLabel('Data de início',{exact:true}).fill('2026-11-01');await page.getByLabel('Data de fim',{exact:true}).fill('2027-04-30');
   await page.getByRole('button',{name:'Calcular quantidade',exact:true}).click();await page.getByText('Quantidade planejada: 52 sessões — calculada a partir da frequência e período.',{exact:true}).waitFor();
-  for(const width of [1440,768,390]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),`overflow ${width}`);}
+  for(const width of [1440,768,390]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),`overflow ${width}`);await page.screenshot({path:`/tmp/pts-parity-planning-${width}.png`,fullPage:true});}
   await page.getByRole('button',{name:'Salvar planejamento',exact:true}).click();await page.getByText('Quantidade planejada: 52 sessões · PLANEJADO',{exact:true}).waitFor();
-  await page.reload();await page.getByRole('button',{name:'Consultar planejamentos',exact:true}).click();await page.getByText('Quantidade planejada: 52 sessões · PLANEJADO',{exact:true}).waitFor();
-  await page.getByRole('button',{name:'Editar planejamento',exact:true}).click();await page.getByLabel('Quantidade manual (opcional)',{exact:true}).fill('53');await page.getByRole('button',{name:'Calcular quantidade',exact:true}).click();await page.getByRole('alert').filter({hasText:'incompatível'}).waitFor();
-  await page.getByLabel('Quantidade manual (opcional)',{exact:true}).fill('12');await page.getByRole('button',{name:'Calcular quantidade',exact:true}).click();await page.getByRole('status').filter({hasText:'12 sessões'}).waitFor();await page.getByRole('button',{name:'Salvar planejamento',exact:true}).click();await page.getByText('Quantidade planejada: 12 sessões · PLANEJADO',{exact:true}).waitFor();
-  allowed=false;await page.reload();await page.getByRole('button',{name:'Consultar planejamentos',exact:true}).click();assert.ok(await page.getByRole('button',{name:'+ Novo planejamento',exact:true}).isDisabled());assert.equal(writes,2);assert.deepEqual(errors,[]);
+  await page.reload();await page.getByRole('button',{name:'Planejar Atividade',exact:true}).click();await page.getByText('Quantidade planejada: 52 sessões · PLANEJADO',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Editar planejamento',exact:true}).click();await page.getByLabel('Número de sessões (opcional)',{exact:true}).fill('53');await page.getByRole('button',{name:'Calcular quantidade',exact:true}).click();await page.getByRole('alert').filter({hasText:'incompatível'}).waitFor();
+  await page.getByLabel('Número de sessões (opcional)',{exact:true}).fill('12');await page.getByRole('button',{name:'Calcular quantidade',exact:true}).click();await page.getByRole('status').filter({hasText:'12 sessões'}).waitFor();await page.getByRole('button',{name:'Salvar planejamento',exact:true}).click();await page.getByText('Quantidade planejada: 12 sessões · PLANEJADO',{exact:true}).waitFor();
+  allowed=false;await page.reload();await page.getByRole('button',{name:'Planejar Atividade',exact:true}).click();assert.ok(await page.getByRole('button',{name:'+ Novo planejamento',exact:true}).isDisabled());assert.equal(writes,2);assert.deepEqual(errors,[]);
   console.log('PLANEJAMENTO_MENTAL_PASS: quantity, manual validation, persisted reload, edit, read-only, no legacy/session calls, 1440/768/390.');
  } finally {await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});
