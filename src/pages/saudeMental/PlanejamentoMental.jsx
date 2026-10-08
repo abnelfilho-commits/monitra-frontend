@@ -1,3 +1,4 @@
+import CronogramaMental from "./CronogramaMental";
 import { useState } from "react";
 import Button from "../../components/ui/Button";
 import { salvarPTSMental } from "../../services/saudeMental";
@@ -46,7 +47,7 @@ export default function PlanejamentoMental({ institution, pessoaId, contextoId, 
     {error&&<p role="alert">{error}</p>}
     {items&&<><p>Planejamento não representa sessão agendada, realizada ou previsão financeira.</p>
       {!items.length&&<p>Nenhum planejamento registrado.</p>}
-      {items.map(item=><div key={item.id} className="mental-pts__card"><strong>{item.atividade_nome}</strong><p>{item.ocupacao_nome} · {item.profissional_nome}</p><p>{item.frequencia_semanal} vezes/semana · {item.duracao_minutos} minutos · {item.data_inicio} até {item.data_fim}</p><p>Quantidade planejada: {item.quantidade_sessoes} sessões · {item.status}</p>{item.observacoes&&<p>{item.observacoes}</p>}<Button variant="secondary" disabled={!canWrite||busy||uncertain} onClick={()=>edit(item)}>Editar planejamento</Button></div>)}
+      {items.map(item=><div key={item.id} className="mental-pts__card"><strong>{item.atividade_nome}</strong><p>{item.ocupacao_nome} · {item.profissional_nome}</p><p>{item.frequencia_semanal} vezes/semana · {item.duracao_minutos} minutos · {item.data_inicio} até {item.data_fim}</p><p>Quantidade planejada: {item.quantidade_sessoes} sessões · {item.status}</p>{item.observacoes&&<p>{item.observacoes}</p>}<Button variant="secondary" disabled={!canWrite||busy||uncertain} onClick={()=>edit(item)}>Editar planejamento</Button><CronogramaMental institution={institution} pessoaId={pessoaId} contextoId={contextoId} plan={plan} objective={objective} planning={item} canWrite={canWrite} /></div>)}
       <Button variant="secondary" disabled={!canWrite||busy||uncertain} onClick={()=>edit()}>+ Novo planejamento</Button></>}
     {form&&catalog&&<form className="mental-pts__card" onSubmit={save}><h5>{form.id?"Editar planejamento":"Novo planejamento"}</h5><fieldset disabled={!canWrite||busy||uncertain}>
       <label>Atividade<select aria-label="Atividade" required value={form.atividade_id} onChange={e=>change("atividade_id",e.target.value)}><option value="">Selecione</option>{catalog.atividades.map(a=><option key={a.id} value={a.id}>{a.nome}</option>)}</select></label>
