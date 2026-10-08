@@ -21,3 +21,5 @@ export const registrarIntervencaoMental = async (instituicao, pessoa, contexto, 
 export const registrarPHQ9Mental = async (instituicao, pessoa, contexto, payload) => (await api.post(`/saude-mental/pessoas/${pessoa}/contextos/${contexto}/phq9`, payload, { params: { instituicao_id: instituicao } })).data;
 
 export const registrarGAD7Mental = async (instituicao, pessoa, contexto, payload) => (await api.post(`/saude-mental/pessoas/${pessoa}/contextos/${contexto}/gad7`, payload, { params: { instituicao_id: instituicao } })).data;
+
+export const registrarCBIMental = async (instituicao, pessoa, contexto, payload) => (await api.post(`/saude-mental/pessoas/${pessoa}/contextos/${contexto}/cbi`, payload, { params: { instituicao_id: instituicao } })).data;

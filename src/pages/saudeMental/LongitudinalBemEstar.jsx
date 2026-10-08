@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import TimelineBemEstar from "./TimelineBemEstar";
-import { gad7Events, phq9Events, wellbeingDimensions, wellbeingOverview, wellbeingSeries, wellbeingEvents, diagnosisEvents, interventionEvents, valueLabels, displayTimestamp } from "./bemEstarPresentation";
+import { cbiEvents, gad7Events, phq9Events, wellbeingDimensions, wellbeingOverview, wellbeingSeries, wellbeingEvents, diagnosisEvents, interventionEvents, valueLabels, displayTimestamp } from "./bemEstarPresentation";
 
 const dimensionColors = ["#356b9b", "#8765a5", "#b2793d", "#438c89", "#64749a", "#a56283", "#79803f"];
 function OverviewTooltip({ active, payload, hidden }) {
@@ -24,7 +24,7 @@ export default function LongitudinalBemEstar({ jornada }) {
   const all = dimensionKey === "all";
   const series = all ? wellbeingOverview(records || []) : wellbeingSeries(records || [], dimension);
   const events = [...wellbeingEvents(records || [], jornada.nome_social || jornada.nome_completo, jornada.pessoa_id),
-    ...gad7Events(jornada.gad7?.itens || []), ...phq9Events(jornada.phq9?.itens || []), ...diagnosisEvents(jornada.diagnosticos?.itens || []), ...interventionEvents(jornada.intervencoes?.itens || [])].sort((a, b) => {
+    ...cbiEvents(jornada.cbi?.itens || []), ...gad7Events(jornada.gad7?.itens || []), ...phq9Events(jornada.phq9?.itens || []), ...diagnosisEvents(jornada.diagnosticos?.itens || []), ...interventionEvents(jornada.intervencoes?.itens || [])].sort((a, b) => {
       const left = Date.parse(a.created_at), right = Date.parse(b.created_at);
       return (Number.isFinite(right) ? right : -Infinity) - (Number.isFinite(left) ? left : -Infinity) || Number(b.id.split(":")[1]) - Number(a.id.split(":")[1]);
     });

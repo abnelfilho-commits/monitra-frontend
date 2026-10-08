@@ -1,8 +1,10 @@
+import CBIResult from "./CBIResult";
 import { useState } from "react";
 import Button from "../../components/ui/Button";
 import { displayTimestamp } from "./bemEstarPresentation";
 
 const eventPresentation = {
+  "CBI": { filter: "cbi", className: "mental-timeline-event--assessment" },
   "GAD-7": { filter: "gad7", className: "mental-timeline-event--assessment" },
   "PHQ-9": { filter: "phq9", className: "mental-timeline-event--assessment" },
   "Intervenção": { filter: "interventions", className: "mental-timeline-event--intervention" },
@@ -17,13 +19,13 @@ export default function TimelineBemEstar({ events, available }) {
     <div className="mental-timeline__header">
       <h2 id="mental-timeline-title">Timeline Clínica</h2>
       <div className="mental-timeline__filters" role="group" aria-label="Filtrar eventos">
-        {[["all", "Todos"], ["checkins", "Check-ins"], ["diagnoses", "Diagnósticos"], ["interventions", "Intervenções"], ["phq9", "PHQ-9"], ["gad7", "GAD-7"]].map(([value, label]) =>
+        {[["all", "Todos"], ["checkins", "Check-ins"], ["diagnoses", "Diagnósticos"], ["interventions", "Intervenções"], ["phq9", "PHQ-9"], ["gad7", "GAD-7"], ["cbi", "CBI"]].map(([value, label]) =>
           <Button key={value} variant="secondary" style={filter === value ? { background: "#eaf2f9", borderColor: "#8baac5", color: "#294e70" } : undefined} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</Button>)}
       </div>
     </div>
     <p>Eventos deste contexto, do mais recente para o mais antigo.</p>
     {!available ? <p>Histórico de Check-ins não disponível nesta consulta.</p>
-      : !visible.length ? <p className="mental-timeline__empty">{filter === "all" ? "Nenhum evento encontrado." : filter === "gad7" ? "Nenhuma avaliação GAD-7 encontrada para este filtro." : filter === "phq9" ? "Nenhuma avaliação PHQ-9 encontrada para este filtro." : filter === "checkins" ? "Nenhum Check-in encontrado para este filtro." : filter === "interventions" ? "Nenhuma intervenção encontrada para este filtro." : "Nenhum diagnóstico encontrado para este filtro."}</p>
+      : !visible.length ? <p className="mental-timeline__empty">{filter === "all" ? "Nenhum evento encontrado." : filter === "cbi" ? "Nenhuma avaliação CBI encontrada para este filtro." : filter === "gad7" ? "Nenhuma avaliação GAD-7 encontrada para este filtro." : filter === "phq9" ? "Nenhuma avaliação PHQ-9 encontrada para este filtro." : filter === "checkins" ? "Nenhum Check-in encontrado para este filtro." : filter === "interventions" ? "Nenhuma intervenção encontrada para este filtro." : "Nenhum diagnóstico encontrado para este filtro."}</p>
         : <div className="mental-timeline__events">{visible.map(event => <article key={event.id} className={`mental-timeline-event ${eventPresentation[event.tipo]?.className || ""}`}>
           <div className="mental-timeline-event__header">
             <div>
@@ -41,7 +43,8 @@ export default function TimelineBemEstar({ events, available }) {
           </div>
           {event.respondente && <p className="mental-timeline-event__respondent">Respondente: {event.respondente}</p>}
           {["Diagnóstico", "Intervenção"].includes(event.tipo) && <p style={{ whiteSpace: "pre-wrap" }}>{event.descricao}</p>}
-          {event.resultado && <div><p><strong>Pontuação: {event.resultado.score} / {event.resultado.score_max ?? 27}</strong> · Intensidade de sintomas: {event.resultado.classificacao}</p><p>{event.resultado.interpretacao}</p>{event.resultado.alertas?.map(alert => <p key={alert} role="alert">{alert}</p>)}</div>}
+          {event.resultado?.instrumento === "CBI" && <CBIResult result={event.resultado} />}
+          {event.resultado && event.resultado.instrumento !== "CBI" && <div><p><strong>Pontuação: {event.resultado.score} / {event.resultado.score_max ?? 27}</strong> · Intensidade de sintomas: {event.resultado.classificacao}</p><p>{event.resultado.interpretacao}</p>{event.resultado.alertas?.map(alert => <p key={alert} role="alert">{alert}</p>)}</div>}
           {event.metadata?.answers?.length > 0 && <details className="mental-timeline-event__details">
             <summary>Detalhes do registro</summary>
             <ul>{event.metadata.answers.map((answer, index) => <li key={`${answer.field_id}:${index}`}>

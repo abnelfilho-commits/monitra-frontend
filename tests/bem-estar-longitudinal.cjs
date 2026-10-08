@@ -49,7 +49,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     await timeline.getByText('Nenhum evento encontrado.').waitFor();
     const filters=timeline.getByRole('group',{name:'Filtrar eventos'});
     assert.equal(await filters.getByRole('button',{name:'Todos',exact:true}).getAttribute('aria-pressed'),'true');
-    assert.equal(await filters.getByRole('button').count(),6);
+    assert.equal(await filters.getByRole('button').count(),7);
     await filters.getByRole('button',{name:'Check-ins',exact:true}).click();
     await timeline.getByText('Nenhum Check-in encontrado para este filtro.').waitFor();
     await filters.getByRole('button',{name:'Todos',exact:true}).click();

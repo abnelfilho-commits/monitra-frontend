@@ -1,3 +1,4 @@
+import CBIMental from "./pages/saudeMental/CBIMental";
 import GAD7Mental from "./pages/saudeMental/GAD7Mental";
 import PHQ9Mental from "./pages/saudeMental/PHQ9Mental";
 import IntervencaoMental from "./pages/saudeMental/IntervencaoMental";
@@ -105,6 +106,7 @@ export default function App() {
             {/* Jornada assistencial: autorização permanece no backend. */}
             <Route element={<SaudeMentalLayout />}>
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/check-ins/novo" element={<CheckinBemEstar />} />
+              <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/cbi" element={<CBIMental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/gad7" element={<GAD7Mental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/phq9" element={<PHQ9Mental />} />
               <Route path="/saude-mental/pessoas/:pessoaId/contextos/:contextoId/intervencoes/nova" element={<IntervencaoMental />} />

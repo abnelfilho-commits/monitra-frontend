@@ -118,3 +118,18 @@ export function gad7Events(items = []) {
     ] },
   }));
 }
+
+// CBI domain scores and response labels come from the persisted assessment.
+export function cbiEvents(items = []) {
+  return items.map(item => ({
+    id: `CBI:${item.id}`, tipo: "CBI", created_at: item.data_hora, resultado: item.resultado,
+    metadata: { answers: [
+      ...Object.keys(item.resultado.metadata.respostas).map(key => ({
+        field_id: key, name: key.replace("cbi_", "").toUpperCase(),
+        values: { resposta: item.resultado.metadata.rotulos_respostas[key], dominio: item.resultado.metadata.dominio_por_item[key] },
+      })),
+      { field_id: "autor", name: "Profissional registrador", values: { id: item.registrador_profissional_id } },
+      { field_id: "versao", name: "Versão do instrumento", values: { versao: item.resultado.versao } },
+    ] },
+  }));
+}
