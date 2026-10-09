@@ -48,14 +48,30 @@ const FRONT='http://127.0.0.1:5177';
    rows=[{...p,id:7,pts_id:1,objetivo_id:2,status:'PLANEJADO',quantidade_sessoes:p.quantidade_sessoes||52,atividade_nome:'Psicoterapia individual',ocupacao_nome:'Psicólogo',profissional_nome:'Executor institucional'}];return reply(rows[0],req.method()==='POST'?201:200);
   });
   const url=FRONT+base+'/pts?instituicao_id=5';await page.goto(url);
-  const open=async()=>{await page.getByRole('button',{name:'Planejar Atividade',exact:true}).click();await page.getByRole('button',{name:'Sugerir Cronograma',exact:true}).click();};await open();
+  const open=async()=>{await page.getByRole('button',{name:sessions.length?'Consultar Cronograma':'Sugerir Cronograma',exact:true}).click();};await open();
   await page.getByText('Planejado: 52 · Cronograma: 0',{exact:true}).waitFor();
-  assert.equal(sessions.length,0);assert.equal(await page.getByLabel('Início sessão 1',{exact:true}).inputValue(),'');
+  await page.getByRole('dialog',{name:'Sugerir Cronograma',exact:true}).waitFor();await page.getByRole('button',{name:'Confirmar Cronograma',exact:true}).click();assert.equal(writes,0);assert.equal(sessions.length,0);assert.equal(await page.getByLabel('Início sessão 1',{exact:true}).inputValue(),'');
   for(let i=1;i<=52;i++){await page.getByLabel(`Início sessão ${i}`,{exact:true}).fill('09:00');await page.getByLabel(`Fim sessão ${i}`,{exact:true}).fill('09:50');}
   const responsive=async(label)=>{for(const width of [1440,768,390]){await page.setViewportSize({width,height:1000});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),`overflow ${label} ${width}`);await page.screenshot({path:`/tmp/contextual-${label}-${width}.png`,fullPage:true});}};
   await responsive('schedule');
+  for(const width of [1440,768,390]){
+   await page.setViewportSize({width,height:800});
+   assert.ok(await page.getByRole('dialog').evaluate(d=>d.getBoundingClientRect().width<=innerWidth));
+   assert.ok(await page.getByRole('button',{name:'Confirmar Cronograma',exact:true}).evaluate(b=>b.getBoundingClientRect().bottom<=innerHeight));
+   assert.equal(await page.evaluate(()=>document.body.style.overflow),'hidden');
+   assert.ok(await page.locator('dialog[open] .mental-pts__modal-body').evaluate(b=>b.scrollHeight>b.clientHeight));
+  }
+  await page.keyboard.press('Escape');assert.equal(await page.getByRole('dialog').count(),0);assert.equal(writes,0);
+  assert.equal(await page.evaluate(()=>document.body.style.overflow),'');
+  await open();await page.getByLabel('Início sessão 1',{exact:true}).waitFor();
+  for(let i=1;i<=52;i++){await page.getByLabel(`Início sessão ${i}`,{exact:true}).fill('09:00');await page.getByLabel(`Fim sessão ${i}`,{exact:true}).fill('09:50');}
+
   await page.getByRole('button',{name:'Confirmar Cronograma',exact:true}).click();
-  await page.getByText('Planejado: 52 · Cronograma: 52',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'Consultar Cronograma',exact:true}).waitFor();assert.equal(await page.getByRole('dialog').count(),0);
+  sessions[1].hora_inicio=null;sessions[1].hora_fim=null;
+  await page.reload();await open();await page.getByText('Planejado: 52 · Cronograma: 52',{exact:true}).waitFor();await page.getByText('Não definido',{exact:true}).waitFor();assert.equal(await page.getByRole('link',{name:'Visualizar Sessão 1',exact:true}).count(),1);
+  await responsive('schedule-consult');
+  await page.getByRole('button',{name:'Fechar consulta',exact:true}).click();assert.equal(await page.getByRole('link',{name:'Visualizar Sessão 1',exact:true}).count(),0);
   assert.equal(await page.getByRole('button',{name:'Confirmar sessão 1',exact:true}).count(),0);
   await page.getByRole('link',{name:'Abrir Agenda Assistencial',exact:true}).click();
   await page.getByRole('button',{name:'Visualizar Sessão',exact:true}).first().waitFor();await responsive('agenda');

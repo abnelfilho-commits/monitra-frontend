@@ -17,6 +17,7 @@ const FRONT='http://127.0.0.1:5177';
    if(denied)return reply({detail:{code:'PTS_UNAVAILABLE'}},404);
    if(u.pathname===base)return reply({pessoa_id:18,nome_completo:'Pessoa teste',instituicao_id:5,instituicao_nome:'Instituição teste',contexto_assistencial_id:9,modulo_id:3,contexto_estado:'ABERTO',linha_estado:'ATIVA',data_inicio:'2026-01-01',bem_estar:{pode_registrar:false,checkins:[]}});
    assert.ok(u.pathname.startsWith(base+'/pts'));
+   if(req.method()==='GET' && u.pathname.endsWith('/planejamentos'))return reply([]);
    if(req.method()==='GET')return reply({pode_registrar:allowed,itens:items});
    writes++;assert.ok(allowed);if(failure)return reply({detail:{code:'PTS_CONFLICT'}},409);
    const body=req.postDataJSON();

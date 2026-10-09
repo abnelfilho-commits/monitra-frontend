@@ -36,3 +36,26 @@
 .mental-pts__planning-item {margin-top:12px;padding:14px;border:1px solid #e5e7eb;border-radius:12px;background:#f8fafc;}
 .mental-pts [role=status] {background:#dcfce7;border:1px solid #86efac;color:#166534;padding:12px;border-radius:10px;}
 @media(max-width:600px) {.mental-pts__agenda,.mental-pts__editor {padding:12px;} .mental-planning-grid {grid-template-columns:1fr;}}
+
+/* Native dialog follows ReportDownload; scoped to the contextual PTS. */
+.mental-pts__modal {width:min(760px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 32px);padding:0;border:1px solid #d1d5db;border-radius:16px;box-shadow:0 20px 60px #0f172a40;overflow:hidden;box-sizing:border-box;color:#111827;}
+.mental-pts__modal::backdrop {background:#0f172a80;}
+.mental-pts__modal[open],.mental-pts__planning-form {display:flex;flex-direction:column;min-height:0;}
+.mental-pts__planning-form {max-height:calc(100dvh - 34px);}
+.mental-pts__modal--large {width:min(1100px,calc(100vw - 24px));}
+.mental-pts__modal-header,.mental-pts__modal-footer {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;background:#fff;flex-shrink:0;}
+.mental-pts__modal-header {border-bottom:1px solid #e5e7eb;}
+.mental-pts__modal-header h3 {margin:0;}
+.mental-pts__modal-footer {border-top:1px solid #e5e7eb;justify-content:flex-end;flex-wrap:wrap;}
+.mental-pts__modal-body {overflow:auto;min-height:0;padding:16px 20px;overscroll-behavior:contain;}
+.mental-pts__modal table {width:100%;border-collapse:collapse;}
+.mental-pts__modal th,.mental-pts__modal td {padding:8px;text-align:left;border-bottom:1px solid #e5e7eb;}
+@media(max-width:600px) {
+ .mental-pts__modal-header,.mental-pts__modal-footer,.mental-pts__modal-body {padding:12px;}
+ .mental-pts__modal table,.mental-pts__modal tbody,.mental-pts__modal tr,.mental-pts__modal td {display:block;}
+ .mental-pts__modal thead {display:none;}
+ .mental-pts__modal tr {padding:8px 0;border-bottom:2px solid #d1d5db;}
+ .mental-pts__modal td {border:0;padding:4px 0;}
+ .mental-pts__modal td::before {content:attr(data-label);display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:4px;}
+ .mental-pts__modal input {min-width:0;}
+}
