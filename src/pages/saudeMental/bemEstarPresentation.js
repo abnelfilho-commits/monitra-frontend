@@ -138,11 +138,11 @@ export function cbiEvents(items = []) {
 export function sessionEvents(items = []) {
   return items.filter(item => item.status === "REALIZADA" && item.registro_longitudinal_id).map(item => ({
     id: `SESSAO:${item.id}`, tipo: "Sessão assistencial", nome: `Sessão ${item.numero_sessao} · Realizada`,
-    data: item.data_realizacao, created_at: item.updated_at, descricao: item.narrativa,
+    data: item.data_agendada, created_at: item.registrado_em, descricao: item.narrativa,
     metadata: { answers: [
-      { field_id: "executor", name: "Profissional executor", values: { id: item.profissional_id } },
-      { field_id: "autor", name: "Conta registradora", values: { id: item.autor_usuario_id } },
-      { field_id: "proximos", name: "Próximos passos", values: { itens: item.proximos_passos } },
+      ...(item.profissional_nome ? [{ field_id: "executor", name: "Profissional executor", values: { nome: item.profissional_nome } }] : []),
+      ...(item.autor_nome ? [{ field_id: "autor", name: "Registrado por", values: { nome: item.autor_nome } }] : []),
+      ...(item.proximos_passos?.length ? [{ field_id: "proximos", name: "Próximos passos", values: { itens: item.proximos_passos.join(", ") } }] : []),
     ] },
   }));
 }

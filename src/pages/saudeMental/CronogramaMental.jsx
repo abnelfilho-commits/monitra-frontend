@@ -41,7 +41,7 @@ export default function CronogramaMental({ institution, pessoaId, contextoId, pl
   const edit = (index, name, value) => setReview(rows => rows.map((r, i) => i === index ? { ...r, [name]: value } : r));
   return <section aria-label={`Cronograma do planejamento ${planning.id}`}>
     <Button variant="secondary" disabled={busy} onClick={load}>{data?.quantidade_materializada ? "Consultar Cronograma" : "Sugerir Cronograma"}</Button>
-    {data?.quantidade_materializada > 0 && <p role="status">Cronograma confirmado · {data.quantidade_materializada} sessões. <Link to="/agenda-assistencial?espaco=saude-mental">Abrir Agenda Assistencial</Link></p>}
+    {data?.quantidade_materializada > 0 && <p role="status">Cronograma confirmado · {data.quantidade_materializada} sessões. <Link to="/agenda-assistencial?espaco=saude-mental" state={{returnTo:`/saude-mental/pessoas/${pessoaId}/contextos/${contextoId}/pts?instituicao_id=${encodeURIComponent(institution)}`}}>Abrir Agenda Assistencial</Link></p>}
     {!opened&&error && <p role="alert">{error}</p>}
     <dialog ref={dialog} className="mental-pts__modal mental-pts__modal--large" aria-labelledby={headingId} onCancel={e=>{e.preventDefault();if(!busy)setOpened(false);}}>
     <header className="mental-pts__modal-header"><h3 id={headingId}>{data?.quantidade_materializada ? "Consultar Cronograma" : "Sugerir Cronograma"}</h3><Button variant="secondary" disabled={busy} onClick={()=>setOpened(false)}>Fechar</Button></header>

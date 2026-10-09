@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import useCareLineNavigate from "../hooks/useCareLineNavigate";
 import Button from "../components/ui/Button";
 
@@ -22,8 +22,10 @@ function formatarHora(hora) {
 
 export default function AgendaAssistencial() {
   const navigate = useCareLineNavigate();
+  const { state } = useLocation();
   const [params] = useSearchParams();
   const mentalSpace = params.get("espaco") === "saude-mental";
+  const ptsOrigin = mentalSpace && typeof state?.returnTo === "string" && /^\/saude-mental\/pessoas\/[1-9]\d*\/contextos\/[1-9]\d*\/pts\?instituicao_id=[1-9]\d*$/.test(state.returnTo) ? state.returnTo : null;
 
   const [sessoes, setSessoes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -193,7 +195,7 @@ export default function AgendaAssistencial() {
     >
       <Button
         variant="secondary"
-        onClick={() => navigate(mentalSpace ? "/saude-mental" : "/dashboard")}
+        onClick={() => navigate(ptsOrigin || (mentalSpace ? "/saude-mental" : "/dashboard"))}
       >
         ← Voltar
       </Button>

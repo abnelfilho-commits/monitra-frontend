@@ -1,3 +1,12 @@
+// Session adapter keeps clinical date independent from persistence/finalization.
+(async()=>{
+ const assert=require('node:assert/strict');
+ const {sessionEvents}=await import('../src/pages/saudeMental/bemEstarPresentation.js');
+ const [event]=sessionEvents([{id:1,status:'REALIZADA',registro_longitudinal_id:2,numero_sessao:1,data_agendada:'2026-10-12',data_realizacao:'2026-10-09',updated_at:'2026-10-09T15:00:00',registrado_em:'2026-10-09T14:55:47Z',profissional_nome:'Profissional teste',autor_nome:'Autor teste',proximos_passos:[]}]);
+ assert.equal(event.data,'2026-10-12');assert.equal(event.created_at,'2026-10-09T14:55:47Z');assert.equal(event.metadata.answers.some(a=>a.field_id==='proximos'),false);
+ assert.equal(new Date(event.created_at).toLocaleTimeString('pt-BR',{timeZone:'America/Cuiaba'}),'10:55:47');
+ assert.equal(new Date(event.created_at).toLocaleTimeString('pt-BR',{timeZone:'UTC'}),'14:55:47');
+})().catch(e=>{console.error(e);process.exitCode=1;});
 const assert = require('node:assert/strict');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
