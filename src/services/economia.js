@@ -5,3 +5,17 @@ export const obterServico = async id => (await api.get(`${base}/${id}`)).data;
 export const criarServico = async payload => (await api.post(`${base}/`, payload)).data;
 export const atualizarServico = async (id, payload) => (await api.put(`${base}/${id}`, payload)).data;
 export const alterarEstadoServico = async (id, ativo) => (await api.patch(`${base}/${id}/estado`, { ativo })).data;
+
+const economic = "/admin/economia";
+export const listarTabelas = async () => (await api.get(`${economic}/tabelas/`)).data;
+export const obterTabela = async id => (await api.get(`${economic}/tabelas/${id}`)).data;
+export const criarTabela = async payload => (await api.post(`${economic}/tabelas/`, payload)).data;
+export const listarVersoes = async id => (await api.get(`${economic}/tabelas/${id}/versoes`)).data;
+export const criarVersao = async (id, payload) => (await api.post(`${economic}/tabelas/${id}/versoes`, payload)).data;
+export const obterVersao = async id => (await api.get(`${economic}/versoes/${id}`)).data;
+export const atualizarVersao = async (id, payload) => (await api.put(`${economic}/versoes/${id}`, payload)).data;
+export const publicarVersao = async id => (await api.post(`${economic}/versoes/${id}/publicar`)).data;
+export const listarPrecos = async id => (await api.get(`${economic}/versoes/${id}/precos`)).data;
+export const criarPreco = async (id, payload) => (await api.post(`${economic}/versoes/${id}/precos`, payload)).data;
+export const atualizarPreco = async (id, payload) => (await api.put(`${economic}/precos/${id}`, payload)).data;
+export const excluirPreco = async id => { await api.delete(`${economic}/precos/${id}`); };

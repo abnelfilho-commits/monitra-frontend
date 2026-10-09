@@ -11,6 +11,7 @@ export default function AdministracaoEconomica() {
   return <PageLayout>
     <PageHeader title="Administração Econômica" description="Configuração econômica da plataforma. Projeções e análises permanecem no Financeiro Institucional." />
     <CardWidget title="Serviços Econômicos"><p>Catálogo global de serviços que podem ser precificados em diferentes tabelas.</p><Link to="/admin/economia/servicos">Administrar Serviços Econômicos</Link></CardWidget>
-    {["Tabelas de Preços", "Contratos", "Mapeamentos Econômicos"].map(title => <CardWidget key={title} title={title}><p>Disponível em uma próxima etapa.</p></CardWidget>)}
+    <CardWidget title="Tabelas de Preços"><p>Versões, preços por serviço e publicação.</p><Link to="/admin/economia/tabelas">Tabelas de Preços</Link></CardWidget>
+    {["Contratos", "Mapeamentos Econômicos"].map(title => <CardWidget key={title} title={title}><p>Disponível em uma próxima etapa.</p></CardWidget>)}
   </PageLayout>;
 }
