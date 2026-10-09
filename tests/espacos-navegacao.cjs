@@ -17,6 +17,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5176';
    if(u.pathname==='/me')return reply({id:99,nome:'Synthetic',perfil:profile,modulos:[{id:1,slug:'neurodesenvolvimento'},{id:2,slug:'cardiometabolico'}]});
    if(u.pathname==='/operacao-assistencial/instituicoes')return operationalFailure?reply({detail:{code:'OPERATION_DENIED'}},403):reply(operational?[{id:1,nome:'Instituição sintética'}]:[]);
    if(u.pathname==='/operacao-assistencial/contextos')return reply([]);
+   if(u.pathname==='/atividades-terapeuticas/linhas')return reply([{id:1,nome:'Neurodesenvolvimento',slug:'neurodesenvolvimento'},{id:2,nome:'Cardiometabólico',slug:'cardiometabolico'},{id:3,nome:'Saúde Mental',slug:'saude_mental'}]);
    if(u.pathname==='/admin/pessoas/')return reply([]);
    if(u.pathname.startsWith('/saude-mental/'))return reply(u.pathname.endsWith('/pessoas')?{itens:[],tem_mais:false}:[]);
    if(u.pathname==='/financeiro/institucional/contexto')return reply({instituicoes:[],contratos:[],modulos:[]});
@@ -66,8 +67,8 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5176';
   await side.getByRole('button',{name:'Cockpit Neuro',exact:true}).waitFor();
   for(const x of expected)assert.equal(await side.getByRole('button',{name:x,exact:true}).count(),0);
   await page.screenshot({animations:'disabled',path:'/tmp/integra-espacos/neuro.png',fullPage:true});
-  // Legacy Cardio query survives institutional routing; no new dimension calculation.
-  await Promise.all([page.waitForResponse(r=>r.url().includes('/dimensionamento/ocupacoes?modulo_id=2')),page.goto(FRONT+'/dimensionamento?modulo=cardiometabolico')]);await noClinical();
+  // Legacy Cardio navigation selects the canonical care-line filter.
+  await Promise.all([page.waitForResponse(r=>r.url().includes('/dimensionamento/ocupacoes?linha=cardiometabolico')),page.goto(FRONT+'/dimensionamento?modulo=cardiometabolico')]);await noClinical();
   assert.equal(await nav().getByRole('link',{name:'Profissionais',exact:true}).getAttribute('href'),'/profissionais?modulo=cardiometabolico');
   profile='PROFISSIONAL';await page.goto(FRONT+'/plataforma');await page.getByRole('button',{name:'Acessar módulo Saúde Mental',exact:true}).waitFor();
   await page.waitForTimeout(200);assert.equal(await page.getByRole('button',{name:'Acessar Gestão Institucional',exact:true}).count(),0);

@@ -28,7 +28,7 @@ export default function AdministracaoLayout() {
     <main className="institutional-shell-content">
       {pathname === "/gestao-institucional" && <section className="institutional-shell-intro"><h1>Gestão Institucional</h1><p>Escolha uma capacidade na navegação. Cada operação mantém suas próprias regras de acesso.</p><p>Linhas de cuidado são acessadas pela Plataforma. Nenhuma permissão clínica é concedida por entrar neste espaço.</p>{!items.length && <p>Nenhuma capacidade institucional disponível para esta conta.</p>}</section>}
       {legacy && <div className="institutional-shell-notice"><strong>Cadastro legado</strong> — esta página ainda utiliza Clínica e seus vínculos existentes. Não representa convergência para Instituição. {user?.perfil !== "PROFISSIONAL" && <Link to="/clinicas">Abrir Clínicas (legado)</Link>}</div>}
-      {pathname === "/dimensionamento" && <div className="institutional-shell-notice">Capacidade transversal. O cálculo atual atende Neuro/Cardio; Saúde Mental não está incluída.</div>}
+      {pathname === "/dimensionamento" && <div className="institutional-shell-notice">Dimensionamento transversal da demanda assistencial planejada por linha de cuidado.</div>}
       <Outlet />
     </main>
   </div>;

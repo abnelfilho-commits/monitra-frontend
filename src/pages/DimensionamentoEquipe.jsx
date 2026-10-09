@@ -8,56 +8,44 @@ export default function DimensionamentoEquipe() {
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
 
-  const isCardio = searchParams.get("modulo") === "cardiometabolico";
-
+  const [linha, setLinha] = useState(() => searchParams.get("modulo") === "cardiometabolico" ? "cardiometabolico" : "todas");
+  const [linhas, setLinhas] = useState(null);
+  const [erro, setErro] = useState("");
+  const [erroCapacidade, setErroCapacidade] = useState("");
   useEffect(() => {
-    carregarDados();
-  }, [isCardio]);
-
-  const carregarDados = async () => {
-    try {
-      const moduloId = isCardio ? 2 : 1;
-
-      const dimensionamentoResponse = await api.get(
-        `/dimensionamento/ocupacoes?modulo_id=${moduloId}`
-      );
-
-      setDados(
-        Array.isArray(dimensionamentoResponse.data)
-          ? dimensionamentoResponse.data
-          : []
-      );
-
+    let current = true;
+    api.get("/atividades-terapeuticas/linhas").then(({data}) => {
+      if (current) setLinhas(data.filter(item => ["neurodesenvolvimento", "cardiometabolico", "saude_mental"].includes(item.slug)));
+    }).catch(() => { if (current) {setErro("Não foi possível carregar as linhas de cuidado.");setLoading(false);} });
+    return () => { current = false; };
+  }, []);
+  useEffect(() => {
+    if (!linhas) return;
+    let current = true;
+    async function load() {
+      setLoading(true);setErro("");setErroCapacidade("");setDados([]);setCapacidade([]);
       try {
-        const capacidadeResponse = await api.get(
-          `/capacidade-instalada/demanda-capacidade?modulo_id=${moduloId}`
-        );
-
-        setCapacidade(
-          Array.isArray(capacidadeResponse.data)
-            ? capacidadeResponse.data
-            : []
-        );
-      } catch (capacidadeError) {
-        console.warn("Capacidade instalada indisponível:", capacidadeError);
-        setCapacidade([]);
-      }
-    } catch (error) {
-      console.error("Erro ao carregar dimensionamento:", error);
-      setDados([]);
-      setCapacidade([]);
-    } finally {
-      setLoading(false);
+        const response = await api.get("/dimensionamento/ocupacoes", {params:{linha}});
+        if (!current) return;
+        if (!Array.isArray(response.data)) throw new Error("Resposta inválida");
+        setDados(response.data);
+        const legacy = linhas.find(item => item.slug === linha && item.slug !== "saude_mental");
+        if (legacy) {
+          try {
+            const result = await api.get("/capacidade-instalada/demanda-capacidade", {params:{modulo_id:legacy.id}});
+            if (!Array.isArray(result.data)) throw new Error("Resposta inválida");
+            if (current) setCapacidade(result.data);
+          } catch { if (current) setErroCapacidade("Comparativo legado indisponível nesta consulta."); }
+        }
+      } catch { if (current) setErro("Não foi possível consultar o dimensionamento. Tente novamente."); }
+      finally { if (current) setLoading(false); }
     }
-  };
+    load();
+    return () => { current = false; };
+  }, [linha, linhas]);
 
   const totalPlanejamentos = dados.reduce(
     (acc, item) => acc + Number(item.total_planejamentos || 0),
-    0
-  );
-
-  const totalMinutos = dados.reduce(
-    (acc, item) => acc + Number(item.minutos_semanais || 0),
     0
   );
 
@@ -68,11 +56,6 @@ export default function DimensionamentoEquipe() {
 
   const totalHorasMensais = dados.reduce(
     (acc, item) => acc + Number(item.horas_mensais || 0),
-    0
-  );
-
-  const totalHorasAnuais = dados.reduce(
-    (acc, item) => acc + Number(item.horas_anuais || 0),
     0
   );
 
@@ -106,11 +89,20 @@ const maiorHorasAnuais = maiorDemanda
           <div>
             <h2 style={{ margin: 0 }}>Dimensionamento de Equipe</h2>
             <div style={subtitleStyle}>
-              Demanda assistencial planejada a partir dos Planos Terapêuticos Singulares.
+              Dimensionamento transversal da demanda assistencial planejada por linha de cuidado.
             </div>
           </div>
         </div>
 
+        <label style={{display:"block",marginBottom:18}}>Linha de Cuidado
+          <select aria-label="Linha de Cuidado" value={linha} disabled={!linhas} onChange={e=>setLinha(e.target.value)} style={{display:"block",padding:10,maxWidth:"100%",marginTop:6}}>
+            <option value="todas">Todas</option>
+            {linhas?.map(item=><option key={item.slug} value={item.slug}>{item.nome}</option>)}
+          </select>
+        </label>
+        <p>{linha === "todas" ? "Visão transversal consolidada das linhas suportadas." : `Linha analisada: ${linhas?.find(item=>item.slug===linha)?.nome || "Indisponível"}`}</p>
+        {erro && <p role="alert">{erro}</p>}
+        {!erro && <>
         <div style={infoGridStyle}>
           <div style={cardResumoStyle}>
             <div style={smallLabelStyle}>Planejamentos</div>
@@ -248,9 +240,11 @@ const maiorHorasAnuais = maiorDemanda
               Demanda x Capacidade Instalada
             </h3>
 
+            <p>A capacidade instalada ainda não está integrada ao cálculo transversal. Os valores legados de capacidade não representam a disponibilidade real da equipe.</p>
+            {erroCapacidade && <p role="alert">{erroCapacidade}</p>}
             {capacidade.length === 0 ? (
               <p style={{ color: "#6b7280" }}>
-                Nenhuma capacidade instalada cadastrada.
+                Comparativo de capacidade não disponível nesta visão.
               </p>
             ) : (
               <div style={{ overflowX: "auto" }}>
@@ -312,6 +306,7 @@ const maiorHorasAnuais = maiorDemanda
             )}
           </div>
         </div>
+        </>}
       </div>
     </div>
   );
@@ -334,7 +329,7 @@ const subtitleStyle = {
 
 const infoGridStyle = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))",
   gap: 16,
   marginBottom: 24,
 };
