@@ -24,6 +24,7 @@ export default function useInstitutionalNavigation() {
   const items = [];
   const cardio = new URLSearchParams(search).get("modulo") === "cardiometabolico" ? "?modulo=cardiometabolico" : "";
   if (profile === "ADMIN") items.push(
+    { label: "Administração Econômica", to: "/admin/economia" },
     { label: "Instituições", to: "/admin/instituicoes" },
     { label: "Pessoas", to: "/admin/pessoas" },
     { label: "Usuários / Acessos", to: "/usuarios" },

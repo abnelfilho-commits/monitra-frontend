@@ -16,6 +16,8 @@ import AdministracaoLayout from "./components/AdministracaoLayout";
 import SaudeMentalLayout from "./components/SaudeMentalLayout";
 
 import Usuarios from "./pages/Usuarios";
+import AdministracaoEconomica from "./pages/AdministracaoEconomica";
+import ServicosEconomicos from "./pages/ServicosEconomicos";
 import Instituicoes from "./pages/Instituicoes";
 import Pessoas from "./pages/Pessoas";
 import OperacaoAssistencial from "./pages/OperacaoAssistencial";
@@ -145,6 +147,8 @@ export default function App() {
                 path="/ocupacoes-profissionais/nova"
                 element={<NovaOcupacaoProfissional />}
               />
+              <Route path="/admin/economia" element={<AdministracaoEconomica />} />
+              <Route path="/admin/economia/servicos" element={<ServicosEconomicos />} />
               <Route path="/admin/instituicoes" element={<Instituicoes />} />
               <Route path="/admin/pessoas" element={<Pessoas />} />
               <Route path="/usuarios" element={<Usuarios />} />
