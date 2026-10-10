@@ -19,3 +19,31 @@ export const listarPrecos = async id => (await api.get(`${economic}/versoes/${id
 export const criarPreco = async (id, payload) => (await api.post(`${economic}/versoes/${id}/precos`, payload)).data;
 export const atualizarPreco = async (id, payload) => (await api.put(`${economic}/precos/${id}`, payload)).data;
 export const excluirPreco = async id => { await api.delete(`${economic}/precos/${id}`); };
+
+// AE3 — Contratos + Beneficiários
+export const listarContratos = async () =>
+  (await api.get(`${economic}/contratos/`)).data;
+
+export const obterContrato = async id =>
+  (await api.get(`${economic}/contratos/${id}`)).data;
+
+export const criarContrato = async payload =>
+  (await api.post(`${economic}/contratos/`, payload)).data;
+
+export const atualizarContrato = async (id, payload) =>
+  (await api.put(`${economic}/contratos/${id}`, payload)).data;
+
+export const publicarContrato = async id =>
+  (await api.post(`${economic}/contratos/${id}/publicar`)).data;
+
+export const listarCandidatosBeneficiarios = async contratoId =>
+  (await api.get(`${economic}/contratos/${contratoId}/beneficiarios/candidatos`)).data;
+
+export const listarBeneficiarios = async contratoId =>
+  (await api.get(`${economic}/contratos/${contratoId}/beneficiarios`)).data;
+
+export const adicionarBeneficiario = async (contratoId, payload) =>
+  (await api.post(`${economic}/contratos/${contratoId}/beneficiarios`, payload)).data;
+
+export const encerrarBeneficiario = async (beneficiarioId, fim) =>
+  (await api.post(`${economic}/beneficiarios/${beneficiarioId}/encerrar`, { fim })).data;

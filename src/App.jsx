@@ -19,6 +19,7 @@ import Usuarios from "./pages/Usuarios";
 import AdministracaoEconomica from "./pages/AdministracaoEconomica";
 import ServicosEconomicos from "./pages/ServicosEconomicos";
 import { TabelasPrecos, DetalheTabelaPreco, VersaoTabelaPreco } from "./pages/TabelasPrecos";
+import ContratosEconomicos, { DetalheContratoEconomico } from "./pages/ContratosEconomicos";
 import Instituicoes from "./pages/Instituicoes";
 import Pessoas from "./pages/Pessoas";
 import OperacaoAssistencial from "./pages/OperacaoAssistencial";
@@ -151,6 +152,8 @@ export default function App() {
               <Route path="/admin/economia" element={<AdministracaoEconomica />} />
               <Route path="/admin/economia/servicos" element={<ServicosEconomicos />} />
               <Route path="/admin/economia/tabelas" element={<TabelasPrecos />} />
+              <Route path="/admin/economia/contratos" element={<ContratosEconomicos />} />
+              <Route path="/admin/economia/contratos/:contratoId" element={<DetalheContratoEconomico />} />
               <Route path="/admin/economia/tabelas/:tabelaId" element={<DetalheTabelaPreco />} />
               <Route path="/admin/economia/tabelas/:tabelaId/versoes/:versaoId" element={<VersaoTabelaPreco />} />
               <Route path="/admin/instituicoes" element={<Instituicoes />} />
