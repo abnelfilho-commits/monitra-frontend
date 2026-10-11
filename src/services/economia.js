@@ -47,3 +47,8 @@ export const adicionarBeneficiario = async (contratoId, payload) =>
 
 export const encerrarBeneficiario = async (beneficiarioId, fim) =>
   (await api.post(`${economic}/beneficiarios/${beneficiarioId}/encerrar`, { fim })).data;
+
+// AE4 — associação individual de planejamento e serviço.
+export const listarMapeamentos = async () => (await api.get(`${economic}/mapeamentos/`)).data;
+export const criarMapeamento = async payload => (await api.post(`${economic}/mapeamentos/`, payload)).data;
+export const alterarMapeamento = async (id, servico_id) => (await api.put(`${economic}/mapeamentos/${id}`, { servico_id })).data;

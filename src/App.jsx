@@ -16,6 +16,7 @@ import AdministracaoLayout from "./components/AdministracaoLayout";
 import SaudeMentalLayout from "./components/SaudeMentalLayout";
 
 import Usuarios from "./pages/Usuarios";
+import MapeamentosEconomicos from "./pages/MapeamentosEconomicos";
 import AdministracaoEconomica from "./pages/AdministracaoEconomica";
 import ServicosEconomicos from "./pages/ServicosEconomicos";
 import { TabelasPrecos, DetalheTabelaPreco, VersaoTabelaPreco } from "./pages/TabelasPrecos";
@@ -150,6 +151,7 @@ export default function App() {
                 element={<NovaOcupacaoProfissional />}
               />
               <Route path="/admin/economia" element={<AdministracaoEconomica />} />
+              <Route path="/admin/economia/mapeamentos" element={<MapeamentosEconomicos />} />
               <Route path="/admin/economia/servicos" element={<ServicosEconomicos />} />
               <Route path="/admin/economia/tabelas" element={<TabelasPrecos />} />
               <Route path="/admin/economia/contratos" element={<ContratosEconomicos />} />
