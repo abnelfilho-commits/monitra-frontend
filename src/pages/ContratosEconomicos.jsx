@@ -56,7 +56,7 @@ const messages = {
   INVALID_BENEFICIARY: "O paciente informado não é um beneficiário válido para esta operação.",
   BENEFICIARY_PAYER_MISMATCH: "O paciente não possui vínculo institucional ativo com a instituição pagadora.",
   BENEFICIARY_OUTSIDE_CONTRACT_PERIOD: "O período de cobertura do beneficiário deve estar integralmente dentro da vigência do contrato.",
-  BENEFICIARY_ALREADY_CLOSED: "Esta cobertura já foi encerrada.",
+  BENEFICIARY_ALREADY_CLOSED: "Informe uma data anterior ao término atual da cobertura. Esta operação não permite manter ou prorrogar o término.",
   BENEFICIARY_PERIOD_OVERLAP: "Já existe uma cobertura deste beneficiário no contrato que se sobrepõe ao período informado.",
   INVALID_PERIOD: "A data final não pode ser anterior à data inicial.",
   CONTRACT_CODE_EDITION_EXISTS: "Já existe um contrato com este código e edição para a instituição pagadora.",
@@ -419,6 +419,9 @@ function DetalheContrato({ id }) {
   const institutions = state.data?.institutions || [];
   const tables = state.data?.tables || [];
   const beneficiaries = state.data?.beneficiaries || [];
+  // Compare calendar DATE values directly; do not parse them as UTC timestamps.
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const candidates = state.data?.candidates || [];
   const draft = contract?.estado === "DRAFT";
 
@@ -598,9 +601,9 @@ function DetalheContrato({ id }) {
                       <td>{row.identificador_beneficiario || "—"}</td>
                       <td>{date(row.inicio)}</td>
                       <td>{row.fim ? date(row.fim) : "—"}</td>
-                      <td>{row.fim ? "ENCERRADA" : "ABERTA"}</td>
+                      <td>{row.fim && row.fim < today ? "ENCERRADA" : row.fim ? "VIGENTE — TÉRMINO PROGRAMADO" : "VIGENTE — SEM TÉRMINO DEFINIDO"}</td>
                       <td>
-                        {row.fim ? (
+                        {row.fim && row.fim < today ? (
                           "Histórico preservado"
                         ) : (
                           <Button
@@ -759,6 +762,7 @@ function DetalheContrato({ id }) {
             Beneficiário: <strong>{editor.row.paciente_nome}</strong>
           </p>
           <p>Início da cobertura: {date(editor.row.inicio)}</p>
+          {editor.row.fim && <p>Término atual: {date(editor.row.fim)}. Informe uma data anterior para antecipá-lo.</p>}
 
           <form
             onSubmit={event => {
@@ -766,7 +770,7 @@ function DetalheContrato({ id }) {
 
               run(
                 () => encerrarBeneficiario(editor.row.id, editor.fim),
-                "Cobertura encerrada com sucesso."
+                "Término da cobertura atualizado com sucesso."
               );
             }}
           >
