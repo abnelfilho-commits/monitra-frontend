@@ -121,7 +121,7 @@ export default function FinanceiroInstitucional() {
             <div style={grid}>
               <label>Instituição<select required style={campo} value={filtros.instituicao_id} onChange={(e) => alterar("instituicao_id", e.target.value)}><option value="">Selecione</option>{contexto.instituicoes.map((i) => <option key={i.id} value={i.id}>{i.nome}</option>)}</select></label>
               <label>Contrato<select required disabled={!filtros.instituicao_id} style={campo} value={filtros.contrato_id} onChange={(e) => alterar("contrato_id", e.target.value)}><option value="">Selecione</option>{contratos.map((c) => <option key={c.id} value={c.id}>{c.codigo} — edição {c.edicao}</option>)}</select></label>
-              <label>Linha assistencial<select required style={campo} value={filtros.modulo_id} onChange={(e) => alterar("modulo_id", e.target.value)}><option value="">Selecione</option><option value="1">Neurodesenvolvimento</option></select></label>
+              <label>Linha assistencial<select required style={campo} value={filtros.modulo_id} onChange={(e) => alterar("modulo_id", e.target.value)}><option value="">Selecione</option><option value="1">Neurodesenvolvimento</option><option value="3">Saúde Mental</option></select></label>
               <label>Data inicial<input required type="date" style={campo} value={filtros.data_inicio} onChange={(e) => alterar("data_inicio", e.target.value)} /></label>
               <label>Data final<input required type="date" min={filtros.data_inicio || undefined} style={campo} value={filtros.data_fim} onChange={(e) => alterar("data_fim", e.target.value)} /></label>
             </div>
