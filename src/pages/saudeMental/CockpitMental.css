@@ -1,0 +1,11 @@
+.mental-cockpit { overflow-wrap: anywhere; }
+.mental-cockpit-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mental-cockpit-actions a { color: #0f766e; font-weight: 600; }
+.mental-cockpit-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.mental-cockpit-filter select { max-width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; }
+.mental-cockpit-session { padding: 16px 0; border-bottom: 1px solid #e5e7eb; }
+.mental-cockpit-session:last-child { border-bottom: 0; }
+.mental-cockpit-session h3 { margin: 0; color: #1f2937; }
+.mental-cockpit-session li { margin-bottom: 16px; }
+.mental-cockpit-muted { color: #6b7280; font-size: 14px; }
+@media (max-width: 700px) { .mental-cockpit-filter { align-items: stretch; flex-direction: column; } }

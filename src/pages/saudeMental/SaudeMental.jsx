@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageLayout from "../../components/layouts/PageLayout/PageLayout";
+import CockpitMental from "./CockpitMental";
 import ProntuarioSaudeMental from "./ProntuarioSaudeMental";
 import Button from "../../components/ui/Button";
 import { instituicoesMentais, pessoasMentais, jornadaMental, erroMental } from "../../services/saudeMental";
@@ -20,11 +21,15 @@ function Status({ item }) {
 
 export default function SaudeMental() {
   const { pessoaId, contextoId } = useParams();
-  const [search, setSearch] = useSearchParams();
+  const location = useLocation();
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  const setSearch = value => navigate(`/saude-mental?${new URLSearchParams(value)}#pessoas`);
   const institution = search.get("instituicao_id") || "";
   const rawOffset = Number(search.get("offset") || 0);
   const offset = Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
   const detail = Boolean(pessoaId);
+  if (!detail && location.hash !== "#pessoas") return <CockpitMental key={institution} />;
   // Remount on explicit scope changes: previous person's data is never reused.
   const content = <SaudeMentalContent key={`${institution}:${pessoaId}:${contextoId}:${offset}`} {...{institution, pessoaId, contextoId, offset, detail, setSearch}} />;
   return detail ? <div style={{ padding: 24, maxWidth: 1220, margin: "0 auto" }}>{content}</div> : <PageLayout>{content}</PageLayout>;
@@ -64,7 +69,7 @@ function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail,
 
   return <>
     {!detail && <header style={{ marginBottom: 24 }}><h1>Saúde Mental</h1><p>Jornada assistencial da Pessoa, com contexto institucional explícito.</p></header>}
-    {detail ? <Link style={{ display: "inline-block", marginBottom: 16, fontSize: 14 }} to={`/saude-mental?instituicao_id=${encodeURIComponent(institution)}`}>← Pessoas</Link> : <section id="pessoas" style={card}>
+    {detail ? <Link style={{ display: "inline-block", marginBottom: 16, fontSize: 14 }} to={`/saude-mental?instituicao_id=${encodeURIComponent(institution)}#pessoas`}>← Pessoas</Link> : <section id="pessoas" style={card}>
       <p><Link to="/operacao-assistencial">Operação contextual — consultar minhas atribuições</Link></p>
       <h2>Pessoas</h2><label htmlFor="mental-institution">Instituição</label>{" "}
       <select id="mental-institution" value={institution} disabled={loading} onChange={e => setSearch(e.target.value ? { instituicao_id: e.target.value } : {})}>

@@ -27,7 +27,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
       assert.equal(u.pathname, '/saude-mental/pessoas/18/contextos/9');
       return reply({ ...item, bem_estar: { pode_registrar: allow, checkins: [], formulario: { id: 15, campos: [{ id: 1, nome_campo: 'humor', label: 'Humor', tipo_campo: 'radio', obrigatorio: true, opcoes: [{ valor: 'BOM', label: 'Bom' }] }] } } }, status);
     });
-    await page.goto(FRONT + '/saude-mental');
+    await page.goto(FRONT + '/saude-mental#pessoas');
     await page.locator('#mental-institution').selectOption('5');
     await page.getByRole('link', { name: 'Abrir jornada' }).click();
     assert.equal(await page.getByRole('heading', { name: 'Prontuário Saúde Mental 360°' }).count(), 0);

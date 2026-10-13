@@ -27,3 +27,5 @@ export const registrarCBIMental = async (instituicao, pessoa, contexto, payload)
 const ptsMentalPath = (pessoa, contexto) => `/saude-mental/pessoas/${pessoa}/contextos/${contexto}/pts`;
 export const listarPTSMental = async (instituicao, pessoa, contexto) => (await api.get(ptsMentalPath(pessoa, contexto), { params: { instituicao_id: instituicao } })).data;
 export const salvarPTSMental = async (instituicao, pessoa, contexto, method, suffix, payload) => (await api.request({ method, url: ptsMentalPath(pessoa, contexto) + suffix, data: payload, params: { instituicao_id: instituicao } })).data;
+
+export const cockpitMental = async (instituicao, signal) => (await api.get("/saude-mental/cockpit/profissional", { params: instituicao ? { instituicao_id: instituicao } : {}, signal })).data;

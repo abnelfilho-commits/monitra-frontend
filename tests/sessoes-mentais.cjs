@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict');
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
-const FRONT='http://127.0.0.1:5177';
+const FRONT=process.env.MENTAL_FRONT_URL||'http://127.0.0.1:5177';
 (async()=>{
  const {sessionEvents}=await import('../src/pages/saudeMental/bemEstarPresentation.js');
  const event=sessionEvents([{id:1,status:'AGENDADA'},{id:2,status:'REALIZADA',registro_longitudinal_id:5,numero_sessao:2,narrativa:'Sessão realizada',profissional_id:5,autor_usuario_id:99,proximos_passos:[]}]);assert.equal(event.length,1);assert.equal(event[0].tipo,'Sessão assistencial');assert.equal(event[0].id,'SESSAO:2');
@@ -27,6 +27,7 @@ const FRONT='http://127.0.0.1:5177';
     }
     return reply({sessao:{id:1,numero:1,status:session.status,data:session.data_agendada,hora_inicio:session.hora_inicio,hora_fim:session.hora_fim,duracao_minutos:45},pessoa:{id:18,nome:'Pessoa teste'},contexto:contextual,pode_registrar:allowed,objetivo:{id:2,descricao:'Objetivo contextual'},atividade:{id:3,nome:'Psicoterapia individual'},profissional:{id:5,nome:'Executor institucional',ocupacao:'Psicólogo'},registro_longitudinal:session.registro_longitudinal_id?{id:99,data:session.data_agendada,origem:'PROFISSIONAL'}:null,narrativa:session.narrativa,proximos_passos:session.proximos_passos || [],autor_usuario_id:99,avaliacoes:[],intervencoes:[],resumo:{titulo:'Sessão nº 1',descricao:'Atividade contextual',avaliacoes_realizadas:0,intervencoes:0,registro_realizado:Boolean(session.registro_longitudinal_id),total_sessoes:52,sessoes_realizadas:session.status==='REALIZADA'?1:0,percentual_conclusao:0}});
    }
+   if(u.pathname==='/saude-mental/cockpit/profissional')return reply({resumo:{pessoas_em_acompanhamento:0,atendimentos_hoje:0,realizados_hoje:0,proximos_atendimentos:0},agenda_hoje:[],proximos_atendimentos:[],pessoas_para_acompanhamento:[],atividade_recente:[],metadados:{data_referencia:'2026-10-13',fuso:'America/Cuiaba',tem_mais:{}}});
    if(u.pathname==='/saude-mental/instituicoes')return reply([]);
    assert.equal(u.searchParams.get('instituicao_id'),'5');assert.ok(u.pathname.startsWith(base));
    if(u.pathname===base)return reply({pessoa_id:18,nome_completo:'Pessoa teste',instituicao_id:5,instituicao_nome:'Instituição teste',contexto_assistencial_id:9,modulo_id:3,contexto_estado:'ABERTO',linha_estado:'ATIVA',data_inicio:'2026-01-01',bem_estar:{checkins:[],pode_registrar:allowed},sessoes:sessions.filter(s=>s.status==='REALIZADA')});

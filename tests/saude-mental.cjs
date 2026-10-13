@@ -19,6 +19,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
    calls.push({method:req.method(),path:u.pathname,query:u.search});
    if(delay)await new Promise(r=>setTimeout(r,300));
    if(failure)return reply({detail:{code:'SYNTHETIC_ERROR'}},failure);
+   if(u.pathname.endsWith('/cockpit/profissional'))return reply({resumo:{pessoas_em_acompanhamento:0,atendimentos_hoje:0,realizados_hoje:0,proximos_atendimentos:0},agenda_hoje:[],proximos_atendimentos:[],pessoas_para_acompanhamento:[],atividade_recente:[],metadados:{data_referencia:'2026-10-13',fuso:'America/Cuiaba',tem_mais:{}}});
    if(u.pathname.endsWith('/instituicoes'))return reply([{id:5,nome:'Instituição sintética'}]);
    if(u.pathname.endsWith('/pessoas'))return reply({itens:empty?[]:[{...item,linha_estado:line}],tem_mais:false});
    return reply({...item,linha_estado:line});
@@ -63,7 +64,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
    failure=status;await page.reload();await page.getByRole('alert').waitFor();
    assert.equal(await page.getByRole('heading',{name:'Pessoa: Pessoa sintética',exact:true}).count(),0);
   }
-  failure=null;empty=true;await page.goto(FRONT+'/saude-mental?instituicao_id=5');
+  failure=null;empty=true;await page.goto(FRONT+'/saude-mental?instituicao_id=5#pessoas');
   await page.getByRole('heading',{name:'Nenhum contexto acessível'}).waitFor();
   empty=false;line='ATIVA';await page.reload();await page.getByRole('link',{name:'Abrir jornada'}).click();
   await page.getByRole('heading',{name:'Pessoa: Pessoa sintética',exact:true}).waitFor();
@@ -81,7 +82,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
    if(profile==='ADMIN') await page.getByText('Conta de administração global.',{exact:false}).waitFor();
   }
   assert.ok(calls.every(c=>c.method==='GET'));
-  assert.ok(calls.filter(c=>!c.path.endsWith('/instituicoes')).every(c=>c.query.includes('instituicao_id=5')));
+  assert.ok(calls.filter(c=>!c.path.endsWith('/instituicoes')&&!c.path.endsWith('/cockpit/profissional')).every(c=>c.query.includes('instituicao_id=5')));
   await page.getByRole('button',{name:'Sair',exact:true}).click();
   await page.waitForURL('**/login');
   assert.equal(await page.evaluate(()=>localStorage.getItem('access_token')),null);
