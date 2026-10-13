@@ -4,7 +4,7 @@ import { baixarRelatorioPacientePdf } from "../services/pacientes";
 import "./ReportDownload.css";
 import Button from "./ui/Button";
 
-export default function ReportDownload({ patientId, careLine }) {
+export default function ReportDownload({ patientId, careLine, contextoAssistencialId }) {
   const headingId = useId();
   const dialogRef = useRef(null);
   const triggerRef = useRef(null);
@@ -30,6 +30,7 @@ export default function ReportDownload({ patientId, careLine }) {
     try {
       const blob = await baixarRelatorioPacientePdf(patientId, careLine, {
         ...(start ? { period_start: start } : {}), ...(end ? { period_end: end } : {}),
+        ...(contextoAssistencialId ? { contexto_assistencial_id: contextoAssistencialId } : {}),
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
