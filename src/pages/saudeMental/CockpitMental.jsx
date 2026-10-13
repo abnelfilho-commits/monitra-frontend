@@ -27,6 +27,15 @@ function timestamp(value, precision, zone) {
   const instant = new Date(value);
   return Number.isNaN(instant.getTime()) ? "Data indisponível" : instant.toLocaleString("pt-BR", { timeZone: zone });
 }
+function contextGroups(motivos) {
+  const groups = new Map();
+  motivos.forEach(reason => {
+    const key = `${reason.instituicao_id}-${reason.contexto_assistencial_id}`;
+    if (!groups.has(key)) groups.set(key, { key, scope: reason, motivos: [] });
+    groups.get(key).motivos.push(reason);
+  });
+  return [...groups.values()];
+}
 function More({ value }) { return value ? <p className="mental-cockpit-muted">Há outros registros além desta lista limitada.</p> : null; }
 function Scope({ row }) { return <span>{row.instituicao} · Contexto #{row.contexto_assistencial_id}</span>; }
 
@@ -57,11 +66,11 @@ export default function CockpitMental() {
   const greeting = hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   const name = user?.nome || user?.name || "Profissional";
   const zone = data?.metadados.fuso || "America/Cuiaba";
-  const sessions = (rows, more) => <>
-    {!rows.length ? <EmptyState compact icon="📅" title="Nenhum atendimento agendado neste período" /> : rows.map(row => <article className="mental-cockpit-session" key={row.sessao_id}>
-      <h3>{civilDate(row.data_agendada)} · {row.hora_inicio?.slice(0, 5) || "Horário não definido"} · {row.pessoa}</h3>
+  const sessions = (rows, more, compact = false) => <>
+    {!rows.length ? <EmptyState compact icon="📅" title="Nenhum atendimento agendado neste período" /> : rows.map(row => <article className={`mental-cockpit-session${compact ? " mental-cockpit-session--compact" : ""}`} key={row.sessao_id}>
+      <div className="mental-cockpit-session-info"><h3>{civilDate(row.data_agendada)} · {row.hora_inicio?.slice(0, 5) || "Horário não definido"} · {row.pessoa}</h3>
       <p>{row.atividade} · {row.duracao_minutos} min · {({ AGENDADA: "Agendada", CONFIRMADA: "Confirmada", EM_ANDAMENTO: "Em andamento" })[row.status] || row.status}</p>
-      <p className="mental-cockpit-muted"><Scope row={row} /></p>
+      <p className="mental-cockpit-muted"><Scope row={row} /></p></div>
       <div className="mental-cockpit-actions">
         <Button variant="secondary" onClick={() => navigate(`/sessoes-assistenciais/${row.sessao_id}?espaco=saude-mental`, { state: { returnTo } })}>Visualizar Sessão</Button>
         {row.pode_registrar === true && <Button onClick={() => navigate(`/sessoes-assistenciais/${row.sessao_id}/executar?espaco=saude-mental`, { state: { returnTo } })}>Registrar Atendimento</Button>}
@@ -93,16 +102,22 @@ export default function CockpitMental() {
         <WidgetGrid minItemWidth={220}>{indicators.map(([key, title, icon, tone]) => <StatCard key={key} title={title} icon={icon} tone={tone} value={data.resumo[key]} />)}</WidgetGrid>
       </section>
       <CardWidget icon="📅" title="Minha Agenda Hoje">{sessions(data.agenda_hoje, data.metadados.tem_mais.agenda_hoje)}</CardWidget>
-      <CardWidget icon="⏳" title="Próximos atendimentos">{sessions(data.proximos_atendimentos, data.metadados.tem_mais.proximos_atendimentos)}</CardWidget>
+      <CardWidget icon="⏳" title="Próximos atendimentos">{sessions(data.proximos_atendimentos, data.metadados.tem_mais.proximos_atendimentos, true)}</CardWidget>
       <CardWidget icon="👥" title="Pessoas para Acompanhamento" description="Evidências para revisão profissional, sem classificação automática de risco.">
         {!data.pessoas_para_acompanhamento.length && <EmptyState compact title="Nenhuma evidência de acompanhamento nesta consulta" />}
         {data.pessoas_para_acompanhamento.map(person => <article className="mental-cockpit-session" key={person.pessoa_id}>
           <h3>{person.pessoa}</h3><p className="mental-cockpit-muted">Evidência mais recente: {timestamp(person.evidencia_mais_recente, "INSTANTE", zone)}</p>
-          <ul>{person.motivos.map((reason, i) => <li key={`${reason.contexto_assistencial_id}-${reason.codigo}-${reason.referencia_id}-${i}`}>
-            <strong>{reasons[reason.codigo] || "Evidência para revisão profissional"}</strong>
-            <p><Scope row={reason} /></p>
-            <Link to={journey(reason)}>Abrir jornada · Contexto #{reason.contexto_assistencial_id}</Link>
-          </li>)}</ul>
+          {contextGroups(person.motivos).map(group => <section className="mental-cockpit-context" key={group.key} aria-label={`Contexto #${group.scope.contexto_assistencial_id}`}>
+            <div className="mental-cockpit-context-header">
+              <span className="mental-cockpit-muted"><Scope row={group.scope} /></span>
+              <Link to={journey(group.scope)} aria-label={`Abrir Jornada · Contexto #${group.scope.contexto_assistencial_id}`}>Abrir Jornada</Link>
+            </div>
+            <ul className="mental-cockpit-reasons">{group.motivos.map((reason, i) => <li key={`${reason.codigo}-${reason.referencia_id}-${i}`}>
+              <strong>{reasons[reason.codigo] || "Evidência para revisão profissional"}</strong>
+              <time dateTime={reason.data}>{timestamp(reason.data, "INSTANTE", zone)}</time>
+              {!!reason.dimensoes?.length && <span className="mental-cockpit-muted">{reason.dimensoes.join(" · ")}</span>}
+            </li>)}</ul>
+          </section>)}
         </article>)}<More value={data.metadados.tem_mais.pessoas_para_acompanhamento} />
       </CardWidget>
       <CardWidget icon="🕒" title="Atividade Recente">
