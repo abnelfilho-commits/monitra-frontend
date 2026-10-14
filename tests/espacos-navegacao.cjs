@@ -15,6 +15,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5176';
    const reply=(x,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(x)});
    requests.push({path:u.pathname,method:q.method(),query:u.search});
    if(u.pathname==='/me')return reply({id:99,nome:'Synthetic',perfil:profile,modulos:[{id:1,slug:'neurodesenvolvimento'},{id:2,slug:'cardiometabolico'}]});
+   if(u.pathname==='/saude-mental/cockpit/gestao')return reply({},403);
    if(u.pathname==='/operacao-assistencial/instituicoes')return operationalFailure?reply({detail:{code:'OPERATION_DENIED'}},403):reply(operational?[{id:1,nome:'Instituição sintética'}]:[]);
    if(u.pathname==='/operacao-assistencial/contextos')return reply([]);
    if(u.pathname==='/atividades-terapeuticas/linhas')return reply([{id:1,nome:'Neurodesenvolvimento',slug:'neurodesenvolvimento'},{id:2,nome:'Cardiometabólico',slug:'cardiometabolico'},{id:3,nome:'Saúde Mental',slug:'saude_mental'}]);

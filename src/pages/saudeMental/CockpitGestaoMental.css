@@ -1,0 +1,8 @@
+.management-cockpit { overflow-wrap: anywhere; }
+.management-cockpit h1 { color: #1f2937; font-size: 1.6rem; margin: 0; }
+.management-cockpit-filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: end; }
+.management-cockpit-filters label { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.management-cockpit-filters select { max-width: 100%; padding: 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: white; }
+.management-cockpit-chart { height: 300px; min-width: 0; }
+.management-cockpit details { color: #4b5563; }
+@media (max-width: 700px) { .management-cockpit-filters { align-items: stretch; flex-direction: column; } .management-cockpit-chart { height: 250px; } }

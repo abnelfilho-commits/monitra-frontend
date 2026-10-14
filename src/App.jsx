@@ -1,3 +1,4 @@
+import CockpitGestaoMental from "./pages/saudeMental/CockpitGestaoMental";
 import CBIMental from "./pages/saudeMental/CBIMental";
 import GAD7Mental from "./pages/saudeMental/GAD7Mental";
 import PHQ9Mental from "./pages/saudeMental/PHQ9Mental";
@@ -135,6 +136,7 @@ export default function App() {
 
             {/* Capacidades transversais: URLs e guards existentes preservados. */}
             <Route element={<AdministracaoLayout />}>
+              <Route path="/saude-mental/gestao" element={<CockpitGestaoMental />} />
               <Route path="/gestao-institucional" element={null} />
               <Route
                 path="/atividades-terapeuticas"
