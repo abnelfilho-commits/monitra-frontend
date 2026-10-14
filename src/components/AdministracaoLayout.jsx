@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from "react-router-dom";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import useInstitutionalNavigation from "../hooks/useInstitutionalNavigation";
 import Button from "./ui/Button";
@@ -9,6 +9,8 @@ export default function AdministracaoLayout() {
   const { pathname } = useLocation();
   const items = useInstitutionalNavigation();
   const isHml = import.meta.env.VITE_AMBIENTE === "HML";
+  const overview = items.find(item => item.to === "/saude-mental/gestao" && item.managementConfirmed === true);
+  if (pathname === "/gestao-institucional" && overview) return <Navigate to={overview.to} replace />;
   const legacy = pathname === "/usuarios" || pathname.startsWith("/profissionais");
   return <div className={`institutional-shell${isHml ? " institutional-shell--hml" : ""}`}>
     {isHml && <div className="institutional-shell-banner">AMBIENTE DE HOMOLOGAÇÃO — NÃO USAR COMO PRODUÇÃO</div>}

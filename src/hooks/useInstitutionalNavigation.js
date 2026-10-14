@@ -58,7 +58,7 @@ export default function useInstitutionalNavigation() {
   if (user && profile !== "PROFISSIONAL") items.push({ label: "Dimensionamento", to: `/dimensionamento${cardio}` });
   if (["ADMIN", "ADMIN_CLINICA"].includes(profile)) items.push({ label: "Financeiro Institucional", to: "/financeiro/institucional" });
   if (management?.id === id && management?.profile === profile && management.status !== "denied") {
-    items.push({ label: management.status === "allowed" ? "Cockpit Gestor/RH — Saúde Mental" : "Cockpit Gestor/RH — Saúde Mental (verificar acesso)", to: "/saude-mental/gestao" });
+    items.push({ label: management.status === "allowed" ? "Visão Geral" : "Visão Geral (verificar acesso)", to: "/saude-mental/gestao", managementConfirmed: management.status === "allowed" });
   }
   return items;
 }

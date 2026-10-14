@@ -40,7 +40,7 @@ function payload(weeks=4, institution='', profile='ADMIN', zero=false) {
   assert.equal(await page.getByRole('navigation',{name:'Navegação institucional'}).count(),1);
   assert.equal(await page.getByRole('navigation',{name:'Navegação Saúde Mental'}).count(),0);
   assert.deepEqual(await values(),['2','7','30','20']);passed++;
-  await page.getByRole('link',{name:'Cockpit Gestor/RH — Saúde Mental',exact:true}).waitFor();passed++;
+  await page.getByRole('link',{name:'Visão Geral',exact:true}).waitFor();passed++;
   const select=page.getByLabel('Instituição gerencial');
   assert.deepEqual(await select.locator('option').allTextContents(),['Todas as instituições autorizadas','Alfa','Beta']);
   assert.ok(calls.some(c=>c.path==='/admin/instituicoes/'));passed++;
@@ -71,8 +71,8 @@ function payload(weeks=4, institution='', profile='ADMIN', zero=false) {
   assert.deepEqual(await select.locator('option').allTextContents(),['Todas as instituições autorizadas','Instituição #5','Instituição #6']);passed++;
   namesFailure=false;failure=403;await page.getByRole('button',{name:'Atualizar',exact:true}).click();
   await page.getByRole('alert').waitFor();assert.equal((await values()).length,0);assert.equal(await select.isDisabled(),true);
-  assert.equal(await select.locator('option[value="5"]').count(),0);assert.equal(await page.getByRole('link',{name:'Cockpit Gestor/RH — Saúde Mental',exact:true}).count(),0);passed++;
-  failure=0;await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();await ready();await page.getByRole('link',{name:'Cockpit Gestor/RH — Saúde Mental',exact:true}).waitFor();passed++;
+  assert.equal(await select.locator('option[value="5"]').count(),0);assert.equal(await page.getByRole('link',{name:'Visão Geral',exact:true}).count(),0);passed++;
+  failure=0;await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();await ready();await page.getByRole('link',{name:'Visão Geral',exact:true}).waitFor();passed++;
   for(const status of [401,422,503,500,'network']){
    failure=status;await page.getByRole('button',{name:'Atualizar',exact:true}).click();await page.getByRole('alert').waitFor();
    assert.equal((await values()).length,0);
@@ -88,10 +88,32 @@ function payload(weeks=4, institution='', profile='ADMIN', zero=false) {
   profile='SUPORTE';await open();await ready();passed++; // 200 is authoritative, not this global label.
   failure=403;await open();await page.getByRole('alert').waitFor();assert.equal((await values()).length,0);passed++;
   failure='network';await open();await page.getByRole('alert').waitFor();
-  await page.getByRole('link',{name:'Cockpit Gestor/RH — Saúde Mental (verificar acesso)',exact:true}).waitFor();passed++;
+  await page.getByRole('link',{name:'Visão Geral (verificar acesso)',exact:true}).waitFor();passed++;
   failure=0;await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();await ready();
   assert.ok(calls.every(c=>c.method==='GET'));
   assert.ok(!calls.some(c=>/pessoas|pacientes|contextos|cockpit\/profissional/.test(c.path)));passed++;
+  // F20.5-A: only confirmed access redirects the institutional landing.
+  profile='GESTOR';failure=0;
+  await page.goto(FRONT+'/gestao-institucional');await page.waitForURL(FRONT+'/saude-mental/gestao');await ready();
+  await page.getByRole('heading',{name:'Visão Geral — Saúde Mental',exact:true}).waitFor();
+  await page.getByRole('heading',{name:'Gestão operacional institucional',exact:true}).waitFor();
+  assert.equal(await page.getByRole('link',{name:'Visão Geral',exact:true}).getAttribute('aria-current'),'page');passed++;
+  // Other institutional permissions must survive a denied managerial discovery.
+  profile='SUPORTE';failure=403;
+  await page.goto(FRONT+'/gestao-institucional');await page.getByRole('heading',{name:'Gestão Institucional',exact:true}).waitFor();
+  await page.waitForTimeout(200);assert.equal(page.url(),FRONT+'/gestao-institucional');
+  assert.equal(await page.getByRole('alert').count(),0);
+  await page.getByRole('link',{name:'Atividades Terapêuticas',exact:true}).waitFor();
+  assert.equal(await page.getByRole('link',{name:'Visão Geral',exact:true}).count(),0);passed++;
+  failure='network';await page.goto(FRONT+'/gestao-institucional');
+  await page.getByRole('link',{name:'Visão Geral (verificar acesso)',exact:true}).waitFor();
+  assert.equal(page.url(),FRONT+'/gestao-institucional');
+  await page.getByRole('link',{name:'Atividades Terapêuticas',exact:true}).waitFor();
+  failure=0;await page.getByRole('link',{name:'Visão Geral (verificar acesso)',exact:true}).click();await ready();passed++;
+  // A successful discovery must never redirect another administrative route.
+  profile='ADMIN';await page.goto(FRONT+'/admin/instituicoes');
+  await page.getByRole('link',{name:'Visão Geral',exact:true}).waitFor();
+  assert.equal(page.url(),FRONT+'/admin/instituicoes');passed++;
   assert.equal(errors.length,0,errors.join('\n'));
   console.log(`F20_2_PASS: ${passed} groups; real browser, mocked API, 1440/768/390, no HML. Screenshots /private/tmp/f20-visual`);
  }finally{await browser.close();}

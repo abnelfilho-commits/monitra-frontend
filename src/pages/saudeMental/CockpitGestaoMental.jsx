@@ -83,7 +83,7 @@ export default function CockpitGestaoMental() {
   };
   const empty = data && data.indicadores.atendimentos_programados === 0 && data.indicadores.atendimentos_realizados === 0;
   return <PageLayout className="management-cockpit">
-    <h1>Cockpit Gestor/RH — Saúde Mental</h1>
+    <h1>Visão Geral — Saúde Mental</h1>
     <CardWidget title="Gestão operacional institucional" description="Contagens operacionais restritas ao seu escopo gerencial. Este espaço não concede acesso clínico.">
       <div className="management-cockpit-filters">
         <label>Instituição<select aria-label="Instituição gerencial" value={institution} onChange={e => change("instituicao_id", e.target.value)} disabled={!authorized}>
