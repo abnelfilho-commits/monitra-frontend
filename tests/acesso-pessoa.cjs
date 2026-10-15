@@ -14,7 +14,7 @@ const FRONT=process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
    if(u.pathname==='/admin/pessoas/')return reply([person]);
    if(u.pathname==='/admin/pessoas/10')return reply(person);
    if(u.pathname==='/admin/pessoas/10/acessos')return reply(persisted || {pessoa_id:10,usuario:null,autorizacoes:[]});
-   if(u.pathname==='/admin/pessoas/10/vinculos')return reply({pessoa_id:10,paciente_id:null,profissional_id:null,pacientes:[],profissionais:[]});
+   if(u.pathname==='/admin/pessoas/10/vinculos')return reply({pessoa_id:10,paciente_id:null,paciente_ativo:null,profissional_id:null,pacientes:[],profissionais:[]});
    if(u.pathname==='/admin/instituicoes/')return reply([{id:2,razao_social:'Instituição local',ativo:true}]);
    if(u.pathname==='/admin/pessoas/10/acesso'){
     writes.push(req.postDataJSON());

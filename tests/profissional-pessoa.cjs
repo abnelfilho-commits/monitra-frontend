@@ -15,12 +15,13 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
       if (new URL(req.url()).origin === FRONT) return route.continue();
       const reply = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
       calls.push({ path, method: req.method() });
+   if (path === '/saude-mental/cockpit/gestao') return reply({detail: 'Management unavailable in this administrative fixture'}, 403);
       if (path === '/me') return reply({ id: 99, perfil: 'ADMIN', nome: 'Admin', modulos: [] });
       if (req.method() === 'GET') {
         if (path === '/admin/pessoas/') return reply([person]);
         if (path === '/admin/pessoas/4') return reply(person);
         if (path === '/admin/pessoas/4/acessos') return reply({ pessoa_id: 4, usuario: { id: 30, email: 'native@example.com', ativo: true }, autorizacoes: [{ id: 31, instituicao_id: 2, instituicao_nome: 'Instituição sintética', instituicao_ativa: true, perfil_institucional: 'PROFISSIONAL', ativo: true }] });
-        if (path === '/admin/pessoas/4/vinculos') return failRead ? reply({}, 500) : reply({ pessoa_id: 4, paciente_id: null, profissional_id: role, ...(missingState ? {} : { profissional_ativo: active }), pacientes: [], profissionais: links });
+        if (path === '/admin/pessoas/4/vinculos') return failRead ? reply({}, 500) : reply({ pessoa_id: 4, paciente_id: null, paciente_ativo: null, profissional_id: role, ...(missingState ? {} : { profissional_ativo: active }), pacientes: [], profissionais: links });
         if (path === '/admin/instituicoes/') return reply([{ id: 2, razao_social: 'Instituição sintética', ativo: true }]);
         if (path === '/atividades-terapeuticas/ocupacoes-profissionais') return reply([{ id: 8, nome: 'Ocupação sintética', ativo: true }]);
       }

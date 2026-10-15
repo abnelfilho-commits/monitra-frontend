@@ -21,7 +21,7 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
    if(/^\/admin\/pessoas\/\d+\/acessos$/.test(u.pathname))return reply({pessoa_id:Number(u.pathname.split('/')[3]),usuario:null,autorizacoes:[]});
    if(/^\/admin\/pessoas\/\d+\/vinculos$/.test(u.pathname)){
     const id=Number(u.pathname.split('/')[3]),pid=patients.get(id)||null;
-    return reply({pessoa_id:id,paciente_id:pid,profissional_id:null,pacientes:links.filter(l=>l.paciente_id===pid).map(l=>({...l,instituicao_nome:'Empresa sintética',instituicao_ativa:true})),profissionais:[]});
+    return reply({pessoa_id:id,paciente_id:pid,paciente_ativo:pid?false:null,profissional_id:null,pacientes:links.filter(l=>l.paciente_id===pid).map(l=>({...l,instituicao_nome:'Empresa sintética',instituicao_ativa:true})),profissionais:[]});
    }
    if(u.pathname==='/admin/pessoas/')return reply(rows.slice(Number(u.searchParams.get('offset')),Number(u.searchParams.get('offset'))+Number(u.searchParams.get('limit'))));
    if(/^\/admin\/pessoas\/\d+$/.test(u.pathname)){const row=rows.find(r=>r.id===Number(u.pathname.split('/').at(-1)));if(req.method()==='PATCH')Object.assign(row,body);return reply(row);}

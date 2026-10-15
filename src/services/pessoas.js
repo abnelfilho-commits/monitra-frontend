@@ -19,3 +19,5 @@ export const obterVinculosPessoa = id => api.get(`/admin/pessoas/${id}/vinculos`
 export const ativarProfissionalPessoa = id => api.post(`/admin/identidades/pessoas/${id}/profissional/ativar`).then(r => r.data);
 export const inativarProfissionalPessoa = id => api.post(`/admin/identidades/pessoas/${id}/profissional/inativar`).then(r => r.data);
 export const criarVinculoProfissional = dados => api.post("/admin/vinculos-institucionais/profissionais", dados).then(r => r.data);
+
+export const ativarPacientePessoa = id => api.post(`/admin/identidades/pessoas/${id}/paciente/ativar`).then(r => r.data);

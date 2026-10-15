@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import PageLayout from "../components/layouts/PageLayout";
@@ -133,6 +133,7 @@ function VinculosPessoa({ person, preparedPatient, onBusy, onUncertain, children
   return <section style={panel}><h2>Vínculos institucionais</h2>
     <p>Vínculos e acesso à plataforma são independentes. Esta consulta não cria papel, vínculo ou autorização.</p>
     <Button variant="secondary" onClick={() => refresh(n => n + 1)}>Atualizar vínculos da Pessoa</Button>
+    <PapelPaciente person={person} preparedPatient={preparedPatient} revision={revision}>{children}</PapelPaciente>
     {error ? <p role="alert">{error}</p> : !data ? <p role="status">Consultando vínculos persistidos...</p> : <>
       {!rows.length ? <p>Nenhum vínculo institucional registrado.</p> : <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead><tr>{["Instituição", "Papel", "Tipo / Ocupação", "Início", "Término", "Registro"].map(h => <th key={h} style={cell}>{h}</th>)}</tr></thead>
@@ -144,13 +145,87 @@ function VinculosPessoa({ person, preparedPatient, onBusy, onUncertain, children
         setData(next);
         return next;
       }} />
-      {!data.paciente_id ? children : <>
+      {Number.isInteger(data.paciente_id) && data.paciente_id > 0 && <>
         <Button variant="secondary" onClick={() => setAdding(v => !v)}>{adding ? "Fechar preparação de vínculo" : "Adicionar vínculo institucional / preparar contexto"}</Button>
         {adding && <Institutional patient={data.paciente_id} onBusy={onBusy} onUncertain={onUncertain} onCreated={() => refresh(n => n + 1)} />}
       </>}
     </>}
   </section>;
 }
+const patientStateValid = data => data && (
+  (data.paciente_id === null && data.paciente_ativo === null) ||
+  (Number.isInteger(data.paciente_id) && data.paciente_id > 0 && typeof data.paciente_ativo === "boolean")
+);
+const patientUnknown = "Não foi possível confirmar o estado do papel de Paciente";
+function PapelPaciente({ person, preparedPatient, revision, children }) {
+  const [data, setData] = useState(null), [message, setMessage] = useState("");
+  const [reading, setReading] = useState(true), [writing, setWriting] = useState(false);
+  const sequence = useRef(0), mounted = useRef(false), lock = useRef(false);
+  const reload = useCallback(async () => {
+    const request = ++sequence.current;
+    setData(null); setReading(true);
+    try {
+      const next = await api.obterVinculosPessoa(person.id);
+      if (!mounted.current || request !== sequence.current) return false;
+      if (next.pessoa_id !== person.id || !patientStateValid(next)) throw Error("Patient state unavailable");
+      setData(next);
+      return true;
+    } catch {
+      if (mounted.current && request === sequence.current) setData(null);
+      return false;
+    } finally {
+      if (mounted.current && request === sequence.current) setReading(false);
+    }
+  }, [person.id]);
+  useEffect(() => {
+    mounted.current = true;
+    void reload();
+    return () => { mounted.current = false; sequence.current += 1; };
+  }, [reload, preparedPatient, revision]);
+  async function consult() {
+    if (lock.current) return;
+    setMessage("");
+    await reload();
+  }
+  async function activate() {
+    if (lock.current || reading || !patientStateValid(data) || data.paciente_ativo !== false) return;
+    if (!window.confirm("Ativar o papel de Paciente desta Pessoa? Esta ação não cria conta, vínculo, acompanhamento ou permissão clínica.")) return;
+    lock.current = true; setWriting(true); setMessage(""); setData(null); sequence.current += 1;
+    let confirmed = false;
+    try {
+      await api.ativarPacientePessoa(person.id);
+      confirmed = true;
+      if (!mounted.current) return;
+      const read = await reload();
+      if (mounted.current) setMessage(read ? "Escrita confirmada. Estado persistido consultado; nenhuma permissão clínica foi concedida." : "Escrita confirmada, mas o estado persistido não pôde ser consultado. Atualize o estado; não repita a ativação.");
+    } catch (e) {
+      if (!mounted.current) return;
+      const status = e?.response?.status;
+      setMessage(confirmed ? "Escrita confirmada, mas o estado persistido não pôde ser consultado. Atualize o estado; não repita a ativação." :
+        e?.response?.data?.detail?.code === "LEGACY_PATIENT_NOT_SUPPORTED" ? "Este papel não pode ser ativado pelo fluxo canônico. Nenhuma adaptação do legado foi realizada." :
+        ({401: "Sessão expirada. Entre novamente.", 403: "Sem autorização para ativar o papel de Paciente. Operação exclusiva do ADMIN.",
+          404: "Pessoa ou papel não encontrado, ou operação indisponível. Atualize a consulta.",
+          409: "Conflito na ativação. Consulte o estado antes de continuar.", 422: "Requisição de ativação inválida. Confira a Pessoa selecionada."}[status] ||
+          "Resultado da ativação incerto. Consulte o estado persistido antes de repetir."));
+    } finally {
+      lock.current = false;
+      if (mounted.current) setWriting(false);
+    }
+  }
+  const known = patientStateValid(data);
+  return <section aria-label="Papel de Paciente" style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
+    <h3>Papel de Paciente</h3>
+    <p>O estado do papel é independente da Pessoa, dos vínculos e das permissões clínicas.</p>
+    <Button variant="secondary" disabled={writing} onClick={consult}>Atualizar estado do Paciente</Button>
+    {message && <p role="status">{message}</p>}
+    {writing ? <p role="status">Processando ativação...</p> : reading ? <p role="status">Consultando estado do papel de Paciente...</p> : !known ?
+      <p role="alert">{patientUnknown}</p> : <>
+        <p>Estado do papel: <strong>{data.paciente_id === null ? "Não preparado" : data.paciente_ativo ? "Ativo" : "Inativo"}</strong></p>
+        {data.paciente_id === null ? children : data.paciente_ativo === false && <Button onClick={activate}>Ativar papel de Paciente</Button>}
+      </>}
+  </section>;
+}
+
 function Institutional({ patient, onBusy, onUncertain, onCreated }) {
   const [institutions, setInstitutions] = useState(null), [institution, setInstitution] = useState("");
   const [links, setLinks] = useState(null), [selected, setSelected] = useState(null), [creating, setCreating] = useState(false);

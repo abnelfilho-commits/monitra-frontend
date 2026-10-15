@@ -13,13 +13,14 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
    const req=route.request(),u=new URL(req.url());if(u.origin===FRONT)return route.continue();
    if(req.method()!=='GET')writes.push(u.pathname);
    const reply=(data,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
+   if (u.pathname === '/saude-mental/cockpit/gestao') return reply({detail: 'Management unavailable in this administrative fixture'}, 403);
    if(u.pathname==='/me')return reply({id:99,perfil:'ADMIN',nome:'Admin',modulos:[]});
    if(u.pathname==='/admin/pessoas/')return reply([person]);
    if(u.pathname==='/admin/pessoas/10')return reply(person);
    if(u.pathname==='/admin/pessoas/10/acessos')return fail?reply({detail:{code:'PERSON_READ_FAILED'}},500):reply({pessoa_id:10,usuario:empty?null:{id:20,email:'native@example.com',ativo:false},autorizacoes:empty||noRoots?[]:[
     {id:30,instituicao_id:2,instituicao_nome:'Instituição A',instituicao_ativa:true,perfil_institucional:'SUPORTE',ativo:true},
     {id:31,instituicao_id:3,instituicao_nome:'Instituição B',instituicao_ativa:false,perfil_institucional:'GESTOR',ativo:false}]});
-   if(u.pathname==='/admin/pessoas/10/vinculos')return fail?reply({},500):reply({pessoa_id:10,paciente_id:empty?null:40,profissional_id:empty?null:50,pacientes:empty?[]:[{id:60,paciente_id:40,instituicao_id:2,instituicao_nome:'Instituição A',instituicao_ativa:true,tipo_vinculo:'COLABORADOR',data_inicio:'2026-01-01',data_fim:null,ativo:true}],profissionais:empty?[]:[{id:70,profissional_id:50,instituicao_id:3,instituicao_nome:'Instituição B',instituicao_ativa:false,ocupacao_id:8,data_inicio:'2025-01-01',data_fim:'2025-12-31',ativo:false}]});
+   if(u.pathname==='/admin/pessoas/10/vinculos')return fail?reply({},500):reply({pessoa_id:10,paciente_id:empty?null:40,paciente_ativo:empty?null:false,profissional_id:empty?null:50,pacientes:empty?[]:[{id:60,paciente_id:40,instituicao_id:2,instituicao_nome:'Instituição A',instituicao_ativa:true,tipo_vinculo:'COLABORADOR',data_inicio:'2026-01-01',data_fim:null,ativo:true}],profissionais:empty?[]:[{id:70,profissional_id:50,instituicao_id:3,instituicao_nome:'Instituição B',instituicao_ativa:false,ocupacao_id:8,data_inicio:'2025-01-01',data_fim:'2025-12-31',ativo:false}]});
    throw Error('Unexpected HTTP '+req.method()+' '+u.pathname);
   });
   async function open(){await page.goto(FRONT+'/admin/pessoas');await page.getByRole('button',{name:'Ver / Editar'}).click();}
