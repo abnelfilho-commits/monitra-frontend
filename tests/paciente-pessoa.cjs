@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { expandPeople } = require('./helpers/people-navigation.cjs');
 const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
 (async () => {
  const browser = await chromium.launch({channel:'chrome',headless:true});
@@ -39,14 +40,14 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
   const unknown=()=>panel.getByText('Não foi possível confirmar o estado do papel de Paciente',{exact:true}).waitFor();
   async function open(value){
    state=value;readFail=false;postStatus=200;failAfter=false;delayRead=null;delayPost=null;
-   await page.goto(FRONT+'/admin/pessoas');await page.getByRole('button',{name:'Ver / Editar',exact:true}).click();
+   await page.goto(FRONT+'/admin/pessoas');await page.getByRole('button',{name:'Consultar',exact:true}).click(); await expandPeople(page);
    await panel.waitFor();
   }
-  await open({paciente_id:null,paciente_ativo:null});await panel.getByText('Não preparado',{exact:true}).waitFor();assert.equal(await panel.getByRole('button',{name:'Preparar papel assistencial'}).count(),1);checks++;
+  await open({paciente_id:null,paciente_ativo:null});await panel.getByText('Não preparado',{exact:true}).waitFor();assert.equal(await panel.getByRole('button',{name:'Preparar papel de Paciente'}).count(),1);checks++;
   await open({paciente_id:40,paciente_ativo:false});await panel.getByText('Inativo',{exact:true}).waitFor();checks++;
   await open({paciente_id:40,paciente_ativo:true});await panel.getByText('Ativo',{exact:true}).waitFor();assert.equal(await panel.getByRole('button',{name:'Ativar papel de Paciente',exact:true}).count(),0);checks++;
   for(const value of [{paciente_id:40},{paciente_id:null,paciente_ativo:false},{paciente_id:40,paciente_ativo:null},{paciente_id:'40',paciente_ativo:false},{paciente_id:0,paciente_ativo:false},{paciente_id:40,paciente_ativo:'false'}]){
-   await open(value);await unknown();assert.equal(await panel.getByRole('button',{name:'Preparar papel assistencial'}).count(),0);assert.equal(await panel.getByRole('button',{name:'Ativar papel de Paciente',exact:true}).count(),0);
+   await open(value);await unknown();assert.equal(await panel.getByRole('button',{name:'Preparar papel de Paciente'}).count(),0);assert.equal(await panel.getByRole('button',{name:'Ativar papel de Paciente',exact:true}).count(),0);
    await page.getByRole('button',{name:'Preparar Profissional',exact:true}).waitFor();checks++;
   }
   await open({paciente_id:40,paciente_ativo:false});await panel.getByText('Inativo',{exact:true}).waitFor();readFail=true;await refresh();await unknown();readFail=false;await refresh();await panel.getByText('Inativo',{exact:true}).waitFor();checks++;

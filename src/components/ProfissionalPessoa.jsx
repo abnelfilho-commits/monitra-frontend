@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Button from "./ui/Button";
+import usePessoaDraft from "./pessoas/usePessoaDraft";
 import { listarInstituicoes } from "../services/instituicoes";
 import { listarOcupacoesProfissionais } from "../services/atividadesTerapeuticas";
 import { comandoIdentidade, ativarProfissionalPessoa, inativarProfissionalPessoa, criarVinculoProfissional } from "../services/pessoas";
@@ -22,7 +23,7 @@ const message = e => errors[e?.response?.data?.detail?.code] || ({
   422: "Confira os dados obrigatórios, a ocupação, o período e o motivo.",
 }[e?.response?.status]) || "Resultado não confirmado. Não repita a escrita sem conferência administrativa.";
 
-export default function ProfissionalPessoa({ person, data, onReload, onBusy, onUncertain }) {
+export default function ProfissionalPessoa({ person, data, onReload, onBusy, onUncertain, onDirty, children }) {
   const [reason, setReason] = useState(""), [linkReason, setLinkReason] = useState("");
   const [institution, setInstitution] = useState(""), [occupation, setOccupation] = useState("");
   const [start, setStart] = useState(""), [end, setEnd] = useState("");
@@ -30,6 +31,9 @@ export default function ProfissionalPessoa({ person, data, onReload, onBusy, onU
   const [catalogError, setCatalogError] = useState(""), [revision, refresh] = useState(0);
   const [busy, setBusy] = useState(false), [readFailed, setReadFailed] = useState(false);
   const [error, setError] = useState(""), [success, setSuccess] = useState("");
+  const [feedbackTarget, setFeedbackTarget] = useState("role");
+  const markRoleSaved = usePessoaDraft("profissional", reason, onDirty);
+  const markLinkSaved = usePessoaDraft("vinculo-profissional", [linkReason, institution, occupation, start, end], onDirty);
   const lock = useRef(false), keys = useRef(new Map());
   useEffect(() => {
     if (!showLink) return;
@@ -46,20 +50,20 @@ export default function ProfissionalPessoa({ person, data, onReload, onBusy, onU
     if (!validState(next)) throw Error("Professional state unavailable");
     setReadFailed(false);
   }
-  async function consult() {
+  async function consult(target = "role") {
     if (lock.current) return;
-    lock.current = true; setBusy(true); onBusy(true); setError(""); setSuccess("");
+    lock.current = true; setFeedbackTarget(target); setBusy(true); onBusy(true); setError(""); setSuccess("");
     try { await reload(); } catch { setReadFailed(true); setError("Não foi possível confirmar o estado persistido do papel Profissional."); }
     finally { lock.current = false; setBusy(false); onBusy(false); }
   }
-  async function write(operation) {
+  async function write(operation, saved, target = "role") {
     if (lock.current || readFailed || !validState(data)) return;
-    lock.current = true; setBusy(true); onBusy(true); setError(""); setSuccess("");
+    lock.current = true; setFeedbackTarget(target); setBusy(true); onBusy(true); setError(""); setSuccess("");
     let confirmed = false;
     try {
-      await operation(); confirmed = true;
+      await operation(); confirmed = true; saved?.();
       await reload();
-      setSuccess("Operação confirmada e estado persistido consultado. Nenhuma participação ou capability clínica foi concedida.");
+      setSuccess("Operação confirmada e estado persistido consultado. Nenhuma participação ou permissão clínica foi concedida.");
     } catch (e) {
       setReadFailed(true);
       setError(confirmed ? "Escrita confirmada, mas a leitura posterior falhou. Atualize o estado; não repita a escrita." : message(e));
@@ -75,27 +79,42 @@ export default function ProfissionalPessoa({ person, data, onReload, onBusy, onU
     return comandoIdentidade(true, { ...payload, chave_idempotencia: keys.current.get(fingerprint) });
   }
   const known = validState(data), exists = data.profissional_id !== null;
-  return <section aria-label="Papel Profissional" style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
+  const role = <section aria-label="Papel Profissional" style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
     <h3>Profissional</h3>
     <p>Papel Profissional, vínculo institucional e acesso à plataforma são independentes. Esta preparação não cria participação contextual nem concede acesso clínico.</p>
-    <Button variant="secondary" disabled={busy} onClick={consult}>Atualizar estado do Profissional</Button>
-    {error && <p role="alert">{error}</p>}{success && <p role="status">{success}</p>}
+    <Button variant="secondary" disabled={busy} onClick={() => consult()}>Atualizar estado do Profissional</Button>
+    {feedbackTarget === "role" && <>{error && <p role="alert">{error}</p>}{success && <p role="status">{success}</p>}</>}
     {!known ? <p role="alert">Estado do papel Profissional indisponível. Atualize a consulta antes de preparar ou ativar.</p> : <>
       <p>{exists ? `Papel Profissional #${data.profissional_id} — ${data.profissional_ativo ? "Ativo" : "Inativo"}` : "Nenhum papel Profissional associado."}</p>
       <fieldset disabled={busy || readFailed} style={{ border: 0, padding: 0, minWidth: 0 }}>
         {!exists ? !person.cpf ? <p>A preparação exige CPF regularizado. Nenhum CPF será fabricado.</p> :
-          <form onSubmit={e => { e.preventDefault(); write(prepare); }}>
-            <label>Motivo da preparação profissional *<textarea style={input} required maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} /></label>
+          <form onSubmit={e => { e.preventDefault(); write(prepare, markRoleSaved); }}>
+            <label>Motivo da preparação profissional *<textarea aria-label="Motivo da preparação profissional *" style={input} required maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} /></label>
             <Button type="submit" disabled={!reason.trim()}>Preparar Profissional</Button>
           </form> : <>
-          <Button variant={data.profissional_ativo ? "secondary" : "primary"} onClick={() => write(() => data.profissional_ativo ? inativarProfissionalPessoa(person.id) : ativarProfissionalPessoa(person.id))}>
+          <Button variant={data.profissional_ativo ? "secondary" : "primary"} onClick={() => { if (!data.profissional_ativo || window.confirm("Inativar o papel Profissional desta Pessoa? Esta operação não encerra vínculos nem revoga autorizações automaticamente.")) write(() => data.profissional_ativo ? inativarProfissionalPessoa(person.id) : ativarProfissionalPessoa(person.id)); }}>
             {data.profissional_ativo ? "Inativar Profissional" : "Ativar Profissional"}
           </Button>{" "}
-          <Button variant="secondary" onClick={() => setShowLink(v => !v)}>{showLink ? "Fechar vínculo profissional" : "Adicionar vínculo profissional institucional"}</Button>
-          <p>Os vínculos profissionais persistidos são exibidos na tabela acima. O estado de cada vínculo é independente do estado do papel.</p>
-          {showLink && <>
+
+        </>}
+      </fieldset>
+    </>}
+    {busy && feedbackTarget === "role" && <p role="status">Processando operação profissional...</p>}
+  </section>;
+  const link = <section aria-label="Vínculo profissional">
+    {feedbackTarget === "link" && <>
+      {busy && <p role="status">Processando vínculo profissional...</p>}
+      {error && <p role="alert">{error}</p>}
+      {success && <p role="status">{success}</p>}
+      {readFailed && <Button variant="secondary" disabled={busy} onClick={() => consult("link")}>Reconsultar vínculo profissional</Button>}
+    </>}
+    <fieldset disabled={!known || readFailed || busy} style={{ border: 0, padding: 0 }}>
+    {exists && known && <>
+          <Button variant="secondary" aria-expanded={showLink} aria-controls="pessoa-vinculo-profissional" onClick={() => setShowLink(v => !v)}>{showLink ? "Fechar vínculo profissional" : "Adicionar vínculo profissional institucional"}</Button>
+          <p>Os vínculos profissionais persistidos são exibidos nesta área. O estado de cada vínculo é independente do estado do papel.</p>
+          <div id="pessoa-vinculo-profissional" hidden={!showLink}>
             {catalogError ? <p role="alert">{catalogError} <Button variant="secondary" onClick={() => refresh(n => n + 1)}>Reconsultar opções profissionais</Button></p> : !catalog ? <p role="status">Consultando instituições e ocupações...</p> :
-              <form onSubmit={e => { e.preventDefault(); write(() => criarVinculoProfissional({ profissional_id: data.profissional_id, instituicao_id: Number(institution), ocupacao_id: Number(occupation), data_inicio: start, data_fim: end || null, motivo: linkReason.trim() })); }}>
+              <form onSubmit={e => { e.preventDefault(); write(() => criarVinculoProfissional({ profissional_id: data.profissional_id, instituicao_id: Number(institution), ocupacao_id: Number(occupation), data_inicio: start, data_fim: end || null, motivo: linkReason.trim() }), markLinkSaved, "link"); }}>
                 <h4>Novo vínculo profissional institucional</h4>
                 <div style={grid}>
                   <label>Instituição do vínculo profissional *<select style={input} required value={institution} onChange={e => setInstitution(e.target.value)}><option value="">Selecione explicitamente</option>{catalog.institutions.map(i => <option key={i.id} value={i.id} disabled={!i.ativo}>{i.nome_fantasia || i.razao_social}{!i.ativo ? " (inativa)" : ""}</option>)}</select></label>
@@ -103,13 +122,11 @@ export default function ProfissionalPessoa({ person, data, onReload, onBusy, onU
                   <label>Vínculo profissional — início *<input style={input} type="date" required value={start} onChange={e => setStart(e.target.value)} /></label>
                   <label>Vínculo profissional — término<input style={input} type="date" min={start} value={end} onChange={e => setEnd(e.target.value)} /></label>
                 </div>
-                <label>Motivo do vínculo profissional *<textarea style={input} required value={linkReason} onChange={e => setLinkReason(e.target.value)} /></label>
+                <label>Motivo do vínculo profissional *<textarea aria-label="Motivo do vínculo profissional *" style={input} required value={linkReason} onChange={e => setLinkReason(e.target.value)} /></label>
                 <Button type="submit" disabled={!institution || !occupation || !start || !linkReason.trim() || !!(end && end < start)}>Criar vínculo profissional</Button>
               </form>}
-          </>}
-        </>}
-      </fieldset>
+          </div>
     </>}
-    {busy && <p role="status">Processando operação profissional...</p>}
-  </section>;
+  </fieldset></section>;
+  return children ? children({ role, link, summary: !known || readFailed ? "Não confirmado" : !exists ? "Não preparado" : data.profissional_ativo ? "Ativo" : "Inativo" }) : <>{role}{link}</>;
 }

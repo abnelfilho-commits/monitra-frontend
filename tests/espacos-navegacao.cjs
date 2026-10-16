@@ -46,7 +46,7 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5176';
    await nav().getByRole('link',{name:label,exact:true}).and(page.locator('[aria-current="page"]')).waitFor();
    if(['/usuarios','/profissionais'].includes(path))await page.getByText('Cadastro legado',{exact:true}).waitFor();
   }
-  await nav().getByRole('link',{name:'Pessoas',exact:true}).click();await page.getByRole('button',{name:'+ Nova Pessoa',exact:true}).waitFor();
+  await nav().getByRole('link',{name:'Pessoas',exact:true}).click();await page.getByRole('button',{name:'Cadastrar Pessoa',exact:true}).waitFor();
   await nav().getByRole('link',{name:'Pessoas',exact:true}).and(page.locator('[aria-current="page"]')).waitFor();
   await page.screenshot({animations:'disabled',path:'/tmp/integra-espacos/institucional.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});

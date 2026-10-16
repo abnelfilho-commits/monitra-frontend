@@ -6,7 +6,7 @@ import PTSMental from "./pages/saudeMental/PTSMental";
 import IntervencaoMental from "./pages/saudeMental/IntervencaoMental";
 import ScrollManager from "./components/navigation/ScrollManager";
 
-import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Routes, Route, Navigate, useSearchParams } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext";
 
@@ -96,10 +96,9 @@ function SessionLayout() {
   return params.get("espaco") === "saude-mental" ? <SaudeMentalLayout /> : <Layout />;
 }
 
-export default function App() {
+function ApplicationRoutes() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+      <>
         <ScrollManager />
         <Routes>
 
@@ -321,7 +320,13 @@ export default function App() {
           />
 
         </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+      </>
   );
+}
+
+// Incremental data-router adoption: preserve the descendant route tree.
+const router = createBrowserRouter([{ path: "*", element: <ApplicationRoutes /> }]);
+
+export default function App() {
+  return <AuthProvider><RouterProvider router={router} /></AuthProvider>;
 }

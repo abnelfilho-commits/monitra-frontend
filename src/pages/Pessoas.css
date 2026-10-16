@@ -1,0 +1,35 @@
+.pessoas-admin { color: #24344a; }
+.pessoas-admin h1 { margin-bottom: 8px; }
+.pessoas-admin .pessoas-intro { color: #526477; margin-bottom: 24px; }
+.pessoas-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
+.pessoa-area { background: white; border: 1px solid #dce4ed; border-radius: 12px; margin: 16px 0; overflow: hidden; }
+.pessoa-area h2 { margin: 0; font-size: 1.1rem; }
+.pessoa-area-toggle { display: flex; justify-content: space-between; gap: 16px; width: 100%; padding: 20px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.pessoa-area-summary { margin: 0; padding: 0 20px 20px; color: #526477; overflow-wrap: anywhere; }
+.pessoa-area-content { padding: 0 20px 20px; }
+.pessoas-admin [hidden] { display: none !important; }
+.pessoas-admin :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #197b92; outline-offset: 3px; }
+.pessoas-admin :is(input, select, textarea) { max-width: 100%; }
+.pessoas-admin button { white-space: normal; }
+.pessoa-heading { padding: 16px 0; overflow-wrap: anywhere; }
+.pessoa-heading h2 { margin: 8px 0; }
+.pessoa-heading p { margin: 8px 0; }
+.pessoa-status { display: inline-block; border-radius: 16px; padding: 5px 10px; background: #edf3f8; font-size: .9rem; }
+.pessoa-data { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; }
+.pessoa-data div { min-width: 0; overflow-wrap: anywhere; }
+.pessoa-data dt { font-size: .85rem; color: #526477; }
+.pessoa-data dd { margin: 4px 0; }
+.pessoas-table { width: 100%; border-collapse: collapse; }
+.pessoas-table td { overflow-wrap: anywhere; }
+.pessoas-table small { display: block; margin-top: 4px; color: #526477; }
+.pessoa-note { color: #526477; font-size: .9rem; }
+.pessoas-admin fieldset { min-width: 0; }
+@media (max-width: 600px) {
+  .pessoas-table thead { display: none; }
+  .pessoas-table, .pessoas-table tbody, .pessoas-table tr, .pessoas-table td { display: block; }
+  .pessoas-table tr { padding: 12px 0; border-bottom: 1px solid #dce4ed; }
+  .pessoas-table td { border: 0 !important; padding: 6px 12px !important; }
+  .pessoa-area-toggle { padding: 16px; }
+  .pessoa-area-summary { padding: 0 16px 16px; }
+  .pessoa-area-content { padding: 0 16px 16px; }
+}

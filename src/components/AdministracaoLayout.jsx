@@ -1,3 +1,4 @@
+import { useCallback, useRef } from "react";
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import useInstitutionalNavigation from "../hooks/useInstitutionalNavigation";
@@ -8,6 +9,8 @@ export default function AdministracaoLayout() {
   const { user, logout } = useAuth();
   const { pathname } = useLocation();
   const items = useInstitutionalNavigation();
+  const logoutGuard = useRef(null);
+  const registerLogoutGuard = useCallback(guard => { logoutGuard.current = guard; return () => { if (logoutGuard.current === guard) logoutGuard.current = null; }; }, []);
   const isHml = import.meta.env.VITE_AMBIENTE === "HML";
   const overview = items.find(item => item.to === "/saude-mental/gestao" && item.managementConfirmed === true);
   if (pathname === "/gestao-institucional" && overview) return <Navigate to={overview.to} replace />;
@@ -25,13 +28,13 @@ export default function AdministracaoLayout() {
       <div className="institutional-shell-separator" />
       <Link className="institutional-shell-item" to="/plataforma">Voltar à Plataforma</Link>
       <div className="institutional-shell-separator" />
-      <Button variant="danger" onClick={logout} style={{ width: "100%" }}>Sair</Button>
+      <Button variant="danger" onClick={() => logoutGuard.current ? logoutGuard.current(logout) : logout()} style={{ width: "100%" }}>Sair</Button>
     </aside>
     <main className="institutional-shell-content">
       {pathname === "/gestao-institucional" && <section className="institutional-shell-intro"><h1>Gestão Institucional</h1><p>Escolha uma capacidade na navegação. Cada operação mantém suas próprias regras de acesso.</p><p>Linhas de cuidado são acessadas pela Plataforma. Nenhuma permissão clínica é concedida por entrar neste espaço.</p>{!items.length && <p>Nenhuma capacidade institucional disponível para esta conta.</p>}</section>}
       {legacy && <div className="institutional-shell-notice"><strong>Cadastro legado</strong> — esta página ainda utiliza Clínica e seus vínculos existentes. Não representa convergência para Instituição. {user?.perfil !== "PROFISSIONAL" && <Link to="/clinicas">Abrir Clínicas (legado)</Link>}</div>}
       {pathname === "/dimensionamento" && <div className="institutional-shell-notice">Dimensionamento transversal da demanda assistencial planejada por linha de cuidado.</div>}
-      <Outlet />
+      <Outlet context={{ registerLogoutGuard }} />
     </main>
   </div>;
 }

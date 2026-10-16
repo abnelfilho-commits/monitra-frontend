@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Button from "./ui/Button";
+import PessoaArea from "./pessoas/PessoaArea";
+import usePessoaDraft from "./pessoas/usePessoaDraft";
 import { listarInstituicoes } from "../services/instituicoes";
 import { habilitarAcesso, obterAcessosPessoa } from "../services/pessoas";
 
@@ -13,7 +15,7 @@ const errors = {
   USER_INACTIVE: "A conta existente está inativa. Este fluxo não reativa contas.",
   INSTITUTION_INACTIVE: "Instituição inativa.",
 };
-export default function HabilitarAcesso({ person }) {
+export default function HabilitarAcesso({ person, onDirty, onBusy }) {
   const [open, setOpen] = useState(false), [institutions, setInstitutions] = useState(null);
   const [email, setEmail] = useState(""), [password, setPassword] = useState("");
   const [institution, setInstitution] = useState(""), [profile, setProfile] = useState("");
@@ -21,6 +23,8 @@ export default function HabilitarAcesso({ person }) {
   const [error, setError] = useState(""), [result, setResult] = useState(null), [unknown, setUnknown] = useState(false);
   const [revision, refresh] = useState(0), [readError, setReadError] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const markSaved = usePessoaDraft("acesso", [email, institution, profile, active], onDirty);
+  useEffect(() => { onDirty?.("senha-acesso", !!password); return () => onDirty?.("senha-acesso", false); }, [password, onDirty]);
   const lock = useRef(false);
   useEffect(() => {
     let current = true;
@@ -40,19 +44,18 @@ export default function HabilitarAcesso({ person }) {
   async function submit(e) {
     e.preventDefault();
     if (lock.current || unknown || !result || readError || result.usuario) return;
-    lock.current = true; setBusy(true); setError("");
+    lock.current = true; setBusy(true); onBusy?.(true); setError("");
     try {
       await habilitarAcesso(person.id, { email, senha_inicial: password, instituicao_id: Number(institution), perfil_institucional: profile, ativo: active });
-      setOpen(false); setConfirmed(true); setResult(null); setReadError(""); refresh(n => n + 1);
+      markSaved(); setOpen(false); setConfirmed(true); setResult(null); setReadError(""); refresh(n => n + 1);
     } catch (e) {
       const status = e?.response?.status;
       setError(errors[e?.response?.data?.detail?.code] || ({401: "Sessão expirada.",403: "Operação exclusiva do ADMIN global.",404: "Pessoa ou instituição não encontrada.",409: "Conflito: nenhuma sobrescrita foi realizada.",422: "Confira e-mail, senha (até 72 bytes), instituição e perfil."}[status]) || "Resultado não confirmado. Solicite conferência antes de repetir.");
       if (!status || status >= 500) setUnknown(true);
-    } finally { setPassword(""); setBusy(false); lock.current = false; }
+    } finally { setPassword(""); setBusy(false); onBusy?.(false); lock.current = false; }
   }
-  return <section style={{ background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, marginBottom: 20 }}>
-    <h2>Acesso à plataforma</h2>
-    <p>Possuir acesso à plataforma não concede autoridade, participação ou acesso clínico. O perfil institucional não concede capabilities.</p>
+  return <PessoaArea title="Acesso à plataforma" summary={readError ? "Não foi possível confirmar o acesso." : !result ? "Consultando acesso…" : result.usuario ? `Conta ${result.usuario.ativo ? "ativa" : "inativa"} · ${result.autorizacoes.length} autorização(ões) institucional(is).` : "Nenhuma conta associada."}>
+    <p>Possuir acesso à plataforma não concede autoridade, participação ou acesso clínico. O perfil institucional não concede permissões clínicas.</p>
     {readError && <p role="alert">{readError}</p>}
     {!result && !readError && <p role="status">Consultando acesso persistido...</p>}
     <Button variant="secondary" disabled={busy} onClick={() => { setOpen(false); setPassword(""); setResult(null); setReadError(""); refresh(n => n + 1); }}>Atualizar acesso</Button>
@@ -89,5 +92,5 @@ export default function HabilitarAcesso({ person }) {
       {confirmed && <p role="status">Acesso institucional habilitado e consultado. Nenhuma autorização clínica foi concedida.</p>}
     </div>}
     {result && !result.usuario && confirmed && <p role="alert">A conta não foi encontrada na reconsulta. Solicite conferência administrativa antes de repetir.</p>}
-  </section>;
+  </PessoaArea>;
 }
