@@ -8,6 +8,8 @@ const FRONT=process.env.MENTAL_FRONT_URL||'http://127.0.0.1:5177';
  const browser=await chromium.launch({channel:'chrome',headless:true});
  try {
   const page=await browser.newPage({viewport:{width:1440,height:1000},timezoneId:"America/Cuiaba"});page.setDefaultTimeout(12000);
+  await page.clock.setFixedTime(new Date('2026-10-12T16:00:00Z'));
+  assert.equal(await page.evaluate(()=>new Date().toLocaleDateString('en-CA',{timeZone:'America/Cuiaba'})),'2026-10-12');
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   const base='/saude-mental/pessoas/18/contextos/9';let rows=[{id:7,pts_id:1,objetivo_id:2,status:'PLANEJADO',quantidade_sessoes:52,duracao_minutos:45,data_inicio:'2026-10-01',data_fim:'2027-04-30',atividade_nome:'Psicoterapia individual',ocupacao_nome:'Psicólogo',profissional_nome:'Executor institucional'}],allowed=true,writes=0,sessions=[],failFinalize=true;
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -18,14 +20,17 @@ const FRONT=process.env.MENTAL_FRONT_URL||'http://127.0.0.1:5177';
    if(u.pathname.startsWith('/sessoes-assistenciais')) {
     const contextual={id:9,instituicao_id:5,instituicao:'Instituição teste',modulo_id:3,pts_id:1};
     if(u.pathname.endsWith('/minhas'))return reply(sessions.map(s=>({...s,pessoa:'Pessoa teste',contexto:contextual,pode_registrar:allowed,atividade:'Psicoterapia individual'})));
-    const session=sessions[0];
+    const requestedId=Number(u.pathname.split('/')[2]);
+    const session=sessions.find(s=>s.id===requestedId);
+    assert.ok(session, `Sessão solicitada inexistente no mock: ${requestedId}`);
+    assert.equal(session.id,requestedId);
     if(req.method()==='POST') {
      assert.ok(allowed);writes++;
-     if(u.pathname.endsWith('/registrar-atendimento')){assert.equal(req.postDataJSON().narrativa,'Atendimento teste');assert.deepEqual(req.postDataJSON().proximos_passos,['retornoAntecipado']);Object.assign(session,{proximos_passos:req.postDataJSON().proximos_passos,registro_longitudinal_id:99,narrativa:'Atendimento teste',autor_usuario_id:99,registrado_em:'2026-10-09T14:55:47Z',profissional_nome:'Executor institucional',autor_nome:'Registrador teste'});return reply({success:true,sessao_id:1,registro_id:99});}
+     if(u.pathname.endsWith('/registrar-atendimento')){assert.equal(req.postDataJSON().narrativa,'Atendimento teste');assert.deepEqual(req.postDataJSON().proximos_passos,['retornoAntecipado']);Object.assign(session,{proximos_passos:req.postDataJSON().proximos_passos,registro_longitudinal_id:99,narrativa:'Atendimento teste',autor_usuario_id:99,registrado_em:'2026-10-09T14:55:47Z',profissional_nome:'Executor institucional',autor_nome:'Registrador teste'});return reply({success:true,sessao_id:session.id,registro_id:99});}
      if(u.pathname.endsWith('/finalizar') && failFinalize){failFinalize=false;return reply({detail:'Finalização temporariamente indisponível'},409);}
      session.status={confirmar:'CONFIRMADA',iniciar:'EM_ANDAMENTO',finalizar:'REALIZADA'}[u.pathname.split('/').pop()];return reply(session);
     }
-    return reply({sessao:{id:1,numero:1,status:session.status,data:session.data_agendada,hora_inicio:session.hora_inicio,hora_fim:session.hora_fim,duracao_minutos:45},pessoa:{id:18,nome:'Pessoa teste'},contexto:contextual,pode_registrar:allowed,objetivo:{id:2,descricao:'Objetivo contextual'},atividade:{id:3,nome:'Psicoterapia individual'},profissional:{id:5,nome:'Executor institucional',ocupacao:'Psicólogo'},registro_longitudinal:session.registro_longitudinal_id?{id:99,data:session.data_agendada,origem:'PROFISSIONAL'}:null,narrativa:session.narrativa,proximos_passos:session.proximos_passos || [],autor_usuario_id:99,avaliacoes:[],intervencoes:[],resumo:{titulo:'Sessão nº 1',descricao:'Atividade contextual',avaliacoes_realizadas:0,intervencoes:0,registro_realizado:Boolean(session.registro_longitudinal_id),total_sessoes:52,sessoes_realizadas:session.status==='REALIZADA'?1:0,percentual_conclusao:0}});
+    return reply({sessao:{id:session.id,numero:session.numero_sessao,status:session.status,data:session.data_agendada,hora_inicio:session.hora_inicio,hora_fim:session.hora_fim,duracao_minutos:45},pessoa:{id:18,nome:'Pessoa teste'},contexto:contextual,pode_registrar:allowed,objetivo:{id:2,descricao:'Objetivo contextual'},atividade:{id:3,nome:'Psicoterapia individual'},profissional:{id:5,nome:'Executor institucional',ocupacao:'Psicólogo'},registro_longitudinal:session.registro_longitudinal_id?{id:99,data:session.data_agendada,origem:'PROFISSIONAL'}:null,narrativa:session.narrativa,proximos_passos:session.proximos_passos || [],autor_usuario_id:99,avaliacoes:[],intervencoes:[],resumo:{titulo:`Sessão nº ${session.numero_sessao}`,descricao:'Atividade contextual',avaliacoes_realizadas:0,intervencoes:0,registro_realizado:Boolean(session.registro_longitudinal_id),total_sessoes:52,sessoes_realizadas:session.status==='REALIZADA'?1:0,percentual_conclusao:0}});
    }
    if(u.pathname==='/saude-mental/cockpit/profissional')return reply({resumo:{pessoas_em_acompanhamento:0,atendimentos_hoje:0,realizados_hoje:0,proximos_atendimentos:0},agenda_hoje:[],proximos_atendimentos:[],pessoas_para_acompanhamento:[],atividade_recente:[],metadados:{data_referencia:'2026-10-13',fuso:'America/Cuiaba',tem_mais:{}}});
    if(u.pathname==='/saude-mental/instituicoes')return reply([]);
@@ -77,7 +82,7 @@ const FRONT=process.env.MENTAL_FRONT_URL||'http://127.0.0.1:5177';
   await page.getByRole('button',{name:'Fechar consulta',exact:true}).click();assert.equal(await page.getByRole('link',{name:'Visualizar Sessão 1',exact:true}).count(),0);
   assert.equal(await page.getByRole('button',{name:'Confirmar sessão 1',exact:true}).count(),0);
   await page.getByRole('link',{name:'Abrir Agenda Assistencial',exact:true}).click();
-  await page.getByRole('button',{name:'Visualizar Sessão',exact:true}).first().waitFor();await responsive('agenda');
+  await page.locator('section').filter({has:page.getByRole('heading',{name:'Hoje',exact:true})}).getByRole('button',{name:'Visualizar Sessão',exact:true}).waitFor();await responsive('agenda');
   await page.getByRole('button',{name:'← Voltar',exact:true}).click();await page.waitForURL(url);
   await page.getByRole('link',{name:'Abrir Agenda Assistencial',exact:true}).click();await page.reload();
   await page.getByRole('button',{name:'← Voltar',exact:true}).click();await page.waitForURL(url);
@@ -87,7 +92,15 @@ const FRONT=process.env.MENTAL_FRONT_URL||'http://127.0.0.1:5177';
   await page.getByRole('button',{name:'← Voltar',exact:true}).click();await page.waitForURL(FRONT+'/saude-mental');
   await page.goto(url);await page.getByRole('link',{name:'Abrir Agenda Assistencial',exact:true}).click();
 
-  await page.getByRole('button',{name:'Visualizar Sessão',exact:true}).first().click();
+  // Prove that the detail mock resolves a different requested ID without aliasing #1.
+  await page.goto(FRONT+'/sessoes-assistenciais/2?espaco=saude-mental');
+  await page.getByRole('heading',{name:'Sessão nº 2',exact:true}).waitFor();
+  await page.goto(url);await page.getByRole('link',{name:'Abrir Agenda Assistencial',exact:true}).click();
+  const today=page.locator('section').filter({has:page.getByRole('heading',{name:'Hoje',exact:true})});
+  assert.equal(sessions.filter(s=>s.data_agendada==='2026-10-12').length,1);
+  assert.equal(sessions.find(s=>s.data_agendada==='2026-10-12').id,1);
+  await today.getByRole('button',{name:'Visualizar Sessão',exact:true}).click();
+  await page.waitForURL(u=>u.pathname==='/sessoes-assistenciais/1');
   await page.getByRole('heading',{name:'Sessão nº 1',exact:true}).waitFor();await responsive('session');
   await page.getByRole('button',{name:'Registrar Atendimento',exact:true}).click();
   await page.getByLabel('Como foi o atendimento?',{exact:true}).fill('Atendimento teste');await responsive('attendance');
