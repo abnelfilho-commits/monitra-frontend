@@ -66,20 +66,49 @@ export default function Pessoas() {
 function Administracao() {
   const [offset, setOffset] = useState(0), [revision, refresh] = useState(0);
   const [result, setResult] = useState(null);
-  const key = `${offset}:${revision}`;
+  const [searchText, setSearchText] = useState(""), [filters, setFilters] = useState({});
+  const [searchError, setSearchError] = useState("");
+  const key = JSON.stringify([offset, revision, filters]);
   const list = result?.key === key ? result.rows : null;
   const error = result?.key === key ? result.error : "";
   const [selection, select] = useState(null);
   useEffect(() => {
     let current = true;
-    api.listarPessoas(offset, 20).then(rows => { if (current) setResult({ key, rows, error: "" }); }).catch(e => { if (current) setResult({ key, rows: null, error: errorText(e) }); });
+    api.listarPessoas(offset, 20, filters).then(rows => {
+      if (!Array.isArray(rows)) throw new Error("Invalid people response");
+      if (current) setResult({ key, rows, error: "" });
+    }).catch(e => { if (current) setResult({ key, rows: null, error: e?.response?.status === 422 && filters.cpf ? "CPF inválido. Confira os 11 dígitos e tente novamente." : errorText(e) }); });
     return () => { current = false; };
-  }, [offset, key]);
+  }, [offset, key, filters]);
+  function applySearch(next) {
+    setSearchError("");
+    if (offset === 0 && JSON.stringify(next) === JSON.stringify(filters) && !list && !error) return;
+    setFilters(next); setOffset(0); refresh(n => n + 1);
+  }
+  function search(event) {
+    event.preventDefault();
+    const term = searchText.trim();
+    if (!term) return applySearch({});
+    if (/^[0-9]{11}$/.test(term) || /^[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}$/.test(term)) return applySearch({ cpf: term });
+    if (/^[0-9.\s-]+$/.test(term) || /^[0-9]/.test(term)) {
+      setSearchError("Informe o CPF completo, com 11 dígitos ou máscara convencional."); return;
+    }
+    if ([...term].length < 2 || [...term].length > 100) {
+      setSearchError("Informe um nome com 2 a 100 caracteres."); return;
+    }
+    applySearch({ nome: term });
+  }
   return <PageLayout><div className="pessoas-admin"><h1>Pessoas</h1><p className="pessoas-intro">Consulte cadastros e organize papéis, vínculos e acesso à plataforma.</p>
     {selection !== null ? <Editor key={selection} id={selection} close={() => { select(null); refresh(n => n + 1); }} /> : <>
       <Button onClick={() => select("new")}>Cadastrar Pessoa</Button> <Link to="/admin/instituicoes">Administrar Instituições</Link>
+      <form className="pessoas-search" onSubmit={search} role="search" aria-label="Pesquisa de Pessoas">
+        <label htmlFor="pessoas-search">Buscar por nome ou CPF<input id="pessoas-search" type="search" autoComplete="off" style={input} value={searchText} onChange={e => { setSearchText(e.target.value); setSearchError(""); }} aria-invalid={!!searchError} aria-describedby={searchError ? "pessoas-search-error" : undefined} /></label>
+        <Button type="submit">Buscar</Button>
+        <Button type="button" variant="secondary" onClick={() => { setSearchText(""); applySearch({}); }}>Limpar</Button>
+        {searchError && <p id="pessoas-search-error" role="alert">{searchError}</p>}
+      </form>
       {error ? <p role="alert">{error} <Button onClick={() => refresh(n => n + 1)}>Tentar consulta novamente</Button></p> : !list ? <p role="status">Carregando pessoas...</p> : <>
-        {!list.length ? <p>Nenhuma pessoa nesta página.</p> : <div style={{ overflowX: "auto", ...panel }}><table className="pessoas-table"><thead><tr>{["Pessoa", "CPF", "Situação cadastral", "Ação"].map(h => <th key={h} style={cell}>{h}</th>)}</tr></thead><tbody>{list.map(p => <tr key={p.id}><td style={cell}><strong>{p.nome_completo}</strong>{p.nome_social && <small>{p.nome_social}</small>}</td><td style={cell}>{maskedCpf(p.cpf)}</td><td style={cell}><span className="pessoa-status">{p.ativo ? "Cadastro ativo" : "Cadastro inativo"}</span></td><td style={cell}><Button variant="secondary" onClick={() => select(p.id)}>Consultar</Button></td></tr>)}</tbody></table></div>}
+        {!list.length ? <p>{filters.nome || filters.cpf ? "Nenhuma Pessoa encontrada para esta pesquisa." : "Nenhuma pessoa nesta página."}</p> : <div style={{ overflowX: "auto", ...panel }}><table className="pessoas-table"><thead><tr>{["Pessoa", "CPF", "Situação cadastral", "Ação"].map(h => <th key={h} style={cell}>{h}</th>)}</tr></thead><tbody>{list.map(p => <tr key={p.id}><td style={cell}><strong>{p.nome_completo}</strong>{p.nome_social && <small>{p.nome_social}</small>}</td><td style={cell}>{maskedCpf(p.cpf)}</td><td style={cell}><span className="pessoa-status">{p.ativo ? "Cadastro ativo" : "Cadastro inativo"}</span></td><td style={cell}><Button variant="secondary" onClick={() => select(p.id)}>Consultar</Button></td></tr>)}</tbody></table></div>}
         <p>Página {offset / 20 + 1}</p><Button variant="secondary" disabled={!offset} onClick={() => setOffset(n => n - 20)}>Anterior</Button> <Button variant="secondary" disabled={list.length < 20} onClick={() => setOffset(n => n + 20)}>Próxima</Button>
       </>}
     </>}

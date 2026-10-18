@@ -1,6 +1,6 @@
 import { api } from "../lib/api";
 
-export const listarPessoas = (offset, limit) => api.get("/admin/pessoas/", { params: { offset, limit } }).then(r => r.data);
+export const listarPessoas = (offset, limit, { nome, cpf } = {}) => api.get("/admin/pessoas/", { params: { offset, limit, ...(nome ? { nome } : {}), ...(cpf ? { cpf } : {}) } }).then(r => r.data);
 export const obterPessoa = id => api.get(`/admin/pessoas/${id}`).then(r => r.data);
 export const atualizarPessoa = (id, dados) => api.patch(`/admin/pessoas/${id}`, dados).then(r => r.data);
 export const localizarPessoa = cpf => api.post("/admin/identidades/localizar", { cpf }).then(r => r.data);

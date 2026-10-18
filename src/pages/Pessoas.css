@@ -38,3 +38,7 @@
 .pessoas-admin .pessoa-area-toggle { border-radius: 12px; }
 .pessoas-admin .pessoa-area-toggle:focus:not(:focus-visible) { outline: none; }
 .pessoas-admin .pessoa-area-toggle:focus-visible { outline: 3px solid #197b92; outline-offset: -5px; }
+
+.pessoas-admin .pessoas-search { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 20px 0; }
+.pessoas-admin .pessoas-search label { flex: 1 1 260px; min-width: 0; }
+.pessoas-admin .pessoas-search [role="alert"] { flex-basis: 100%; margin: 0; }
