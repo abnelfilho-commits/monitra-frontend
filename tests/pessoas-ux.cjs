@@ -35,6 +35,26 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5186';
   assert.equal(await page.getByRole('button',{name:'Salvar alterações'}).isVisible(),false);
   if(process.env.PESSOAS_SCREENSHOTS)for(const width of [1440,768,390]){ await page.setViewportSize({width,height:900});await page.screenshot({path:`${process.env.PESSOAS_SCREENSHOTS}/pessoas-resumo-${width}.png`,fullPage:true}); }
   assert.equal(await page.getByText('Nenhum vínculo institucional registrado.',{exact:true}).count(),1);
+  for(const width of [1440,768,390]){
+   await page.setViewportSize({width,height:900});
+   for(const title of titles){
+    const toggle=page.getByRole('button',{name:title,exact:true});
+    await toggle.locator('span').first().click();
+    assert.equal(await toggle.getAttribute('aria-expanded'),'true');
+    assert.equal(await toggle.evaluate(e=>getComputedStyle(e).outlineStyle),'none');
+    await toggle.locator('[aria-hidden=true]').click();
+    assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+    await toggle.locator('[aria-hidden=true]').click();
+    assert.equal(await toggle.getAttribute('aria-expanded'),'true');
+    await toggle.press('Shift+Tab');await page.keyboard.press('Tab');
+    assert.ok(await toggle.evaluate(e=>e===document.activeElement && e.matches(':focus-visible')));
+    assert.deepEqual(await toggle.evaluate(e=>{const s=getComputedStyle(e);return [s.outlineStyle,s.outlineWidth,s.outlineOffset,s.borderTopLeftRadius];}),['solid','3px','-5px','12px']);
+    if(process.env.PESSOAS_SCREENSHOTS && title===titles[0])await page.screenshot({path:`${process.env.PESSOAS_SCREENSHOTS}/pessoas-focus-${width}.png`,fullPage:true});
+    await toggle.press('Enter');assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+    await toggle.press('Space');assert.equal(await toggle.getAttribute('aria-expanded'),'true');
+    await toggle.press('Space');assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+   }
+  }
   const reads=calls.filter(c=>c.path.endsWith('/21/vinculos')).length;
   const identity=page.getByRole('button',{name:titles[0],exact:true});
   await identity.focus();

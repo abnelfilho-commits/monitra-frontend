@@ -33,3 +33,8 @@
   .pessoa-area-summary { padding: 0 16px 16px; }
   .pessoa-area-content { padding: 0 16px 16px; }
 }
+
+/* Keep the header focus ring inside the rounded, clipped card. */
+.pessoas-admin .pessoa-area-toggle { border-radius: 12px; }
+.pessoas-admin .pessoa-area-toggle:focus:not(:focus-visible) { outline: none; }
+.pessoas-admin .pessoa-area-toggle:focus-visible { outline: 3px solid #197b92; outline-offset: -5px; }
