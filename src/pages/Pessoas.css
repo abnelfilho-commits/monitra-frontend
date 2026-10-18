@@ -3,7 +3,7 @@
 .pessoas-admin .pessoas-intro { color: #526477; margin-bottom: 24px; }
 .pessoas-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 16px 0; }
 .pessoa-area { background: white; border: 1px solid #dce4ed; border-radius: 12px; margin: 16px 0; overflow: hidden; }
-.pessoa-area h2 { margin: 0; font-size: 1.1rem; }
+.pessoa-area > h2 { margin: 0 0 12px; font-size: 1.1rem; }
 .pessoa-area-toggle { display: flex; justify-content: space-between; gap: 16px; width: 100%; padding: 20px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .pessoa-area-summary { margin: 0; padding: 0 20px 20px; color: #526477; overflow-wrap: anywhere; }
 .pessoa-area-content { padding: 0 20px 20px; }

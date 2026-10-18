@@ -6,7 +6,7 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5186';
  try {
   const page = await browser.newPage(); page.setDefaultTimeout(10000);
   const errors=[],calls=[]; let rejectPatch=false, failLinks=false, failAccess=false;
-  const rows=Array.from({length:21},(_,i)=>({id:i+1,nome_completo:`Pessoa de teste ${i+1}`,nome_social:null,cpf:'11144477735',ativo:true}));
+  const rows=Array.from({length:21},(_,i)=>({id:i+1,nome_completo:`Pessoa de teste ${i+1}`,nome_social:null,cpf:'11144477735',data_nascimento:'2000-02-29',ativo:true}));
   page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>localStorage.setItem('access_token','synthetic-only'));
   await page.route('**/*',async route=>{
@@ -34,10 +34,12 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5186';
   assert.equal(await page.getByRole('button',{name:'Ativar papel de Paciente',exact:true}).count(),0);
   assert.equal(await page.getByRole('button',{name:'Salvar alterações'}).isVisible(),false);
   if(process.env.PESSOAS_SCREENSHOTS)for(const width of [1440,768,390]){ await page.setViewportSize({width,height:900});await page.screenshot({path:`${process.env.PESSOAS_SCREENSHOTS}/pessoas-resumo-${width}.png`,fullPage:true}); }
+  assert.equal(await page.getByText('Nenhum vínculo institucional registrado.',{exact:true}).count(),1);
   const reads=calls.filter(c=>c.path.endsWith('/21/vinculos')).length;
   const identity=page.getByRole('button',{name:titles[0],exact:true});
   await identity.focus();
   await identity.press('Enter');assert.equal(await identity.evaluate(e=>e.matches(':focus-visible') && getComputedStyle(e).outlineStyle!=='none'),true);assert.equal(await identity.getAttribute('aria-expanded'),'true');
+  assert.equal(await page.locator('.pessoa-data div').filter({has:page.getByText('Data de nascimento',{exact:true})}).locator('dd').innerText(),'29/02/2000');
   await page.getByRole('button',{name:'Editar dados',exact:true}).click();
   const name=page.getByLabel('Nome completo *',{exact:true}); await name.fill('Cadastro editado');
   await identity.click();await identity.click();assert.equal(await name.inputValue(),'Cadastro editado');
@@ -61,6 +63,7 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5186';
   for(const width of [1440,768,390]){
    await page.setViewportSize({width,height:900});
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+   assert.ok(await page.locator('.pessoa-area').evaluateAll(areas=>areas.every(a=>a.querySelector('.pessoa-area-summary').getBoundingClientRect().top-a.querySelector('h2').getBoundingClientRect().bottom>=12)));
    for(const title of titles)assert.equal(await page.getByRole('button',{name:title,exact:true}).isVisible(),true);
    if(process.env.PESSOAS_SCREENSHOTS)await page.screenshot({path:`${process.env.PESSOAS_SCREENSHOTS}/pessoas-${width}.png`,fullPage:true});
   }
@@ -70,6 +73,13 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5186';
   await page.getByText('Não foi possível confirmar os vínculos.',{exact:true}).waitFor();await page.getByText('Não foi possível confirmar o acesso.',{exact:true}).waitFor();
   assert.equal(await page.getByText('Nenhum vínculo institucional registrado.',{exact:true}).count(),0);
   await page.getByRole('button',{name:titles[0],exact:true}).click();await page.getByRole('button',{name:'Editar dados',exact:true}).click();assert.equal(await name.inputValue(),'Cadastro editado');
+  for(const [value,expected] of [[null,'Não informado'],['2026-02-30','Data inválida'],['1900-02-29','Data inválida'],['invalid','Data inválida'],['2026-10-12','12/10/2026']]){
+   rows[20].data_nascimento=value;
+   await page.reload();await page.getByRole('button',{name:'Próxima',exact:true}).click();
+   await page.getByRole('button',{name:'Consultar',exact:true}).click();
+   await page.getByRole('button',{name:titles[0],exact:true}).click();
+   assert.equal(await page.locator('.pessoa-data div').filter({has:page.getByText('Data de nascimento',{exact:true})}).locator('dd').innerText(),expected);
+  }
   assert.deepEqual(errors,[]);assert.equal(calls.filter(c=>!['GET','PATCH'].includes(c.method)).length,0);
   console.log('Pessoas UX PASS: quatro áreas, resumos, teclado, edição/PATCH, conflito, descarte/cancelamento, paginação, rascunhos preservados, sem GET extra na expansão, falhas independentes, 1440/768/390, zero pageerrors.');
  }finally{await browser.close();}

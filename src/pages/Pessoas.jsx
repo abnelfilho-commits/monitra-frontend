@@ -20,6 +20,17 @@ const cell = { padding: 12, textAlign: "left", borderBottom: "1px solid #e5e7eb"
 const types = { BENEFICIARIO: "Beneficiário", ASSISTENCIAL: "Assistencial", COLABORADOR: "Colaborador", ASSOCIADO: "Associado", OUTRO: "Outro" };
 const labelInstitution = i => i.nome_fantasia || i.razao_social;
 const date = value => value ? value.split("-").reverse().join("/") : "Sem término";
+const birthDate = value => {
+  if (!value) return "Não informado";
+  const match = typeof value === "string" && /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return "Data inválida";
+  const [, year, month, day] = match;
+  const y = Number(year), m = Number(month), d = Number(day);
+  const leap = y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0);
+  const days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return y > 0 && m >= 1 && m <= 12 && d >= 1 && d <= days[m - 1]
+    ? `${day}/${month}/${year}` : "Data inválida";
+};
 const maskedCpf = cpf => cpf ? `***.***.${cpf.slice(-5, -2)}-${cpf.slice(-2)}` : "Não informado";
 const formOf = p => Object.fromEntries(Object.keys(fields).map(k => [k, p?.[k] || ""]));
 const personal = form => Object.fromEntries(Object.entries(form).map(([k, v]) => [k, v.trim() || null]));
@@ -126,7 +137,7 @@ function Editor({ id, close }) {
     </section>}
     {person && <><header className="pessoa-heading"><h2>{person.nome_completo}</h2>{person.nome_social && <p>{person.nome_social}</p>}<p>Pessoa #{person.id} · <span className="pessoa-status">{person.ativo ? "Cadastro ativo" : "Cadastro inativo"}</span></p><p>CPF: {maskedCpf(person.cpf)} — não editável</p></header>
       <PessoaArea title="Identificação e dados cadastrais" summary="Consulte os dados de identificação e contato. Editar o cadastro não altera papéis ou permissões.">
-        <div hidden={editing}><dl className="pessoa-data">{Object.entries(fields).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{person[key] || "Não informado"}</dd></div>)}</dl><Button onClick={() => setEditing(true)}>Editar dados</Button></div>
+        <div hidden={editing}><dl className="pessoa-data">{Object.entries(fields).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{key === "data_nascimento" ? birthDate(person[key]) : person[key] || "Não informado"}</dd></div>)}</dl><Button onClick={() => setEditing(true)}>Editar dados</Button></div>
         <form hidden={!editing} onSubmit={e => { e.preventDefault(); run(async () => { const next = personal(form), original = personal(formOf(person)); const patch = Object.fromEntries(Object.entries(next).filter(([k,v]) => v !== original[k])); if (!Object.keys(patch).length) { setSuccess("Nenhuma alteração cadastral."); setEditing(false); return; } const p = await api.atualizarPessoa(person.id, patch); setPerson(p); setForm(formOf(p)); setEditing(false); setSuccess("Cadastro atualizado."); }, true); }}><Fields form={form} setForm={setForm} /><div className="pessoas-actions"><Button type="submit">Salvar alterações</Button><Button type="button" variant="secondary" onClick={() => { if (JSON.stringify(form) === JSON.stringify(formOf(person)) || window.confirm("Descartar alterações cadastrais não salvas?")) { setForm(formOf(person)); setEditing(false); } }}>Cancelar edição</Button></div></form>
       </PessoaArea>
       <VinculosPessoa key={person.id} person={person} preparedPatient={patient} onBusy={setBusy} onUncertain={() => setUncertain(true)} onDirty={onDirty}><section><p>Vínculos representam a relação assistencial/institucional da Pessoa com a Instituição. Possuir acesso à plataforma não cria automaticamente este vínculo e não exige papel assistencial. Prepare o papel de Paciente somente para quem participará da jornada assistencial. Um papel já associado será reutilizado; esta ação não cria conta ou autorização.</p>{!person.cpf ? <p>O cadastro legado não possui CPF. A preparação exige regularização explícita; nenhum CPF será fabricado.</p> : <form onSubmit={e => { e.preventDefault(); run(() => identity(true), true); }}><label>Motivo da preparação *<textarea aria-label="Motivo da preparação *" style={input} required maxLength={1000} value={roleReason} onChange={e => setRoleReason(e.target.value)} /></label><Button type="submit">Preparar papel de Paciente</Button></form>}</section></VinculosPessoa>
@@ -163,7 +174,7 @@ function VinculosPessoa({ person, preparedPatient, onBusy, onUncertain, onDirty,
       <PessoaArea title="Instituições vinculadas" summary={error ? "Não foi possível confirmar os vínculos." : !data ? "Consultando vínculos…" : rows.length ? `${rows.length} vínculo(s) institucional(is), incluindo histórico.` : "Nenhum vínculo institucional registrado."}>
         <p>Vínculos e acesso à plataforma são independentes. Esta consulta não cria papel, vínculo ou autorização.</p>
         <Button variant="secondary" onClick={() => refresh(n => n + 1)}>Atualizar vínculos da Pessoa</Button>
-        {error ? <p role="alert">{error}</p> : !data ? <p role="status">Consultando vínculos persistidos...</p> : !rows.length ? <p>Nenhum vínculo institucional registrado.</p> : <div style={{ overflowX: "auto" }}><table className="pessoas-table">
+        {error ? <p role="alert">{error}</p> : !data ? <p role="status">Consultando vínculos persistidos...</p> : !rows.length ? null : <div style={{ overflowX: "auto" }}><table className="pessoas-table">
           <thead><tr>{["Instituição", "Papel", "Tipo / Ocupação", "Período", "Registro"].map(h => <th key={h} style={cell}>{h}</th>)}</tr></thead>
           <tbody>{rows.map(l => <tr key={`${l.papel}:${l.id}`}><td style={cell}>{l.instituicao_nome}{!l.instituicao_ativa && " (inativa)"}</td><td style={cell}>{l.papel}</td><td style={cell}>{l.tipo}</td><td style={cell}>{date(l.data_inicio)} → {date(l.data_fim)}</td><td style={cell}>{l.ativo ? "Válido" : "Invalidado"}</td></tr>)}</tbody>
         </table></div>}
