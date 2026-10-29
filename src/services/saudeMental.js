@@ -44,3 +44,9 @@ export const solicitarWhatsAppMental = async (instituicao, pessoa, contexto, key
   { motivo: "ACOMPANHAMENTO_EXTRAORDINARIO" },
   { params: { instituicao_id: instituicao }, headers: { "Idempotency-Key": key } }
 )).data;
+
+export const salvarProgramacaoWhatsAppMental = async (instituicao, pessoa, contexto, payload) => (await api.put(
+  whatsappMentalPath(pessoa, contexto) + "/programacao",
+  payload,
+  { params: { instituicao_id: instituicao } }
+)).data;

@@ -19,6 +19,7 @@ await build({ stdin: { contents: `
   plugins: [{ name: 'synthetic-api-only', setup(build) {
     build.onLoad({ filter: /\/(services|lib)\/api\.js$/ }, () => ({ contents: `export const api = {
       get: (url, config) => globalThis.syntheticAPI('GET', url, null, config),
+      put: (url, body, config) => globalThis.syntheticAPI('PUT', url, body, config),
       post: (url, body, config) => globalThis.syntheticAPI('POST', url, body, config)
     }; export default api;`, loader: 'js' }));
     build.onLoad({ filter: /\.css$/ }, () => ({ contents: '', loader: 'js' }));
@@ -38,13 +39,13 @@ const jornada = { instituicao_id: 2, pessoa_id: 1, contexto_assistencial_id: 1, 
   bem_estar: { pode_registrar: true, checkins: [] } };
 const scheduled = '2026-10-30T23:49:54Z';
 function fixture() {
-  return { acompanhamento: { id: 1, contexto_assistencial_id: 1, paciente_id: 19, telefone: '5565999991234', status: 'ATIVO', consentimento_status: 'CONSENTIDO', frequencia: 'SEMANAL', proximo_envio_em: scheduled },
+  return { acompanhamento: { id: 1, contexto_assistencial_id: 1, paciente_id: 19, telefone: '5565999991234', status: 'ATIVO', consentimento_status: 'CONSENTIDO', frequencia: 'SEMANAL', proximo_envio_em: scheduled, dia_semana: null, horario_local: null, programacao_ativa: false },
     autorizacao: { acompanhamento_id: 1, estado: 'AUTORIZADA' },
     comunicacao: { acompanhamento_id: 1, estado: 'SEM_INTERRUPCAO_REGISTRADA', interrompido_pela_pessoa: false, bloqueio_preventivo: false },
     diagnostico: { acompanhamento_id: 1, conversas: [] } };
 }
 const conversation = (state = 'CONCLUIDA', attempt = null) => ({ conversa_id: 5, estado_assistencial: state, tentativas: attempt ? [{ id: 3, tentativa: 1, ...attempt }] : [] });
-let data, requests, root, postHandler, getHandler;
+let data, requests, root, postHandler, getHandler, putHandler;
 const element = () => document.getElementById('root');
 const text = () => element().textContent;
 const button = name => [...element().querySelectorAll('button')].find(b => b.textContent === name);
@@ -59,6 +60,7 @@ before(() => {
   // No network is possible: all API methods are replaced at bundle time.
   globalThis.syntheticAPI = async (method, url, body, config) => {
     requests.push({ method, url, body, config });
+    if (method === 'PUT') return { data: await putHandler({ url, body, config }) };
     if (method === 'POST') return { data: await postHandler({ url, body, config }) };
     if (getHandler) await getHandler({ url, config });
     const suffix = url.split('/whatsapp')[1];
@@ -69,7 +71,7 @@ before(() => {
 });
 afterEach(async () => { await unmount(); sessionStorage.clear(); getHandler = null; });
 after(() => { dom.window.close(); for (const channel of channels) { channel.port1.close(); channel.port2.close(); } globalThis.MessageChannel = NativeMessageChannel; rmSync(temp, { recursive: true, force: true }); });
-function reset() { data = fixture(); requests = []; getHandler = null; postHandler = () => { throw new Error('Unexpected POST'); }; }
+function reset() { putHandler = ({ body }) => ({ ...data.acompanhamento, ...body, horario_local: body.horario_local + ':00', proximo_envio_em: body.programacao_ativa ? scheduled : null }); data = fixture(); requests = []; getHandler = null; postHandler = () => { throw new Error('Unexpected POST'); }; }
 
 test('loading is blocked; all four existing reads use explicit institutional scope', async () => {
   reset(); const gate = deferred(); getHandler = () => gate.promise;
@@ -285,7 +287,92 @@ test('loading and loaded states share the stable frame with actions outside the 
   gate.resolve(); await flush();
   assert.equal(document.querySelector('.mental-whatsapp-dialog--overview'), frame);
   assert.equal(body.getAttribute('aria-busy'), 'false');
-  assert.equal(body.querySelectorAll('.mental-whatsapp-dialog__details > div').length, 8);
+  assert.equal(footer.contains(button('Salvar programação')), true);
+  assert.match(body.textContent, /Próximo envio previsto \(Cuiabá\)/);
+  assert.equal(body.querySelectorAll('.mental-whatsapp-dialog__details > div').length, 7);
   await click('Solicitar check-in');
   assert.equal(document.querySelector('dialog[aria-label]').classList.contains('mental-whatsapp-dialog--overview'), false);
+});
+
+const scheduleButton = () => button('Salvar programação') || button('Salvando…');
+const dayInput = () => element().querySelector('select');
+const timeInput = () => element().querySelector('input[type="time"]');
+const activeInput = () => element().querySelector('input[type="checkbox"]');
+async function change(input, value) {
+  await act(async () => {
+    const prototype = input.tagName === 'SELECT' ? dom.window.HTMLSelectElement.prototype : dom.window.HTMLInputElement.prototype;
+    Object.getOwnPropertyDescriptor(prototype, 'value').set.call(input, value);
+    input.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    input.dispatchEvent(new dom.window.Event('input', { bubbles: true }));
+  });
+}
+async function preferences(day='4', time='19:00') { await change(dayInput(), day); await change(timeInput(), time); }
+
+test('weekly persisted preference loads; civil time and next occurrence use Cuiaba', async () => {
+  reset(); Object.assign(data.acompanhamento, { dia_semana: 4, horario_local: '19:00:00', programacao_ativa: true });
+  await mount();
+  assert.equal(dayInput().value, '4'); assert.equal(timeInput().value, '19:00'); assert.equal(activeInput().checked, true);
+  assert.match(text(), /30\/10\/2026,? 19:49/);
+  assert.match(text(), /Programação salva. Execução automática ainda não ativada/);
+  assert.equal(requests.length, 4);
+  for (const input of [dayInput(),timeInput()]) assert.ok(element().querySelector(`label[for="${input.id}"]`));
+});
+test('weekly initial save uses exact scope and PUT, updates without extra reads or dispatch', async () => {
+  reset(); await mount(); await preferences(); await act(async () => activeInput().click());
+  await click('Salvar programação');
+  const calls=requests.filter(r => r.method==='PUT'); assert.equal(calls.length,1);
+  assert.equal(calls[0].url,'/saude-mental/pessoas/1/contextos/1/whatsapp/programacao');
+  assert.deepEqual(calls[0].config.params,{instituicao_id:2});
+  assert.deepEqual(calls[0].body,{dia_semana:4,horario_local:'19:00',programacao_ativa:true});
+  assert.equal(requests.length,5); assert.match(text(),/Preferência semanal atualizada/);
+});
+test('weekly pause and resume retain preference; changing day/time uses backend response', async () => {
+  reset(); Object.assign(data.acompanhamento,{dia_semana:4,horario_local:'19:00:00',programacao_ativa:true});
+  await mount(); await act(async () => activeInput().click()); await click('Salvar programação');
+  assert.match(text(),/Programação semanal pausada/); assert.equal(dayInput().value,'4'); assert.equal(timeInput().value,'19:00');
+  assert.match(text(),/Não definido/);
+  await act(async () => activeInput().click()); await click('Salvar programação');
+  await preferences('6','08:30'); await click('Salvar programação');
+  assert.deepEqual(requests.filter(r=>r.method==='PUT').map(r=>r.body),[
+    {dia_semana:4,horario_local:'19:00',programacao_ativa:false},
+    {dia_semana:4,horario_local:'19:00',programacao_ativa:true},
+    {dia_semana:6,horario_local:'08:30',programacao_ativa:true}]);
+  assert.equal(requests.filter(r=>r.method==='POST').length,0);
+});
+test('weekly missing values are invalid; backend validation/auth errors never claim success', async () => {
+  for (const status of [401,403,409,422]) {
+    reset(); await mount(); await click('Salvar programação'); assert.equal(requests.filter(r=>r.method==='PUT').length,0);
+    await preferences(); putHandler=()=>{throw {response:{status}};}; await click('Salvar programação');
+    assert.ok(element().querySelector('[role="alert"]'));
+    assert.doesNotMatch(text(),/Preferência semanal atualizada|Programação salva/); await unmount();
+  }
+});
+test('weekly permissions and absent contract fail closed without blocking extraordinary compatibility', async () => {
+  reset(); await mount({...jornada,bem_estar:{pode_registrar:false}}); assert.equal(scheduleButton().disabled,true); await unmount();
+  for (const change of [a=>{delete a.programacao_ativa;},a=>{a.status='ENCERRADO';},a=>{a.consentimento_status='REVOGADO';}]) {
+    reset(); change(data.acompanhamento); await mount(); assert.equal(scheduleButton().disabled,true); await unmount();
+  }
+  reset(); delete data.acompanhamento.programacao_ativa; await mount(); assert.equal(requestButton().disabled,false);
+});
+test('weekly concurrent clicks issue one request; uncertain outcome requires refresh', async () => {
+  reset(); const gate=deferred(); putHandler=()=>gate.promise;
+  await mount(); await preferences(); const save=scheduleButton();
+  await act(async()=>{save.click();save.click();}); assert.equal(requests.filter(r=>r.method==='PUT').length,1);
+  assert.equal(requestButton().disabled,true); assert.equal(button('Atualizar WhatsApp').disabled,true);
+  gate.reject(new Error('timeout')); await flush(); assert.match(text(),/Não foi possível confirmar o salvamento/);
+  assert.equal(scheduleButton().disabled,true); await refresh(); assert.equal(scheduleButton().disabled,false);
+  assert.equal(requests.filter(r=>r.method==='PUT').length,1);
+});
+test('weekly late response cannot leak to a different institution/person/context', async () => {
+  reset(); const gate=deferred(); putHandler=()=>gate.promise; await mount(); await preferences(); await click('Salvar programação');
+  const saved={...data.acompanhamento,dia_semana:4,horario_local:'19:00:00',programacao_ativa:false};
+  const other={...jornada,instituicao_id:8,pessoa_id:9,contexto_assistencial_id:10,paciente_id:11};
+  data.acompanhamento={...data.acompanhamento,contexto_assistencial_id:10,paciente_id:11};
+  await act(async()=>root.render(h(Component,{jornada:other}))); await click('Check-in via WhatsApp');
+  gate.resolve(saved); await flush(); assert.equal(dayInput().value,''); assert.doesNotMatch(text(),/Preferência semanal atualizada|Programação salva/);
+  assert.ok(requests.filter(r=>r.method==='GET').slice(-4).every(r=>r.config.params.instituicao_id===8 && r.url.includes('/pessoas/9/contextos/10/')));
+});
+test('weekly mismatched response is unconfirmed and cannot update current scope', async () => {
+  reset(); await mount(); await preferences(); putHandler=({body})=>({...data.acompanhamento,...body,contexto_assistencial_id:999});
+  await click('Salvar programação'); assert.match(text(),/Não foi possível confirmar o salvamento/); assert.equal(scheduleButton().disabled,true);
 });

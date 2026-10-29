@@ -1,8 +1,16 @@
 import { useEffect, useId, useRef, useState } from "react";
 import "./WhatsAppMental.css";
 import Button from "../../components/ui/Button";
-import { consultarWhatsAppMental, solicitarWhatsAppMental } from "../../services/saudeMental";
-import { displayTimestamp } from "./bemEstarPresentation";
+import { consultarWhatsAppMental, solicitarWhatsAppMental, salvarProgramacaoWhatsAppMental } from "../../services/saudeMental";
+const weekdays = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
+const civilTime = value => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d(:00)?$/.test(value);
+const hasScheduleContract = a => a && typeof a.programacao_ativa === "boolean"
+  && ((a.dia_semana === null && a.horario_local === null && !a.programacao_ativa)
+    || (Number.isInteger(a.dia_semana) && a.dia_semana >= 0 && a.dia_semana <= 6 && civilTime(a.horario_local)));
+const scheduleDraft = a => ({ day: a?.dia_semana == null ? "" : String(a.dia_semana), time: a?.horario_local?.slice(0, 5) || "", active: a?.programacao_ativa === true });
+const nextDate = value => value && !Number.isNaN(Date.parse(value))
+  ? new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Cuiaba", dateStyle: "short", timeStyle: "short" }).format(new Date(value))
+  : "Não definido";
 
 const openStates = ["AGUARDANDO_ACEITE", "EM_ANDAMENTO"];
 const pendingStates = ["PREPARADO", "EM_EXECUCAO", "INCERTO"];
@@ -72,6 +80,12 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const [refused, setRefused] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [draft, setDraft] = useState(scheduleDraft(null));
+  const [saving, setSaving] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
+  const [scheduleMessage, setScheduleMessage] = useState("");
+  const [scheduleUncertain, setScheduleUncertain] = useState(false);
+  const saveLock = useRef(false);
   const [pending, setPending] = useState(() => readPending(storageKey));
   const mounted = useRef(false), sending = useRef(false), reader = useRef(null), dialog = useRef(null);
   const titleId = useId();
@@ -88,6 +102,8 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
       if (!mounted.current || controller.signal.aborted) return;
       if (!validSnapshot(data, jornada)) throw new Error("INVALID_RESPONSE");
       setSnapshot(data);
+      setDraft(scheduleDraft(data.acompanhamento));
+      setScheduleUncertain(false); setScheduleError(""); setScheduleMessage("");
       // Resolve only the exact attempt returned by our POST, never a nearby conversation.
       const saved = readPending(storageKey);
       const conversation = data.diagnostico.conversas.find(c => c.conversa_id === saved?.conversationId);
@@ -129,7 +145,7 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   }, [confirming]);
 
   const reason = snapshot ? impediment(snapshot, canWrite) : "";
-  const disabled = loading || busy || !snapshot || Boolean(reason) || Boolean(pending) || refused;
+  const disabled = loading || busy || saving || !snapshot || Boolean(reason) || Boolean(pending) || refused;
   async function send() {
     if (sending.current || disabled || !confirming) return;
     const existing = readPending(storageKey);
@@ -172,6 +188,39 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
     }
   }
   const a = snapshot?.acompanhamento;
+  const scheduleAvailable = hasScheduleContract(a);
+  const scheduleAllowed = canWrite && scheduleAvailable && ["ATIVO", "PAUSADO"].includes(a.status)
+    && ["PENDENTE", "CONSENTIDO"].includes(a.consentimento_status);
+  const scheduleDisabled = loading || busy || saving || confirming || !scheduleAllowed || scheduleUncertain;
+  async function saveSchedule(event) {
+    event.preventDefault();
+    if (saveLock.current || scheduleDisabled) return;
+    if (!/^[0-6]$/.test(draft.day) || !civilTime(draft.time)) {
+      setScheduleError("Selecione o dia e um horário válido (HH:mm)."); return;
+    }
+    const payload = { dia_semana: Number(draft.day), horario_local: draft.time, programacao_ativa: draft.active };
+    saveLock.current = true; setSaving(true); setScheduleError(""); setScheduleMessage("");
+    try {
+      const saved = await salvarProgramacaoWhatsAppMental(institution, person, context, payload);
+      if (!mounted.current) return;
+      if (!hasScheduleContract(saved) || saved.id !== a.id || saved.contexto_assistencial_id !== context
+        || saved.paciente_id !== jornada.paciente_id || saved.dia_semana !== payload.dia_semana
+        || saved.horario_local.slice(0, 5) !== payload.horario_local || saved.programacao_ativa !== payload.programacao_ativa) throw new Error("INVALID_RESPONSE");
+      setSnapshot(previous => ({ ...previous, acompanhamento: saved }));
+      setDraft(scheduleDraft(saved));
+      setScheduleMessage(saved.programacao_ativa ? "Preferência semanal atualizada." : "Programação semanal pausada. Dia e horário preservados.");
+    } catch (e) {
+      if (!mounted.current) return;
+      const status = e?.response?.status;
+      setScheduleError(({ 401: "Sua sessão expirou. Entre novamente.", 403: "Alteração da programação não autorizada neste contexto.",
+        409: "Programação recusada. Atualize o acompanhamento e verifique os impedimentos.", 422: "Revise o dia e o horário da programação." })[status]
+        || "Não foi possível confirmar o salvamento. Atualize o WhatsApp antes de tentar novamente.");
+      if (![401, 403, 409, 422].includes(status)) setScheduleUncertain(true);
+    } finally {
+      saveLock.current = false;
+      if (mounted.current) setSaving(false);
+    }
+  }
   const conversations = snapshot?.diagnostico.conversas || [];
   const current = [...conversations].sort((a, b) => b.conversa_id - a.conversa_id).find(c => openStates.includes(c.estado_assistencial))
     || [...conversations].sort((a, b) => b.conversa_id - a.conversa_id)[0];
@@ -185,6 +234,33 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
     <div className="mental-whatsapp-dialog__body" aria-busy={loading}>
     {loading && <p role="status">Consultando acompanhamento WhatsApp…</p>}
     {error && <p role="alert">{error}</p>}
+    <section aria-labelledby={`${titleId}-weekly`}>
+    <h3 id={`${titleId}-weekly`}>Programação semanal</h3>
+    {a && !scheduleAvailable && <p>Configuração semanal indisponível neste ambiente.</p>}
+    {snapshot && !a && <p>Acompanhamento WhatsApp não configurado.</p>}
+    <form id={`${titleId}-schedule`} onSubmit={saveSchedule} aria-busy={saving}>
+      <fieldset disabled={scheduleDisabled} className="mental-whatsapp-schedule">
+        <legend className="mental-whatsapp-schedule__legend">Preferência semanal — horário de Cuiabá</legend>
+        <label htmlFor={`${titleId}-day`}>Dia da semana
+          <select id={`${titleId}-day`} required value={draft.day} onChange={e => setDraft({ ...draft, day: e.target.value })}>
+            <option value="">Selecione</option>
+            {weekdays.map((day, index) => <option key={day} value={index}>{day}</option>)}
+          </select>
+        </label>
+        <label htmlFor={`${titleId}-time`}>Horário (Cuiabá)
+          <input id={`${titleId}-time`} type="time" step="60" required value={draft.time} onChange={e => setDraft({ ...draft, time: e.target.value })} />
+        </label>
+        <label className="mental-whatsapp-schedule__toggle"><input type="checkbox" checked={draft.active} onChange={e => setDraft({ ...draft, active: e.target.checked })} /> Programação semanal ativa</label>
+      </fieldset>
+    </form>
+    <p>Próximo envio previsto (Cuiabá): <strong>{nextDate(a?.proximo_envio_em)}</strong></p>
+    {scheduleAvailable && <p>{a.dia_semana !== null ? "Programação salva. Execução automática ainda não ativada." : "Execução automática ainda não ativada."}</p>}
+    {scheduleAvailable && !canWrite && <p>Alteração da programação não autorizada neste contexto.</p>}
+    {scheduleError && <p role="alert">{scheduleError}</p>}
+    {scheduleMessage && <p role="status">{scheduleMessage}</p>}
+    </section>
+    <section aria-labelledby={`${titleId}-extra`}>
+    <h3 id={`${titleId}-extra`}>Check-in extraordinário</h3>
     {snapshot && (a ? <dl className="mental-whatsapp-dialog__details">
       <div><dt>Status do acompanhamento</dt><dd>{label(a.status)}</dd></div>
       <div><dt>Consentimento</dt><dd>{label(a.consentimento_status)}</dd></div>
@@ -192,7 +268,6 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
       <div><dt>Autorização de comunicação</dt><dd>{label(snapshot.autorizacao.estado)}</dd></div>
       <div><dt>Comunicação</dt><dd>{label(snapshot.comunicacao.estado)}{snapshot.comunicacao.bloqueio_preventivo && " · Bloqueio preventivo"}</dd></div>
       <div><dt>Frequência configurada</dt><dd>{label(a.frequencia)}</dd></div>
-      <div><dt>Próximo envio previsto</dt><dd>{a.proximo_envio_em ? displayTimestamp(a.proximo_envio_em) : "Não definido"}</dd></div>
       <div><dt>Conversa atual ou mais recente</dt><dd>{current ? label(current.estado_assistencial) : "Nenhuma conversa registrada"}</dd></div>
     </dl> : <p>Acompanhamento WhatsApp não configurado.</p>)}
     <p>O check-in extraordinário não altera a programação semanal.</p>
@@ -201,11 +276,13 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
     {pending && <p role="alert">Há uma solicitação aguardando confirmação. Novas solicitações estão bloqueadas; consulte o estado ou solicite verificação.</p>}
     {message && <p role="status">{message}</p>}
     {refused && <p>Novas solicitações bloqueadas nesta consulta. Após verificar o impedimento, atualize o prontuário.</p>}
+    </section>
     </div>
     <footer className="mental-whatsapp-dialog__footer">
       <Button variant="secondary" onClick={onClose}>Fechar</Button>
+      <Button type="submit" form={`${titleId}-schedule`} disabled={scheduleDisabled}>{saving ? "Salvando…" : "Salvar programação"}</Button>
       <Button disabled={disabled} onClick={() => setConfirming(true)}>Solicitar check-in</Button>
-      <Button variant="secondary" disabled={loading || busy} onClick={() => void load()}>Atualizar WhatsApp</Button>
+      <Button variant="secondary" disabled={loading || busy || saving} onClick={() => void load()}>Atualizar WhatsApp</Button>
     </footer>
     <dialog ref={dialog} aria-label="Confirmar solicitação de check-in" onCancel={e => { e.preventDefault(); e.stopPropagation(); setConfirming(false); }} className="mental-whatsapp-dialog">
       {confirming && <>
