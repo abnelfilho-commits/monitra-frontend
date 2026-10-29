@@ -29,3 +29,18 @@ export const listarPTSMental = async (instituicao, pessoa, contexto) => (await a
 export const salvarPTSMental = async (instituicao, pessoa, contexto, method, suffix, payload) => (await api.request({ method, url: ptsMentalPath(pessoa, contexto) + suffix, data: payload, params: { instituicao_id: instituicao } })).data;
 
 export const cockpitMental = async (instituicao, signal) => (await api.get("/saude-mental/cockpit/profissional", { params: instituicao ? { instituicao_id: instituicao } : {}, signal })).data;
+
+const whatsappMentalPath = (pessoa, contexto) => `/saude-mental/pessoas/${pessoa}/contextos/${contexto}/whatsapp`;
+export async function consultarWhatsAppMental(instituicao, pessoa, contexto, signal) {
+  const path = whatsappMentalPath(pessoa, contexto);
+  const config = { params: { instituicao_id: instituicao }, signal };
+  const [acompanhamento, autorizacao, comunicacao, diagnostico] = await Promise.all(
+    ["", "/autorizacao-comunicacao", "/comunicacao", "/diagnostico"].map(suffix => api.get(path + suffix, config).then(response => response.data))
+  );
+  return { acompanhamento, autorizacao, comunicacao, diagnostico };
+}
+export const solicitarWhatsAppMental = async (instituicao, pessoa, contexto, key) => (await api.post(
+  whatsappMentalPath(pessoa, contexto) + "/disparar-manual",
+  { motivo: "ACOMPANHAMENTO_EXTRAORDINARIO" },
+  { params: { instituicao_id: instituicao }, headers: { "Idempotency-Key": key } }
+)).data;

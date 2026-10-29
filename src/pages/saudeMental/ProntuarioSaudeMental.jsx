@@ -1,3 +1,4 @@
+import WhatsAppMental from "./WhatsAppMental";
 import Button from "../../components/ui/Button";
 import ReportDownload from "../../components/ReportDownload";
 import LongitudinalBemEstar from "./LongitudinalBemEstar";
@@ -63,6 +64,7 @@ export default function ProntuarioSaudeMental({ jornada, onRefresh }) {
       <div style={cardStyle}><div style={labelStyle}>Último evento</div><div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{latest ? "Check-in de Bem-Estar" : "-"}</div><div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>{latest ? displayTimestamp(latest.created_at) : "-"}</div></div>
       <div style={cardStyle}><div style={labelStyle}>Resumo recente</div><div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflowWrap: "anywhere" }}>{description ? description.length > 70 ? `${description.slice(0, 70)}...` : description : "-"}</div></div>
     </div>
+    <WhatsAppMental jornada={jornada} />
     <section aria-label="Resumo clínico automático" className={`mental-reading mental-reading--${readingTones[reading?.clinical_state?.status] || "neutral"}${reading?.alerts?.length > 0 ? " mental-reading--attention" : ""}`}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
         <div>
