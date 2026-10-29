@@ -44,6 +44,7 @@ export default function ProntuarioSaudeMental({ jornada, onRefresh }) {
       </div>
       <div className="mental-record__toolbar" role="group" aria-label="Ações clínicas" style={{ flex: "1 1 420px", minWidth: 320, display: "flex", gap: 8, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "flex-end" }}>
         <Button disabled={!checkinAvailable} title={!checkinAvailable ? "Registro indisponível nesta consulta" : undefined} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/check-ins/novo?instituicao_id=${jornada.instituicao_id}`)}>Check-in de Bem-Estar</Button>
+        <WhatsAppMental jornada={jornada} />
         <Button variant="secondary" disabled={jornada.diagnosticos?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/diagnosticos/novo?instituicao_id=${jornada.instituicao_id}`)}>Registrar Diagnóstico</Button>
         <Button variant="secondary" disabled={jornada.phq9?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/phq9?instituicao_id=${jornada.instituicao_id}`)}>PHQ-9</Button>
         <Button variant="secondary" disabled={jornada.gad7?.pode_registrar !== true} onClick={() => navigate(`/saude-mental/pessoas/${jornada.pessoa_id}/contextos/${jornada.contexto_assistencial_id}/gad7?instituicao_id=${jornada.instituicao_id}`)}>GAD-7</Button>
@@ -64,7 +65,6 @@ export default function ProntuarioSaudeMental({ jornada, onRefresh }) {
       <div style={cardStyle}><div style={labelStyle}>Último evento</div><div style={{ fontSize: 15, fontWeight: 700, marginTop: 6 }}>{latest ? "Check-in de Bem-Estar" : "-"}</div><div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>{latest ? displayTimestamp(latest.created_at) : "-"}</div></div>
       <div style={cardStyle}><div style={labelStyle}>Resumo recente</div><div style={{ fontSize: 14, fontWeight: 600, marginTop: 6, overflowWrap: "anywhere" }}>{description ? description.length > 70 ? `${description.slice(0, 70)}...` : description : "-"}</div></div>
     </div>
-    <WhatsAppMental jornada={jornada} />
     <section aria-label="Resumo clínico automático" className={`mental-reading mental-reading--${readingTones[reading?.clinical_state?.status] || "neutral"}${reading?.alerts?.length > 0 ? " mental-reading--attention" : ""}`}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
         <div>

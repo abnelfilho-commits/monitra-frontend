@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import "./WhatsAppMental.css";
 import Button from "../../components/ui/Button";
 import { consultarWhatsAppMental, solicitarWhatsAppMental } from "../../services/saudeMental";
 import { displayTimestamp } from "./bemEstarPresentation";
@@ -52,9 +53,17 @@ function readPending(key) {
 // Remount even when used outside the keyed Prontuário. No state crosses scopes.
 export default function WhatsAppMental({ jornada }) {
   const scope = `${jornada.instituicao_id}:${jornada.pessoa_id}:${jornada.contexto_assistencial_id}`;
-  return <WhatsAppScope key={scope} jornada={jornada} storageKey={`mental-whatsapp-pending:${scope}`} />;
+  return <WhatsAppLauncher key={scope} jornada={jornada} storageKey={`mental-whatsapp-pending:${scope}`} />;
 }
-function WhatsAppScope({ jornada, storageKey }) {
+function WhatsAppLauncher({ jornada, storageKey }) {
+  const [opened, setOpened] = useState(false);
+  const trigger = useRef(null);
+  return <>
+    <Button ref={trigger} variant="secondary" aria-haspopup="dialog" onClick={() => setOpened(true)}>Check-in via WhatsApp</Button>
+    {opened && <WhatsAppScope jornada={jornada} storageKey={storageKey} onClose={() => setOpened(false)} trigger={trigger} />}
+  </>;
+}
+function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const { instituicao_id: institution, pessoa_id: person, contexto_assistencial_id: context } = jornada;
   const [snapshot, setSnapshot] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +75,7 @@ function WhatsAppScope({ jornada, storageKey }) {
   const [pending, setPending] = useState(() => readPending(storageKey));
   const mounted = useRef(false), sending = useRef(false), reader = useRef(null), dialog = useRef(null);
   const titleId = useId();
+  const modal = useRef(null), heading = useRef(null);
   const canWrite = jornada.bem_estar?.pode_registrar === true && jornada.linha_estado === "ATIVA" && jornada.contexto_estado === "ABERTO";
 
   async function load() {
@@ -97,8 +107,17 @@ function WhatsAppScope({ jornada, storageKey }) {
   }
   useEffect(() => {
     mounted.current = true;
+    const node = modal.current, returnFocus = trigger.current;
+    const previousOverflow = document.body.style.overflow;
+    node.showModal();
+    heading.current.focus();
+    document.body.style.overflow = "hidden";
     void load();
-    return () => { mounted.current = false; reader.current?.abort(); };
+    return () => {
+      mounted.current = false; reader.current?.abort();
+      node.close(); document.body.style.overflow = previousOverflow;
+      returnFocus?.focus();
+    };
     // This component is remounted for every institution/person/context change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -157,30 +176,34 @@ function WhatsAppScope({ jornada, storageKey }) {
   const current = [...conversations].sort((a, b) => b.conversa_id - a.conversa_id).find(c => openStates.includes(c.estado_assistencial))
     || [...conversations].sort((a, b) => b.conversa_id - a.conversa_id)[0];
   const lastAttempt = [...(current?.tentativas || [])].sort((a, b) => b.tentativa - a.tentativa)[0];
-  return <section className="mental-record__actions" aria-labelledby={titleId}>
-    <h2 id={titleId}>Check-ins via WhatsApp</h2>
+  return <dialog ref={modal} className="mental-whatsapp-dialog" aria-labelledby={titleId} onCancel={e => { e.preventDefault(); onClose(); }}>
+    <h2 ref={heading} tabIndex={-1} id={titleId}>Check-in via WhatsApp</h2>
+    <p>Pessoa: <strong>{jornada.nome_social || jornada.nome_completo}</strong></p>
+    <p>Instituição: {jornada.instituicao_nome} · Contexto assistencial #{context}</p>
     {loading && <p role="status">Consultando acompanhamento WhatsApp…</p>}
     {error && <p role="alert">{error}</p>}
     {snapshot && (a ? <dl>
       <dt>Status do acompanhamento</dt><dd>{label(a.status)}</dd>
       <dt>Consentimento</dt><dd>{label(a.consentimento_status)}</dd>
+      <dt>Telefone</dt><dd>{maskedPhone(a.telefone)}</dd>
       <dt>Autorização de comunicação</dt><dd>{label(snapshot.autorizacao.estado)}</dd>
       <dt>Comunicação</dt><dd>{label(snapshot.comunicacao.estado)}{snapshot.comunicacao.bloqueio_preventivo && " · Bloqueio preventivo"}</dd>
       <dt>Frequência configurada</dt><dd>{label(a.frequencia)}</dd>
       <dt>Próximo envio previsto</dt><dd>{a.proximo_envio_em ? displayTimestamp(a.proximo_envio_em) : "Não definido"}</dd>
       <dt>Conversa atual ou mais recente</dt><dd>{current ? label(current.estado_assistencial) : "Nenhuma conversa registrada"}</dd>
     </dl> : <p>Acompanhamento WhatsApp não configurado.</p>)}
-    <p>A previsão não confirma execução automática. A solicitação extraordinária não altera a programação semanal.</p>
+    <p>O check-in extraordinário não altera a programação semanal.</p>
     {current && <p>{attemptMessage(lastAttempt)}</p>}
     {reason && a && <p>{reason}</p>}
     {pending && <p role="alert">Há uma solicitação aguardando confirmação. Novas solicitações estão bloqueadas; consulte o estado ou solicite verificação.</p>}
     {message && <p role="status">{message}</p>}
     {refused && <p>Novas solicitações bloqueadas nesta consulta. Após verificar o impedimento, atualize o prontuário.</p>}
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      <Button disabled={disabled} onClick={() => setConfirming(true)}>Solicitar check-in agora</Button>
+      <Button variant="secondary" onClick={onClose}>Fechar</Button>
+      <Button disabled={disabled} onClick={() => setConfirming(true)}>Solicitar check-in</Button>
       <Button variant="secondary" disabled={loading || busy} onClick={() => void load()}>Atualizar WhatsApp</Button>
     </div>
-    <dialog ref={dialog} aria-label="Confirmar solicitação de check-in" onCancel={e => { e.preventDefault(); setConfirming(false); }} style={{ maxWidth: 480, border: "1px solid #d1d5db", borderRadius: 12, padding: 24 }}>
+    <dialog ref={dialog} aria-label="Confirmar solicitação de check-in" onCancel={e => { e.preventDefault(); e.stopPropagation(); setConfirming(false); }} className="mental-whatsapp-dialog">
       {confirming && <>
         <h3>Solicitar Check-in de Bem-Estar?</h3>
         <p>Pessoa: {jornada.nome_social || jornada.nome_completo}</p>
@@ -193,5 +216,5 @@ function WhatsAppScope({ jornada, storageKey }) {
         </div>
       </>}
     </dialog>
-  </section>;
+  </dialog>;
 }

@@ -1,0 +1,20 @@
+.mental-whatsapp-dialog {
+  box-sizing: border-box;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  color: #111827;
+  background: white;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.mental-whatsapp-dialog::backdrop { background: rgb(15 23 42 / 45%); }
+.mental-whatsapp-dialog h2 { margin-top: 0; }
+.mental-whatsapp-dialog dt { font-weight: 600; margin-top: 10px; }
+.mental-whatsapp-dialog dd { margin: 2px 0 0; }
+@media (max-width: 400px) {
+  .mental-whatsapp-dialog { padding: 16px; }
+}

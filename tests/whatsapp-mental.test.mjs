@@ -48,9 +48,9 @@ let data, requests, root, postHandler, getHandler;
 const element = () => document.getElementById('root');
 const text = () => element().textContent;
 const button = name => [...element().querySelectorAll('button')].find(b => b.textContent === name);
-const requestButton = () => button('Solicitar check-in agora');
+const requestButton = () => button('Solicitar check-in');
 async function click(name) { await act(async () => button(name).click()); }
-async function mount(value = jornada) { root = createRoot(element()); await act(async () => root.render(h(Component, { jornada: value }))); }
+async function mount(value = jornada) { root = createRoot(element()); await act(async () => root.render(h(Component, { jornada: value }))); await click('Check-in via WhatsApp'); }
 async function refresh() { await click('Atualizar WhatsApp'); }
 async function unmount() { if (root) { await act(async () => root.unmount()); root = null; } }
 async function flush() { await act(async () => {}); }
@@ -77,7 +77,7 @@ test('loading is blocked; all four existing reads use explicit institutional sco
   gate.resolve(); await flush(); assert.equal(requestButton().disabled, false);
   assert.equal(requests.length, 4);
   for (const call of requests) { assert.equal(call.config.params.instituicao_id, 2); assert.match(call.url, /\/pessoas\/1\/contextos\/1\/whatsapp/); }
-  assert.match(text(), /A previsão não confirma execução automática/);
+  assert.match(text(), /O check-in extraordinário não altera a programação semanal/);
 });
 test('absence is distinct from a read error and never enables dispatch', async () => {
   reset(); data.acompanhamento = null;
@@ -113,16 +113,16 @@ test('known care, consent, authorization, communication and execution blockers',
   reset(); data.acompanhamento.consentimento_status = 'PENDENTE'; await mount(); assert.equal(requestButton().disabled, false);
 });
 test('confirmation masks the phone; cancellation does not post', async () => {
-  reset(); await mount(); await click('Solicitar check-in agora');
-  assert.equal(document.querySelector('dialog').open, true);
+  reset(); await mount(); await click('Solicitar check-in');
+  assert.equal(document.querySelector('dialog[aria-label]').open, true);
   assert.match(text(), /Pessoa sintética/); assert.match(text(), /Contexto #1/); assert.match(text(), /•••• •••• 1234/);
   assert.ok(!text().includes(data.acompanhamento.telefone));
-  await click('Cancelar'); assert.equal(document.querySelector('dialog').open, false);
+  await click('Cancelar'); assert.equal(document.querySelector('dialog[aria-label]').open, false);
   assert.equal(requests.filter(c => c.method === 'POST').length, 0);
 });
 test('one POST on double click, exact contract, Meta acceptance is not delivery; schedule unchanged', async () => {
   reset(); const gate = deferred(); postHandler = () => gate.promise;
-  await mount(); await click('Solicitar check-in agora');
+  await mount(); await click('Solicitar check-in');
   const confirm = button('Confirmar solicitação');
   await act(async () => { confirm.click(); confirm.click(); });
   assert.equal(requests.filter(c => c.method === 'POST').length, 1);
@@ -138,14 +138,14 @@ test('one POST on double click, exact contract, Meta acceptance is not delivery;
   data.diagnostico.conversas[0].estado_assistencial = 'CONCLUIDA'; await refresh();
   assert.equal(requestButton().disabled, false);
   const second = deferred(); postHandler = () => second.promise;
-  await click('Solicitar check-in agora'); await click('Confirmar solicitação');
+  await click('Solicitar check-in'); await click('Confirmar solicitação');
   const posts = requests.filter(c => c.method === 'POST');
   assert.notEqual(posts[0].config.headers['Idempotency-Key'], posts[1].config.headers['Idempotency-Key']);
   second.reject({ response: { status: 409 } }); await flush();
 });
 test('timeout stays blocked across refresh and remount, no automatic retry', async () => {
   reset(); postHandler = () => { throw new Error('timeout'); };
-  await mount(); await click('Solicitar check-in agora'); await click('Confirmar solicitação');
+  await mount(); await click('Solicitar check-in'); await click('Confirmar solicitação');
   assert.match(text(), /Resultado não confirmado/); assert.equal(requestButton().disabled, true);
   await refresh(); await unmount(); await mount();
   assert.equal(requestButton().disabled, true); assert.equal(requests.filter(c => c.method === 'POST').length, 1);
@@ -153,7 +153,7 @@ test('timeout stays blocked across refresh and remount, no automatic retry', asy
 test('pending POST results and invalid results remain uncertain', async () => {
   for (const estado of ['PREPARADO', 'EM_EXECUCAO', 'INCERTO', 'UNKNOWN']) {
     reset(); postHandler = () => ({ solicitacao_id: 2, conversa_id: 5, tentativa_id: null, estado, aceitacao_meta: false });
-    await mount(); await click('Solicitar check-in agora'); await click('Confirmar solicitação');
+    await mount(); await click('Solicitar check-in'); await click('Confirmar solicitação');
     assert.equal(requestButton().disabled, true); assert.match(text(), /Resultado não confirmado/);
     await unmount(); sessionStorage.clear();
   }
@@ -176,33 +176,35 @@ test('late old-scope responses cannot populate a new institution/person/context'
   await mount();
   const next = { ...jornada, instituicao_id: 8, pessoa_id: 9, contexto_assistencial_id: 10, paciente_id: 11, nome_completo: 'Outra pessoa' };
   data.acompanhamento.contexto_assistencial_id = 10; data.acompanhamento.paciente_id = 11;
-  await act(async () => root.render(h(Component, { jornada: next })));
+  await act(async () => root.render(h(Component, { jornada: next }))); await click('Check-in via WhatsApp');
   assert.equal(requestButton().disabled, false);
   old.resolve(); await flush();
-  await click('Solicitar check-in agora'); assert.match(text(), /Outra pessoa/); assert.match(text(), /Contexto #10/);
+  await click('Solicitar check-in'); assert.match(text(), /Outra pessoa/); assert.match(text(), /Contexto assistencial #10/);
   assert.ok(requests.filter(c => c.url.includes('/pessoas/9/')).every(c => c.config.params.instituicao_id === 8));
 });
 test('uncertainty does not leak to another scope, and is restored on returning', async () => {
   reset(); postHandler = () => { throw new Error('timeout'); };
-  await mount(); await click('Solicitar check-in agora'); await click('Confirmar solicitação');
+  await mount(); await click('Solicitar check-in'); await click('Confirmar solicitação');
   const next = { ...jornada, instituicao_id: 8, pessoa_id: 9, contexto_assistencial_id: 10, paciente_id: 11 };
   data.acompanhamento.contexto_assistencial_id = 10; data.acompanhamento.paciente_id = 11;
-  await act(async () => root.render(h(Component, { jornada: next }))); assert.equal(requestButton().disabled, false);
-  data = fixture(); await act(async () => root.render(h(Component, { jornada }))); assert.equal(requestButton().disabled, true);
+  await act(async () => root.render(h(Component, { jornada: next }))); await click('Check-in via WhatsApp'); assert.equal(requestButton().disabled, false);
+  data = fixture(); await act(async () => root.render(h(Component, { jornada }))); await click('Check-in via WhatsApp'); assert.equal(requestButton().disabled, true);
 });
-test('Prontuário places the section after cards and before clinical summary without replacing timeline', async () => {
+test('Prontuário keeps assisted action and places WhatsApp beside it without a permanent panel', async () => {
   reset(); root = createRoot(element());
   await act(async () => root.render(h(MemoryRouter, null, h(Prontuario, { jornada, onRefresh() {} }))));
   const html = element().innerHTML;
-  assert.ok(html.indexOf('mental-record__summary') < html.indexOf('Check-ins via WhatsApp'));
-  assert.ok(html.indexOf('Check-ins via WhatsApp') < html.indexOf('Resumo clínico automático'));
+  assert.ok(html.indexOf('Check-in de Bem-Estar</button>') < html.indexOf('Check-in via WhatsApp'));
+  assert.ok(html.indexOf('Check-in via WhatsApp') < html.indexOf('mental-record__summary'));
+  assert.equal(document.querySelectorAll('dialog.mental-whatsapp-dialog').length, 0);
+  assert.equal(requests.length, 0);
   assert.match(text(), /Timeline Clínica/);
 });
 
 test('backend refusals stay blocked even when read permission remains available', async () => {
   for (const status of [401, 403, 409, 422]) {
     reset(); postHandler = () => { throw { response: { status } }; };
-    await mount(); await click('Solicitar check-in agora'); await click('Confirmar solicitação');
+    await mount(); await click('Solicitar check-in'); await click('Confirmar solicitação');
     assert.equal(requestButton().disabled, true);
     assert.match(text(), /Novas solicitações bloqueadas nesta consulta/);
     await refresh(); assert.equal(requestButton().disabled, true);
@@ -215,7 +217,7 @@ test('failed revalidation and uncorrelated diagnostics cannot unlock an accepted
     getHandler = () => { throw new Error('read unavailable'); };
     return { solicitacao_id: 2, conversa_id: 5, tentativa_id: 3, estado: 'ACEITO', aceitacao_meta: true };
   };
-  await mount(); await click('Solicitar check-in agora'); await click('Confirmar solicitação');
+  await mount(); await click('Solicitar check-in'); await click('Confirmar solicitação');
   assert.equal(requestButton().disabled, true); assert.match(text(), /Não foi possível confirmar o estado/);
   getHandler = null; data.diagnostico.conversas = [{ ...conversation('CONCLUIDA', { estado: 'ACEITO' }), conversa_id: 999 }];
   await refresh(); assert.equal(requestButton().disabled, true);
@@ -223,10 +225,50 @@ test('failed revalidation and uncorrelated diagnostics cannot unlock an accepted
   await refresh(); assert.equal(requestButton().disabled, false);
 });
 test('unavailable local repetition protection prevents any POST', async () => {
-  reset(); await mount(); await click('Solicitar check-in agora');
+  reset(); await mount(); await click('Solicitar check-in');
   const original = dom.window.Storage.prototype.setItem;
   dom.window.Storage.prototype.setItem = () => { throw new Error('storage unavailable'); };
   try { await click('Confirmar solicitação'); } finally { dom.window.Storage.prototype.setItem = original; }
   assert.match(text(), /Nenhum envio foi solicitado/);
   assert.equal(requests.filter(c => c.method === 'POST').length, 0);
+});
+
+test('modal opens with named heading and focus, closes by button or Escape, reloads on opening', async () => {
+  reset(); await mount();
+  const main = document.querySelector('dialog[aria-labelledby]');
+  assert.equal(main.open, true);
+  assert.equal(document.activeElement.id, main.getAttribute('aria-labelledby'));
+  assert.equal(document.body.style.overflow, 'hidden');
+  assert.equal(button('Check-in via WhatsApp').getAttribute('aria-haspopup'), 'dialog');
+  assert.match(text(), /Telefone•••• •••• 1234/);
+  await click('Fechar');
+  assert.equal(document.querySelector('dialog'), null);
+  assert.equal(document.activeElement, button('Check-in via WhatsApp'));
+  assert.equal(document.body.style.overflow, '');
+  data.acompanhamento.status = 'PAUSADO';
+  await click('Check-in via WhatsApp');
+  assert.equal(requests.filter(c => c.method === 'GET').length, 8);
+  assert.match(text(), /Pausado/); assert.equal(requestButton().disabled, true);
+  await act(async () => document.querySelector('dialog[aria-labelledby]').dispatchEvent(new dom.window.Event('cancel', { bubbles: false, cancelable: true })));
+  assert.equal(document.querySelector('dialog'), null);
+  assert.equal(document.activeElement, button('Check-in via WhatsApp'));
+});
+test('Escape cancels confirmation without submitting or closing the consultation modal', async () => {
+  reset(); await mount(); await click('Solicitar check-in');
+  await act(async () => document.querySelector('dialog[aria-label]').dispatchEvent(new dom.window.Event('cancel', { bubbles: false, cancelable: true })));
+  assert.equal(document.querySelector('dialog[aria-label]').open, false);
+  assert.equal(document.querySelector('dialog[aria-labelledby]').open, true);
+  assert.equal(requests.filter(c => c.method === 'POST').length, 0);
+});
+test('result stays visible in modal and closing during a POST cannot create a duplicate on reopening', async () => {
+  reset(); const gate = deferred(); postHandler = () => gate.promise;
+  await mount(); await click('Solicitar check-in'); await click('Confirmar solicitação');
+  await click('Fechar'); await click('Check-in via WhatsApp');
+  assert.equal(requestButton().disabled, true);
+  data.diagnostico.conversas = [conversation('AGUARDANDO_ACEITE', { estado: 'ACEITO' })];
+  gate.resolve({ solicitacao_id: 2, conversa_id: 5, tentativa_id: 3, estado: 'ACEITO', aceitacao_meta: true }); await flush();
+  await refresh();
+  assert.equal(document.querySelector('dialog[aria-labelledby]').open, true);
+  assert.match(text(), /aceito pela Meta; entrega ainda não confirmada/);
+  assert.equal(requests.filter(c => c.method === 'POST').length, 1);
 });
