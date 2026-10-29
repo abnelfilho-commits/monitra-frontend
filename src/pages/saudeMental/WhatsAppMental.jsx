@@ -176,21 +176,24 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const current = [...conversations].sort((a, b) => b.conversa_id - a.conversa_id).find(c => openStates.includes(c.estado_assistencial))
     || [...conversations].sort((a, b) => b.conversa_id - a.conversa_id)[0];
   const lastAttempt = [...(current?.tentativas || [])].sort((a, b) => b.tentativa - a.tentativa)[0];
-  return <dialog ref={modal} className="mental-whatsapp-dialog" aria-labelledby={titleId} onCancel={e => { e.preventDefault(); onClose(); }}>
+  return <dialog ref={modal} className="mental-whatsapp-dialog mental-whatsapp-dialog--overview" aria-labelledby={titleId} onCancel={e => { e.preventDefault(); onClose(); }}>
+    <header className="mental-whatsapp-dialog__header">
     <h2 ref={heading} tabIndex={-1} id={titleId}>Check-in via WhatsApp</h2>
     <p>Pessoa: <strong>{jornada.nome_social || jornada.nome_completo}</strong></p>
     <p>Instituição: {jornada.instituicao_nome} · Contexto assistencial #{context}</p>
+    </header>
+    <div className="mental-whatsapp-dialog__body" aria-busy={loading}>
     {loading && <p role="status">Consultando acompanhamento WhatsApp…</p>}
     {error && <p role="alert">{error}</p>}
-    {snapshot && (a ? <dl>
-      <dt>Status do acompanhamento</dt><dd>{label(a.status)}</dd>
-      <dt>Consentimento</dt><dd>{label(a.consentimento_status)}</dd>
-      <dt>Telefone</dt><dd>{maskedPhone(a.telefone)}</dd>
-      <dt>Autorização de comunicação</dt><dd>{label(snapshot.autorizacao.estado)}</dd>
-      <dt>Comunicação</dt><dd>{label(snapshot.comunicacao.estado)}{snapshot.comunicacao.bloqueio_preventivo && " · Bloqueio preventivo"}</dd>
-      <dt>Frequência configurada</dt><dd>{label(a.frequencia)}</dd>
-      <dt>Próximo envio previsto</dt><dd>{a.proximo_envio_em ? displayTimestamp(a.proximo_envio_em) : "Não definido"}</dd>
-      <dt>Conversa atual ou mais recente</dt><dd>{current ? label(current.estado_assistencial) : "Nenhuma conversa registrada"}</dd>
+    {snapshot && (a ? <dl className="mental-whatsapp-dialog__details">
+      <div><dt>Status do acompanhamento</dt><dd>{label(a.status)}</dd></div>
+      <div><dt>Consentimento</dt><dd>{label(a.consentimento_status)}</dd></div>
+      <div><dt>Telefone</dt><dd>{maskedPhone(a.telefone)}</dd></div>
+      <div><dt>Autorização de comunicação</dt><dd>{label(snapshot.autorizacao.estado)}</dd></div>
+      <div><dt>Comunicação</dt><dd>{label(snapshot.comunicacao.estado)}{snapshot.comunicacao.bloqueio_preventivo && " · Bloqueio preventivo"}</dd></div>
+      <div><dt>Frequência configurada</dt><dd>{label(a.frequencia)}</dd></div>
+      <div><dt>Próximo envio previsto</dt><dd>{a.proximo_envio_em ? displayTimestamp(a.proximo_envio_em) : "Não definido"}</dd></div>
+      <div><dt>Conversa atual ou mais recente</dt><dd>{current ? label(current.estado_assistencial) : "Nenhuma conversa registrada"}</dd></div>
     </dl> : <p>Acompanhamento WhatsApp não configurado.</p>)}
     <p>O check-in extraordinário não altera a programação semanal.</p>
     {current && <p>{attemptMessage(lastAttempt)}</p>}
@@ -198,11 +201,12 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
     {pending && <p role="alert">Há uma solicitação aguardando confirmação. Novas solicitações estão bloqueadas; consulte o estado ou solicite verificação.</p>}
     {message && <p role="status">{message}</p>}
     {refused && <p>Novas solicitações bloqueadas nesta consulta. Após verificar o impedimento, atualize o prontuário.</p>}
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+    </div>
+    <footer className="mental-whatsapp-dialog__footer">
       <Button variant="secondary" onClick={onClose}>Fechar</Button>
       <Button disabled={disabled} onClick={() => setConfirming(true)}>Solicitar check-in</Button>
       <Button variant="secondary" disabled={loading || busy} onClick={() => void load()}>Atualizar WhatsApp</Button>
-    </div>
+    </footer>
     <dialog ref={dialog} aria-label="Confirmar solicitação de check-in" onCancel={e => { e.preventDefault(); e.stopPropagation(); setConfirming(false); }} className="mental-whatsapp-dialog">
       {confirming && <>
         <h3>Solicitar Check-in de Bem-Estar?</h3>

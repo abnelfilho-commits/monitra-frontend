@@ -272,3 +272,20 @@ test('result stays visible in modal and closing during a POST cannot create a du
   assert.match(text(), /aceito pela Meta; entrega ainda não confirmada/);
   assert.equal(requests.filter(c => c.method === 'POST').length, 1);
 });
+
+test('loading and loaded states share the stable frame with actions outside the scroll body', async () => {
+  reset(); const gate = deferred(); getHandler = () => gate.promise;
+  await mount();
+  const frame = document.querySelector('.mental-whatsapp-dialog--overview');
+  const body = frame.querySelector('.mental-whatsapp-dialog__body');
+  const footer = frame.querySelector('.mental-whatsapp-dialog__footer');
+  assert.equal(body.getAttribute('aria-busy'), 'true');
+  assert.equal(footer.contains(button('Fechar')), true);
+  assert.equal(body.contains(footer), false);
+  gate.resolve(); await flush();
+  assert.equal(document.querySelector('.mental-whatsapp-dialog--overview'), frame);
+  assert.equal(body.getAttribute('aria-busy'), 'false');
+  assert.equal(body.querySelectorAll('.mental-whatsapp-dialog__details > div').length, 8);
+  await click('Solicitar check-in');
+  assert.equal(document.querySelector('dialog[aria-label]').classList.contains('mental-whatsapp-dialog--overview'), false);
+});
