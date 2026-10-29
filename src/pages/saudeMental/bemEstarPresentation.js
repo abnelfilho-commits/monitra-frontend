@@ -53,6 +53,7 @@ export function wellbeingEvents(checkins, personName, personId) {
   }).map(item => ({
     id: `CHECKIN:${item.id}`, tipo: "Check-in de Bem-Estar",
     nome: item.baseline ? "Check-in Inicial · Baseline" : null,
+    data: item.data_registro,
     created_at: Number.isFinite(Date.parse(item.data_hora)) ? item.data_hora : null,
     origem: item.canal === "PORTAL_PROFISSIONAL" ? "Portal Profissional" : item.canal,
     respondente: item.respondente_pessoa_id === personId ? personName : "Identificação não disponível",
