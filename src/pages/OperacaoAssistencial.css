@@ -1,0 +1,13 @@
+.context-setup { max-width: 960px; margin: auto; overflow-wrap: anywhere; }
+.context-setup .setup-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 16px 0; background: white; }
+.context-setup .setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.context-setup label { display: block; }
+.context-setup select, .context-setup textarea, .context-setup input:not([type="checkbox"]) { display: block; width: 100%; box-sizing: border-box; padding: 10px; margin: 8px 0 16px; }
+.context-setup fieldset { border: 0; padding: 0; min-width: 0; }
+.context-setup .setup-check { margin: 12px 0; }
+.context-setup .setup-steps, .context-setup .setup-footer { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.context-setup .setup-steps button { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px; text-align: left; }
+.context-setup .setup-steps button[aria-current="step"] { background: #eff6ff; border-color: #2563eb; font-weight: 600; }
+.context-setup button:focus-visible, .context-setup h2:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.context-setup .setup-footer { border-top: 1px solid #e5e7eb; padding-top: 16px; }
+@media (max-width: 600px) { .context-setup .setup-grid { grid-template-columns: 1fr; } .context-setup .setup-card { padding: 14px; } .context-setup .setup-steps button { flex: 1 1 45%; } }

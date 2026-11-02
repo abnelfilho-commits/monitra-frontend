@@ -95,6 +95,8 @@ const FRONT = process.env.PESSOAS_FRONT_URL || 'http://127.0.0.1:5176';
   const beforeContext=calls.filter(c=>c.path==='/admin/contextos-assistenciais/').length;
   await page.getByRole('button',{name:'Criar contexto',exact:true}).evaluate(button=>{button.form.requestSubmit();button.form.requestSubmit();});
   await page.getByRole('button',{name:'Consultar contexto',exact:true}).waitFor();
+  assert.equal(await page.getByRole('link',{name:'Configurar este contexto',exact:true}).getAttribute('href'),'/operacao-assistencial?instituicao_id=4&contexto_id=91');
+  assert.equal(await page.getByRole('link',{name:'Retomar configuração de contexto nesta instituição',exact:true}).getAttribute('href'),'/operacao-assistencial?instituicao_id=4');
   assert.equal(calls.filter(c=>c.path==='/admin/contextos-assistenciais/').length,beforeContext+1);
   await page.getByRole('button',{name:'Consultar contexto',exact:true}).click();
   await page.getByRole('button',{name:'Adicionar Saúde Mental',exact:true}).waitFor();

@@ -43,10 +43,10 @@ export default function HabilitarAcesso({ person, onDirty, onBusy }) {
   }, [open]);
   async function submit(e) {
     e.preventDefault();
-    if (lock.current || unknown || !result || readError || result.usuario) return;
+    if (lock.current || unknown || !result || readError || result.pessoa_id !== person.id || (confirmed && !result.usuario) || !person.ativo || result.usuario?.ativo === false || !institution || !profile || !password.trim()) return;
     lock.current = true; setBusy(true); onBusy?.(true); setError("");
     try {
-      await habilitarAcesso(person.id, { email, senha_inicial: password, instituicao_id: Number(institution), perfil_institucional: profile, ativo: active });
+      await habilitarAcesso(person.id, { email: result.usuario?.email || email, senha_inicial: password, instituicao_id: Number(institution), perfil_institucional: profile, ativo: active });
       markSaved(); setOpen(false); setConfirmed(true); setResult(null); setReadError(""); refresh(n => n + 1);
     } catch (e) {
       const status = e?.response?.status;
@@ -57,20 +57,22 @@ export default function HabilitarAcesso({ person, onDirty, onBusy }) {
   return <PessoaArea title="Acesso à plataforma" summary={readError ? "Não foi possível confirmar o acesso." : !result ? "Consultando acesso…" : result.usuario ? `Conta ${result.usuario.ativo ? "ativa" : "inativa"} · ${result.autorizacoes.length} autorização(ões) institucional(is).` : "Nenhuma conta associada."}>
     <p>Possuir acesso à plataforma não concede autoridade, participação ou acesso clínico. O perfil institucional não concede permissões clínicas.</p>
     {readError && <p role="alert">{readError}</p>}
+    {unknown && <p role="alert">Novas tentativas bloqueadas até conferência administrativa. Atualizar acesso não repete a solicitação.</p>}
     {!result && !readError && <p role="status">Consultando acesso persistido...</p>}
     <Button variant="secondary" disabled={busy} onClick={() => { setOpen(false); setPassword(""); setResult(null); setReadError(""); refresh(n => n + 1); }}>Atualizar acesso</Button>
-    {result && !readError && !result.usuario && !confirmed && <Button disabled={!person.ativo || busy} variant="secondary" onClick={() => { setOpen(!open); setPassword(""); setError(""); }}> {open ? "Fechar acesso" : "Habilitar acesso"}</Button>}
+    {result && !readError && <Button disabled={!person.ativo || result.usuario?.ativo === false || (confirmed && !result.usuario) || busy || unknown} variant="secondary" onClick={() => { setOpen(!open); setEmail(result.usuario?.email || ""); setInstitution(""); setProfile(""); setActive(false); setPassword(""); setError(""); setConfirmed(false); }}> {open ? "Fechar acesso" : result.usuario ? "Habilitar em outra instituição" : "Habilitar acesso"}</Button>}
+    {result?.usuario?.ativo === false && <p>Conta inativa. Solicite a regularização ao administrador; esta ação não reativa contas.</p>}
     {!person.ativo && <p>Pessoa inativa: habilitação indisponível.</p>}
-    {open && result && !result.usuario && !readError && <form onSubmit={submit}>
+    {open && result && !readError && <form onSubmit={submit}>
       <p>{person.nome_completo} — Pessoa #{person.id} — {person.ativo ? "Ativa" : "Inativa"}</p>
       <p>A senha inicial é usada somente para uma nova conta. Uma conta compatível será reutilizada sem troca de senha. O estado abaixo refere-se à autorização nesta instituição.</p>
       {error && <p role="alert">{error}</p>}
-      {unknown && <p role="alert">Novas tentativas bloqueadas até conferência administrativa.</p>}
       {!institutions && !error && <p role="status">Carregando instituições...</p>}
       <fieldset disabled={busy || unknown || !person.ativo || !institutions} style={{ border: 0, padding: 0, minWidth: 0 }}>
-        <label>E-mail de acesso<input style={input} type="email" required autoComplete="off" value={email} onChange={e => setEmail(e.target.value)} /></label>
-        <label>Senha inicial<input style={input} type="password" required autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} /></label>
-        <label>Instituição do acesso<select aria-label="Instituição do acesso" style={input} required value={institution} onChange={e => setInstitution(e.target.value)}><option value="">Selecione explicitamente</option>{institutions?.map(i => <option key={i.id} value={i.id} disabled={!i.ativo}>{i.nome_fantasia || i.razao_social}</option>)}</select></label>
+        <label>E-mail de acesso<input style={input} type="email" required readOnly={!!result.usuario} autoComplete="off" value={result.usuario?.email || email} onChange={e => setEmail(e.target.value)} /></label>
+        {result.usuario && <p id="existing-account-password">A conta e o e-mail serão preservados. Este formulário exige uma senha inicial, mas ela não será utilizada nem alterará a senha da conta existente. Não informe sua senha atual.</p>}
+        <label>Senha inicial<input aria-describedby={result.usuario ? "existing-account-password" : undefined} style={input} type="password" required autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} /></label>
+        <label>Instituição do acesso<select aria-label="Instituição do acesso" style={input} required value={institution} onChange={e => setInstitution(e.target.value)}><option value="">Selecione explicitamente</option>{institutions?.map(i => <option key={i.id} value={i.id} disabled={!i.ativo || result.autorizacoes.some(a => a.instituicao_id === i.id)}>{i.nome_fantasia || i.razao_social}{result.autorizacoes.some(a => a.instituicao_id === i.id) ? " — acesso já registrado" : ""}</option>)}</select></label>
         <label>Perfil institucional<select aria-label="Perfil institucional" style={input} required value={profile} onChange={e => setProfile(e.target.value)}><option value="">Selecione explicitamente</option>{["GESTOR","PROFISSIONAL","SUPORTE"].map(p => <option key={p}>{p}</option>)}</select></label>
         <label><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} /> Autorização institucional ativa</label>
         <Button type="submit">Confirmar habilitação</Button>
