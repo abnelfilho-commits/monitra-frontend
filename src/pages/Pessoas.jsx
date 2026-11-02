@@ -5,6 +5,7 @@ import PageLayout from "../components/layouts/PageLayout";
 import Button from "../components/ui/Button";
 import { listarInstituicoes } from "../services/instituicoes";
 import * as api from "../services/pessoas";
+import ConfigurarContextoModal from "../components/ConfigurarContextoModal";
 import HabilitarAcesso from "../components/HabilitarAcesso";
 import ProfissionalPessoa from "../components/ProfissionalPessoa";
 import PessoaArea from "../components/pessoas/PessoaArea";
@@ -169,13 +170,13 @@ function Editor({ id, close }) {
         <div hidden={editing}><dl className="pessoa-data">{Object.entries(fields).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{key === "data_nascimento" ? birthDate(person[key]) : person[key] || "Não informado"}</dd></div>)}</dl><Button onClick={() => setEditing(true)}>Editar dados</Button></div>
         <form hidden={!editing} onSubmit={e => { e.preventDefault(); run(async () => { const next = personal(form), original = personal(formOf(person)); const patch = Object.fromEntries(Object.entries(next).filter(([k,v]) => v !== original[k])); if (!Object.keys(patch).length) { setSuccess("Nenhuma alteração cadastral."); setEditing(false); return; } const p = await api.atualizarPessoa(person.id, patch); setPerson(p); setForm(formOf(p)); setEditing(false); setSuccess("Cadastro atualizado."); }, true); }}><Fields form={form} setForm={setForm} /><div className="pessoas-actions"><Button type="submit">Salvar alterações</Button><Button type="button" variant="secondary" onClick={() => { if (JSON.stringify(form) === JSON.stringify(formOf(person)) || window.confirm("Descartar alterações cadastrais não salvas?")) { setForm(formOf(person)); setEditing(false); } }}>Cancelar edição</Button></div></form>
       </PessoaArea>
-      <VinculosPessoa key={person.id} person={person} preparedPatient={patient} onBusy={setBusy} onUncertain={() => setUncertain(true)} onDirty={onDirty}><section><p>Vínculos representam a relação assistencial/institucional da Pessoa com a Instituição. Possuir acesso à plataforma não cria automaticamente este vínculo e não exige papel assistencial. Prepare o papel de Paciente somente para quem participará da jornada assistencial. Um papel já associado será reutilizado; esta ação não cria conta ou autorização.</p>{!person.cpf ? <p>O cadastro legado não possui CPF. A preparação exige regularização explícita; nenhum CPF será fabricado.</p> : <form onSubmit={e => { e.preventDefault(); run(() => identity(true), true); }}><label>Motivo da preparação *<textarea aria-label="Motivo da preparação *" style={input} required maxLength={1000} value={roleReason} onChange={e => setRoleReason(e.target.value)} /></label><Button type="submit">Preparar papel de Paciente</Button></form>}</section></VinculosPessoa>
+      <VinculosPessoa key={person.id} externalBusy={busy} person={person} preparedPatient={patient} onBusy={setBusy} onUncertain={() => setUncertain(true)} onDirty={onDirty}><section><p>Vínculos representam a relação assistencial/institucional da Pessoa com a Instituição. Possuir acesso à plataforma não cria automaticamente este vínculo e não exige papel assistencial. Prepare o papel de Paciente somente para quem participará da jornada assistencial. Um papel já associado será reutilizado; esta ação não cria conta ou autorização.</p>{!person.cpf ? <p>O cadastro legado não possui CPF. A preparação exige regularização explícita; nenhum CPF será fabricado.</p> : <form onSubmit={e => { e.preventDefault(); run(() => identity(true), true); }}><label>Motivo da preparação *<textarea aria-label="Motivo da preparação *" style={input} required maxLength={1000} value={roleReason} onChange={e => setRoleReason(e.target.value)} /></label><Button type="submit">Preparar papel de Paciente</Button></form>}</section></VinculosPessoa>
       <HabilitarAcesso key={person.id} person={person} onDirty={onDirty} onBusy={setBusy} />
     </>}
     </fieldset>{busy && <p role="status">Processando...</p>}
   </div>;
 }
-function VinculosPessoa({ person, preparedPatient, onBusy, onUncertain, onDirty, children }) {
+function VinculosPessoa({ person, externalBusy, preparedPatient, onBusy, onUncertain, onDirty, children }) {
   const [data, setData] = useState(null), [error, setError] = useState("");
   const [patientSummary, setPatientSummary] = useState("Consultando…");
   const [revision, refresh] = useState(0), [adding, setAdding] = useState(false), [started, setStarted] = useState(false);
@@ -194,8 +195,13 @@ function VinculosPessoa({ person, preparedPatient, onBusy, onUncertain, onDirty,
     setData(next); setError(""); return next;
   };
   const professional = data && !error ? data : { profissional_id: undefined, profissional_ativo: undefined };
+  const wizard = (props = {}) => <ConfigurarContextoModal person={person} externalBusy={externalBusy} onClosed={() => refresh(n => n + 1)}
+    renderPersonPreparation={({onBusy: modalBusy}) => <PapelPaciente person={person} preparedPatient={preparedPatient} revision={revision} onBusy={modalBusy}>{children}</PapelPaciente>}
+    renderLinkPreparation={({institution, onBusy: modalBusy, onUncertain: modalUncertain, onCreated, onDirty: modalDirty}) => <Institutional patient={data?.paciente_id} enabled initialInstitution={institution} onlyLink onBusy={modalBusy} onUncertain={modalUncertain} onCreated={onCreated} onDirty={modalDirty} />}
+    {...props} />;
   return <ProfissionalPessoa person={person} data={professional} onBusy={onBusy} onUncertain={onUncertain} onReload={reload} onDirty={onDirty}>
     {({ role, link, summary }) => <>
+      {wizard()}
       <PessoaArea title="Papéis e atuação" summary={`Paciente: ${patientSummary} · Profissional: ${summary}. Papéis não concedem acesso clínico.`}>
         <PapelPaciente person={person} preparedPatient={preparedPatient} revision={revision} onSummary={setPatientSummary} onBusy={onBusy}>{children}</PapelPaciente>
         {role}
@@ -210,7 +216,7 @@ function VinculosPessoa({ person, preparedPatient, onBusy, onUncertain, onDirty,
         {link}
         {Number.isInteger(data?.paciente_id) && data.paciente_id > 0 && <fieldset disabled={!!error} style={{ border: 0, padding: 0 }}>
           <Button variant="secondary" aria-expanded={adding} aria-controls="pessoa-contexto" onClick={() => { setStarted(true); setAdding(v => !v); }}>{adding ? "Fechar preparação de vínculo" : "Adicionar vínculo institucional / preparar contexto"}</Button>
-          <div id="pessoa-contexto" hidden={!adding}><Institutional patient={data.paciente_id} enabled={started} onBusy={onBusy} onUncertain={onUncertain} onDirty={onDirty} onCreated={() => refresh(n => n + 1)} /></div>
+          <div id="pessoa-contexto" hidden={!adding}><Institutional person={person} wizard={wizard} patient={data.paciente_id} enabled={started} onBusy={onBusy} onUncertain={onUncertain} onDirty={onDirty} onCreated={() => refresh(n => n + 1)} /></div>
         </fieldset>}
       </PessoaArea>
     </>}
@@ -279,7 +285,7 @@ function PapelPaciente({ person, preparedPatient, revision, onSummary, onBusy, c
   }
   const known = patientStateValid(data);
   const summary = writing ? "Processando…" : reading ? "Consultando…" : !known ? "Não confirmado" : data.paciente_id === null ? "Não preparado" : data.paciente_ativo ? "Ativo" : "Inativo";
-  useEffect(() => { onSummary(summary); }, [summary, onSummary]);
+  useEffect(() => { onSummary?.(summary); }, [summary, onSummary]);
   useEffect(() => { onBusy(writing); }, [writing, onBusy]);
   return <section aria-label="Papel de Paciente" style={{ borderTop: "1px solid #e5e7eb", marginTop: 20, paddingTop: 16 }}>
     <h3>Papel de Paciente</h3>
@@ -294,8 +300,9 @@ function PapelPaciente({ person, preparedPatient, revision, onSummary, onBusy, c
   </section>;
 }
 
-function Institutional({ patient, enabled, onBusy, onUncertain, onCreated, onDirty }) {
-  const [institutions, setInstitutions] = useState(null), [institution, setInstitution] = useState("");
+function Institutional({ patient, wizard, enabled, onBusy, onUncertain, onCreated, onDirty, initialInstitution, onlyLink = false }) {
+  const [institutions, setInstitutions] = useState(null), [institution, setInstitution] = useState(initialInstitution ? String(initialInstitution) : "");
+  const [creatingContext, setCreatingContext] = useState(false);
   const [links, setLinks] = useState(null), [selected, setSelected] = useState(null), [creating, setCreating] = useState(false);
   const [error, setError] = useState(""), [busy, setBusy] = useState(false), [unknown, setUnknown] = useState(false);
   const [reason, setReason] = useState(""), [type, setType] = useState("");
@@ -307,7 +314,7 @@ function Institutional({ patient, enabled, onBusy, onUncertain, onCreated, onDir
   const markContextSaved = usePessoaDraft("contexto", contextPeriod, onDirty);
   useEffect(() => { if (!enabled) return; let current = true; listarInstituicoes().then(r => { if (current) setInstitutions(r); }).catch(e => { if (current) setError(errorText(e)); }); return () => { current = false; }; }, [refresh, enabled]);
   useEffect(() => {
-    let current = true; setLinks(null); setSelected(null); setCreating(false); setContext(null); setLine(null); setError("");
+    let current = true; setLinks(null); setSelected(null); setCreating(false); setContext(null); setLine(null); setCreatingContext(false); setError("");
     if (institution) api.listarVinculosPessoa(Number(institution)).then(r => { if (current) setLinks(r.filter(l => l.paciente_id === patient)); }).catch(e => { if (current) setError(errorText(e)); });
     return () => { current = false; };
   }, [institution, patient, refresh]);
@@ -318,18 +325,18 @@ function Institutional({ patient, enabled, onBusy, onUncertain, onCreated, onDir
   return <section style={panel}><h2>Vínculos institucionais</h2><p>Relação assistencial/institucional da Pessoa com a Instituição, independente do acesso à plataforma. Possuir acesso não cria automaticamente este vínculo.</p>
     {error && <p role="alert">{error}</p>}{unknown && <p role="alert">Resultado da escrita não confirmado. Interrompa a preparação e solicite conferência administrativa antes de repetir.</p>}
     <fieldset disabled={busy || unknown} style={{ border: 0, padding: 0, minWidth: 0 }}>
-    <label>Instituição *<select aria-label="Instituição *" style={input} value={institution} onChange={e => setInstitution(e.target.value)}><option value="">Selecione explicitamente</option>{institutions?.map(i => <option key={i.id} value={i.id} disabled={!i.ativo}>{labelInstitution(i)}{!i.ativo ? " (inativa)" : ""}</option>)}</select></label>
+    <label>Instituição *<select aria-label="Instituição *" style={input} disabled={!!initialInstitution} value={institution} onChange={e => setInstitution(e.target.value)}><option value="">Selecione explicitamente</option>{institutions?.map(i => <option key={i.id} value={i.id} disabled={!i.ativo}>{labelInstitution(i)}{!i.ativo ? " (inativa)" : ""}</option>)}</select></label>
     {!institutions && !error && <p role="status">Carregando instituições...</p>}
     <p><Link to="/admin/instituicoes">Administrar Instituições</Link></p>
-    {institution && <p><Link to={`/operacao-assistencial?instituicao_id=${institution}`}>Retomar configuração de contexto nesta instituição</Link> — selecione o contexto existente; não é necessário criá-lo novamente.</p>}
+    {!onlyLink && institution && wizard && <p>{wizard({initialInstitution:Number(institution),label:"Retomar contexto desta Pessoa"})}</p>}
     <Button variant="secondary" onClick={() => setRefresh(n => n + 1)}>Atualizar consultas</Button>
     {institution && !links && !error && <p role="status">Consultando vínculos...</p>}
     {links && <><p>{links.length ? "Vínculos desta Pessoa na instituição selecionada:" : "Nenhum vínculo encontrado nesta instituição."}</p>{links.map(l => <div key={l.id}><span>{types[l.tipo_vinculo] || l.tipo_vinculo} · {date(l.data_inicio)} → {date(l.data_fim)} · {l.ativo ? "Ativo" : "Inativo"} </span><Button variant="secondary" disabled={!l.ativo} onClick={() => { setSelected(l); setContext(null); setLine(null); setContextPeriod({ data_inicio: "", data_fim: "" }); }}>Usar vínculo</Button></div>)}
     {!selected && links.length > 0 && !creating && <Button variant="secondary" onClick={() => setCreating(true)}>Adicionar vínculo nesta instituição</Button>}
     {!selected && (!links.length || creating) && <form onSubmit={e => { e.preventDefault(); write(async () => { const l = await api.criarVinculoPessoa({ paciente_id: patient, instituicao_id: Number(institution), tipo_vinculo: type, data_inicio: period.data_inicio, data_fim: period.data_fim || null, motivo: reason }); setLinks(rows => [...rows.filter(r => r.id !== l.id), l]); setSelected(l); setReason(""); markLinkSaved(["", type, period]); onCreated(); }); }}><h3>Novo vínculo institucional</h3><label>Tipo de vínculo *<select aria-label="Tipo de vínculo *" style={input} required value={type} onChange={e => setType(e.target.value)}><option value="">Selecione</option>{Object.entries(types).map(([v,l]) => <option key={v} value={v}>{l}</option>)}</select></label><Period prefix="Vínculo" value={period} onChange={setPeriod} /><label>Motivo do vínculo *<textarea aria-label="Motivo do vínculo *" style={input} required value={reason} onChange={e => setReason(e.target.value)} /></label><Button type="submit">Criar vínculo</Button></form>}
     </>}
-    {selected && <><h2>Contexto assistencial</h2><p>Vínculo selecionado: {types[selected.tipo_vinculo]} · {date(selected.data_inicio)} → {date(selected.data_fim)}</p><p>Esta visualização apresenta o contexto preparado nesta operação. Contextos anteriores não são listados aqui; períodos sobrepostos serão rejeitados.</p>
-    {!context ? <form onSubmit={e => { e.preventDefault(); write(async () => { setContext(await api.criarContextoPessoa({ paciente_instituicao_id: selected.id, data_inicio: contextPeriod.data_inicio, data_fim: contextPeriod.data_fim || null })); markContextSaved(); }); }}><Period prefix="Contexto" value={contextPeriod} onChange={setContextPeriod} /><Button type="submit">Criar contexto</Button></form> : <><Button variant="secondary" onClick={async () => { if (lock.current) return; lock.current = true; setBusy(true); onBusy(true); setError(""); try { setContext(await api.obterContextoPessoa(context.id, Number(institution))); } catch (e) { setError(errorText(e)); } finally { lock.current = false; setBusy(false); onBusy(false); } }}>Consultar contexto</Button><Link to={`/operacao-assistencial?instituicao_id=${institution}&contexto_id=${context.id}`}>Configurar este contexto</Link><p role="status">Contexto confirmado: {date(context.data_inicio)} → {date(context.data_fim)}. Nenhuma autorização concedida.</p>{line ? <p role="status">Saúde Mental adicionada — {line.ativo ? "ativa" : "inativa"}. A autorização contextual é tratada separadamente.</p> : <><p>A linha Saúde Mental será adicionada inativa. Contextos encerrados não aceitam novas linhas.</p><Button disabled={!context.ativo || !!context.data_fim} onClick={() => write(async () => setLine(await api.adicionarSaudeMental(context.id, Number(institution))))}>Adicionar Saúde Mental</Button></>}</>}
+    {!onlyLink && selected && <><h2>Contexto assistencial</h2><p>Vínculo selecionado: {types[selected.tipo_vinculo]} · {date(selected.data_inicio)} → {date(selected.data_fim)}</p><p>Retome um contexto existente sem criar outro. A preparação de um novo contexto exige uma escolha explícita.</p>{wizard && wizard({initialInstitution:Number(institution),initialLink:selected.id,initialContext:context?.id,label:"Configurar contexto do vínculo"})}{!context && !creatingContext && <Button onClick={() => setCreatingContext(true)}>Preparar novo contexto</Button>}
+    {!context ? creatingContext && <form onSubmit={e => { e.preventDefault(); write(async () => { setContext(await api.criarContextoPessoa({ paciente_instituicao_id: selected.id, data_inicio: contextPeriod.data_inicio, data_fim: contextPeriod.data_fim || null })); markContextSaved(); }); }}><Period prefix="Contexto" value={contextPeriod} onChange={setContextPeriod} /><Button type="submit">Criar contexto</Button></form> : <><Button variant="secondary" onClick={async () => { if (lock.current) return; lock.current = true; setBusy(true); onBusy(true); setError(""); try { setContext(await api.obterContextoPessoa(context.id, Number(institution))); } catch (e) { setError(errorText(e)); } finally { lock.current = false; setBusy(false); onBusy(false); } }}>Consultar contexto</Button><p role="status">Contexto confirmado: {date(context.data_inicio)} → {date(context.data_fim)}. Nenhuma autorização concedida.</p>{line ? <p role="status">Saúde Mental adicionada — {line.ativo ? "ativa" : "inativa"}. A autorização contextual é tratada separadamente.</p> : <><p>A linha Saúde Mental será adicionada inativa. Contextos encerrados não aceitam novas linhas.</p><Button disabled={!context.ativo || !!context.data_fim} onClick={() => write(async () => setLine(await api.adicionarSaudeMental(context.id, Number(institution))))}>Adicionar Saúde Mental</Button></>}</>}
     </>}
     </fieldset>{busy && <p role="status">Processando preparação...</p>}
   </section>;

@@ -23,9 +23,9 @@ const message = e => errors[e?.response?.data?.detail?.code] || ({
   422: "Confira os dados obrigatórios, a ocupação, o período e o motivo.",
 }[e?.response?.status]) || "Resultado não confirmado. Não repita a escrita sem conferência administrativa.";
 
-export default function ProfissionalPessoa({ person, data, onReload, onBusy, onUncertain, onDirty, children }) {
+export default function ProfissionalPessoa({ person, data, institutionId, onReload, onBusy, onUncertain, onDirty, children }) {
   const [reason, setReason] = useState(""), [linkReason, setLinkReason] = useState("");
-  const [institution, setInstitution] = useState(""), [occupation, setOccupation] = useState("");
+  const [institution, setInstitution] = useState(institutionId ? String(institutionId) : ""), [occupation, setOccupation] = useState("");
   const [start, setStart] = useState(""), [end, setEnd] = useState("");
   const [showLink, setShowLink] = useState(false), [catalog, setCatalog] = useState(null);
   const [catalogError, setCatalogError] = useState(""), [revision, refresh] = useState(0);
@@ -117,7 +117,7 @@ export default function ProfissionalPessoa({ person, data, onReload, onBusy, onU
               <form onSubmit={e => { e.preventDefault(); write(() => criarVinculoProfissional({ profissional_id: data.profissional_id, instituicao_id: Number(institution), ocupacao_id: Number(occupation), data_inicio: start, data_fim: end || null, motivo: linkReason.trim() }), markLinkSaved, "link"); }}>
                 <h4>Novo vínculo profissional institucional</h4>
                 <div style={grid}>
-                  <label>Instituição do vínculo profissional *<select style={input} required value={institution} onChange={e => setInstitution(e.target.value)}><option value="">Selecione explicitamente</option>{catalog.institutions.map(i => <option key={i.id} value={i.id} disabled={!i.ativo}>{i.nome_fantasia || i.razao_social}{!i.ativo ? " (inativa)" : ""}</option>)}</select></label>
+                  <label>Instituição do vínculo profissional *<select disabled={!!institutionId} style={input} required value={institution} onChange={e => setInstitution(e.target.value)}><option value="">Selecione explicitamente</option>{catalog.institutions.map(i => <option key={i.id} value={i.id} disabled={!i.ativo}>{i.nome_fantasia || i.razao_social}{!i.ativo ? " (inativa)" : ""}</option>)}</select></label>
                   <label>Ocupação do vínculo profissional *<select style={input} required value={occupation} onChange={e => setOccupation(e.target.value)}><option value="">Selecione explicitamente</option>{catalog.occupations.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}</select></label>
                   <label>Vínculo profissional — início *<input style={input} type="date" required value={start} onChange={e => setStart(e.target.value)} /></label>
                   <label>Vínculo profissional — término<input style={input} type="date" min={start} value={end} onChange={e => setEnd(e.target.value)} /></label>

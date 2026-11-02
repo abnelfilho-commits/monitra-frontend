@@ -24,3 +24,17 @@ export function erroOperacional(error) {
   };
   return messages[error?.response?.data?.detail?.code] || ({401: "Sessão expirada.",403: "Operação não autorizada para esta conta e contexto.",404: "Recurso operacional não encontrado.",409: "O estado mudou ou há conflito. Atualize a consulta.",422: "Confira os campos obrigatórios e o período."}[error?.response?.status]) || "Resultado não confirmado. Não repita a escrita sem conferência administrativa.";
 }
+
+// The operational list deliberately has no person identity. Verify each structural
+// detail through the existing ADMIN endpoint before associating it with a person.
+export async function contextosDaPessoa(instituicao, vinculos) {
+  const candidates = await contextosOperacionais(instituicao);
+  if (!Array.isArray(candidates)) throw Error("Invalid context list");
+  const result = [];
+  for (const candidate of candidates) {
+    const { data } = await api.get(`/admin/contextos-assistenciais/${candidate.id}`, { params: { instituicao_id: instituicao } });
+    if (data.id !== candidate.id || data.instituicao_id !== instituicao || !Number.isInteger(data.paciente_id) || !Number.isInteger(data.paciente_instituicao_id)) throw Error("Invalid context identity");
+    if (data.ativo && vinculos.some(v => v.id === data.paciente_instituicao_id && v.paciente_id === data.paciente_id && v.instituicao_id === instituicao)) result.push(data);
+  }
+  return result;
+}

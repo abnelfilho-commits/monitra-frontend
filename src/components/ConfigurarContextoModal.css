@@ -1,0 +1,13 @@
+.context-wizard { box-sizing: border-box; width: min(820px, calc(100vw - 32px)); height: min(720px, calc(100dvh - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid #cbd5e1; border-radius: 12px; background: white; color: #1f2937; overflow: hidden; }
+.context-wizard[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.context-wizard::backdrop { background: rgb(15 23 42 / 45%); }
+.context-wizard > header, .context-wizard > footer { padding: 16px 20px; }
+.context-wizard > header { border-bottom: 1px solid #e5e7eb; }
+.context-wizard > header h2 { font-size: 22px; margin: 0 0 8px; }
+.context-wizard > header p { margin: 4px 0; font-size: 14px; }
+.context-wizard-body { overflow: auto; min-height: 0; padding: 16px 20px; }
+.context-wizard > footer { display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid #e5e7eb; }
+.context-wizard .setup-card { padding: 0; border: 0; }
+.context-wizard .setup-card > h2 { font-size: 19px; }
+.context-wizard button:focus-visible, .context-wizard h2:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+@media (max-width: 600px) { .context-wizard { width: calc(100vw - 16px); height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); } .context-wizard > header, .context-wizard > footer, .context-wizard-body { padding: 12px; } }
