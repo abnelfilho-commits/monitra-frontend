@@ -131,6 +131,7 @@ function Editor({ id, close }) {
     onDirty("paciente", !!roleReason);
   }, [person, form, cpf, personReason, roleReason, onDirty]);
   const [patient, setPatient] = useState(null);
+  const [manageAccess, setManageAccess] = useState(false);
   const [uncertain, setUncertain] = useState(false);
   const lock = useRef(false), keys = useRef(new Map());
   useEffect(() => {
@@ -140,7 +141,7 @@ function Editor({ id, close }) {
     return () => { current = false; };
   }, [id, readRevision]);
   async function run(fn, write = false) {
-    if (lock.current) return; lock.current = true; setBusy(true); setError(""); setSuccess("");
+    if (lock.current || (write && uncertain)) return; lock.current = true; setBusy(true); setError(""); setSuccess("");
     try { await fn(); } catch (e) { setError(errorText(e)); if (write && (!e.response || e.response.status >= 500)) setUncertain(true); } finally { lock.current = false; setBusy(false); }
   }
   async function identity(role) {
@@ -170,12 +171,83 @@ function Editor({ id, close }) {
         <div hidden={editing}><dl className="pessoa-data">{Object.entries(fields).map(([key, label]) => <div key={key}><dt>{label}</dt><dd>{key === "data_nascimento" ? birthDate(person[key]) : person[key] || "Não informado"}</dd></div>)}</dl><Button onClick={() => setEditing(true)}>Editar dados</Button></div>
         <form hidden={!editing} onSubmit={e => { e.preventDefault(); run(async () => { const next = personal(form), original = personal(formOf(person)); const patch = Object.fromEntries(Object.entries(next).filter(([k,v]) => v !== original[k])); if (!Object.keys(patch).length) { setSuccess("Nenhuma alteração cadastral."); setEditing(false); return; } const p = await api.atualizarPessoa(person.id, patch); setPerson(p); setForm(formOf(p)); setEditing(false); setSuccess("Cadastro atualizado."); }, true); }}><Fields form={form} setForm={setForm} /><div className="pessoas-actions"><Button type="submit">Salvar alterações</Button><Button type="button" variant="secondary" onClick={() => { if (JSON.stringify(form) === JSON.stringify(formOf(person)) || window.confirm("Descartar alterações cadastrais não salvas?")) { setForm(formOf(person)); setEditing(false); } }}>Cancelar edição</Button></div></form>
       </PessoaArea>
+      <Button variant="secondary" aria-expanded={manageAccess} onClick={() => { if (canLeave()) setManageAccess(v => !v); }}>{manageAccess ? "Voltar ao cadastro" : "Gerenciar Acessos"}</Button>
+      {manageAccess ? <GerenciarAcessos person={person} onBusy={setBusy} onDirty={onDirty} onUncertain={() => setUncertain(true)} canLeave={canLeave} /> : <>
       <VinculosPessoa key={person.id} externalBusy={busy} person={person} preparedPatient={patient} onBusy={setBusy} onUncertain={() => setUncertain(true)} onDirty={onDirty}><section><p>Vínculos representam a relação assistencial/institucional da Pessoa com a Instituição. Possuir acesso à plataforma não cria automaticamente este vínculo e não exige papel assistencial. Prepare o papel de Paciente somente para quem participará da jornada assistencial. Um papel já associado será reutilizado; esta ação não cria conta ou autorização.</p>{!person.cpf ? <p>O cadastro legado não possui CPF. A preparação exige regularização explícita; nenhum CPF será fabricado.</p> : <form onSubmit={e => { e.preventDefault(); run(() => identity(true), true); }}><label>Motivo da preparação *<textarea aria-label="Motivo da preparação *" style={input} required maxLength={1000} value={roleReason} onChange={e => setRoleReason(e.target.value)} /></label><Button type="submit">Preparar papel de Paciente</Button></form>}</section></VinculosPessoa>
-      <HabilitarAcesso key={person.id} person={person} onDirty={onDirty} onBusy={setBusy} />
+      <HabilitarAcesso key={person.id} person={person} onDirty={onDirty} onBusy={setBusy} blocked={uncertain} onUncertain={() => setUncertain(true)} />
+      </>}
     </>}
     </fieldset>{busy && <p role="status">Processando...</p>}
   </div>;
 }
+// Civil dates use the operator's local calendar, without parsing UTC midnights.
+function professionalValidity(link) {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (!link.ativo) return "Inativo";
+  if (link.data_inicio > today) return "Futuro";
+  if (link.data_fim && link.data_fim < today) return "Encerrado";
+  return "Vigente";
+}
+// Composition inside Pessoas; no new route or permission commands.
+function GerenciarAcessos({ person, onBusy, onDirty, onUncertain, canLeave }) {
+  const [institutions, setInstitutions] = useState(null), [error, setError] = useState("");
+  const [institution, setInstitution] = useState(""), [profile, setProfile] = useState("");
+  const [revision, refresh] = useState(0);
+  useEffect(() => {
+    let current = true;
+    listarInstituicoes().then(rows => {
+      if (!Array.isArray(rows)) throw Error("Invalid institutions");
+      if (current) { setInstitutions(rows); setError(""); }
+    }).catch(() => { if (current) setError("Não foi possível consultar instituições. Nenhuma opção foi presumida."); });
+    return () => { current = false; };
+  }, [revision]);
+  const selected = institutions?.find(i => i.id === Number(institution));
+  return <section style={panel} aria-label="Gerenciar Acessos">
+    <h2>Gerenciar Acessos</h2><h3>1. Pessoa</h3><p>{person.nome_completo} · referência {person.id}</p>
+    <h3>2. Instituição</h3>
+    {error && <p role="alert">{error} <Button onClick={() => refresh(n => n + 1)}>Reconsultar instituições</Button></p>}
+    {!institutions && !error && <p role="status">Consultando instituições...</p>}
+    <label>Instituição para gerenciar acesso<select style={input} value={institution} disabled={!institutions} onChange={e => { if (canLeave()) { setInstitution(e.target.value); setProfile(""); } }}><option value="">Selecione explicitamente</option>{institutions?.map(i => <option key={i.id} value={i.id}>{labelInstitution(i)}{!i.ativo ? " (inativa)" : ""}</option>)}</select></label>
+    {selected && <><h3>3. Perfil e acesso</h3><p>GESTOR, PROFISSIONAL e SUPORTE são independentes. Não é necessário preparar um GESTOR primeiro. Nenhum perfil concede autorização clínica.</p>
+      {!selected.ativo && <p role="alert">Instituição inativa: consulta disponível; habilitação bloqueada.</p>}
+      <label>Perfil para preparação<select style={input} value={profile} onChange={e => { if (canLeave()) setProfile(e.target.value); }}><option value="">Selecione para habilitar</option>{["GESTOR", "PROFISSIONAL", "SUPORTE"].map(p => <option key={p}>{p}</option>)}</select></label>
+      <HabilitarAcesso key={`${institution}:${profile}`} person={person} institutionId={selected.id} profileValue={profile} embedded blocked={!selected.ativo || !profile} onBusy={onBusy} onDirty={onDirty} onUncertain={onUncertain} />
+      {profile === "PROFISSIONAL" && <PreparacaoAcessoProfissional key={institution} person={person} institution={selected} onBusy={onBusy} onDirty={onDirty} onUncertain={onUncertain} />}
+    </>}
+  </section>;
+}
+function PreparacaoAcessoProfissional({ person, institution, onBusy, onDirty, onUncertain }) {
+  const [data, setData] = useState(null), [error, setError] = useState(""), [revision, refresh] = useState(0), [adding, setAdding] = useState(false);
+  const reload = async () => {
+    const next = await api.obterVinculosPessoa(person.id);
+    if (next.pessoa_id !== person.id || !Array.isArray(next.profissionais)) throw Error("Invalid professional scope");
+    setData(next); setError(""); return next;
+  };
+  useEffect(() => {
+    let current = true;
+    api.obterVinculosPessoa(person.id).then(next => {
+      if (next.pessoa_id !== person.id || !Array.isArray(next.profissionais)) throw Error("Invalid professional scope");
+      if (current) { setData(next); setError(""); }
+    }).catch(() => { if (current) { setData(null); setError("Não foi possível confirmar papel e vínculos profissionais. Nenhuma ausência foi presumida."); } });
+    return () => { current = false; };
+  }, [person.id, revision]);
+  const links = data?.profissionais.filter(l => l.instituicao_id === institution.id) || [];
+  return <section aria-label="Preparação profissional para acesso"><h3>Pendências profissionais</h3>
+    <p>Papel Profissional, vínculo e acesso institucional são independentes. Nenhuma participação assistencial será criada.</p>
+    {error && <p role="alert">{error} <Button onClick={() => refresh(n => n + 1)}>Reconsultar preparação profissional</Button></p>}
+    {!data && !error && <p role="status">Consultando papel e vínculos...</p>}
+    {data && !error && <fieldset disabled={!institution.ativo || !person.ativo} style={{border:0,padding:0,minWidth:0}}>
+      <ProfissionalPessoa person={person} data={data} institutionId={institution.id} onReload={reload} onBusy={onBusy} onDirty={onDirty} onUncertain={onUncertain}>{({role,link}) => <>
+        {role}<h4>Vínculos na instituição selecionada</h4>
+        {!links.length ? <p>Nenhum vínculo profissional nesta instituição. Preparação exige ação explícita.</p> : links.map(l => <p key={l.id}>Vínculo #{l.id} · {date(l.data_inicio)} → {date(l.data_fim)} · {professionalValidity(l)} · ocupação #{l.ocupacao_id}</p>)}
+        {links.length > 0 && <Button variant="secondary" onClick={() => setAdding(v => !v)}>{adding ? "Ocultar preparação adicional" : "Preparar outro vínculo explicitamente"}</Button>}
+        <div hidden={links.length > 0 && !adding}>{link}</div>
+      </>}</ProfissionalPessoa>
+    </fieldset>}
+  </section>;
+}
+
 function VinculosPessoa({ person, externalBusy, preparedPatient, onBusy, onUncertain, onDirty, children }) {
   const [data, setData] = useState(null), [error, setError] = useState("");
   const [patientSummary, setPatientSummary] = useState("Consultando…");
