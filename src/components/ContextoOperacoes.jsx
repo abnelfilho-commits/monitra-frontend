@@ -9,7 +9,7 @@ const date = value => value ? value.split("-").reverse().join("/") : "em aberto"
 const contextLabel = c => `${date(c.data_inicio)} → ${date(c.data_fim)} · referência ${c.id}`;
 const validState = (s, institution, context) => s?.instituicao_id === institution && s?.contexto_id === context && s.acoes && [s.contas, s.profissionais, s.autoridades, s.grants, s.participacoes].every(Array.isArray);
 
-export default function ContextoOperacoes({ institution, context, institutionName, selected, externalStep, embedded = false, onBusy, onUncertain, blocked = false, refreshKey = 0, onState }) {
+export default function ContextoOperacoes({ institution, context, institutionName, selected, externalStep, embedded = false, onBusy, onUncertain, blocked = false, refreshKey = 0, onState, verifyParticipation = false }) {
   const [state, setState] = useState(null), [error, setError] = useState(""), [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false), [unknown, setUnknown] = useState(false), [retry, setRetry] = useState(0);
   const [localStep, setStep] = useState(0);
@@ -29,15 +29,19 @@ export default function ContextoOperacoes({ institution, context, institutionNam
   }, [institution, context, retry, refreshKey, onState]);
   async function write(command, body) {
     if (lock.current || unknown || blocked || !state) return;
+    if (verifyParticipation && (command !== "participacoes" || !state.acoes.administrar_participacao || !state.profissionais.some(p => p.id === body?.profissional_instituicao_id))) return;
     lock.current = true; setBusy(true); onBusy?.(true); setError(""); setSuccess("");
     let committed = false;
     try {
-      await executarOperacao(institution, context, command, body); committed = true;
+      const receipt = await executarOperacao(institution, context, command, body); committed = true;
       const next = await estadoOperacional(institution, context);
       if (!validState(next, institution, context)) throw Error("Invalid operational scope");
-      if (alive.current) { setState(next); onState?.(next); setSuccess("Operação confirmada. Estado consultado novamente. Confira o resumo antes de continuar."); setAccount(""); setCaps([]); setTarget(""); setCap(""); setProfessional(""); setReason(""); setRevoke(""); }
+      if (verifyParticipation && command === "participacoes" && !next.participacoes.some(p =>
+        Number.isInteger(receipt?.id) && p.id === receipt.id && p.profissional_instituicao_id === body.profissional_instituicao_id && p.data_inicio === body.data_inicio && p.data_fim === body.data_fim && !p.invalidado_em && !p.encerrado_em
+      )) throw Error("Participation not confirmed");
+      if (alive.current) { setState(next); onState?.(next); setSuccess(verifyParticipation ? `Participação #${receipt.id} confirmada. Nenhum acesso clínico foi concedido.` : "Operação confirmada. Estado consultado novamente. Confira o resumo antes de continuar."); setAccount(""); setCaps([]); setTarget(""); setCap(""); setProfessional(""); setReason(""); setRevoke(""); }
     } catch (e) {
-      if (alive.current) { setError(committed ? "Escrita confirmada, mas a consulta posterior falhou. Não repita a operação; atualize a consulta." : erroOperacional(e)); setState(null); if (!committed && (!e.response || e.response.status >= 500)) { setUnknown(true); onUncertain?.(); } }
+      if (alive.current) { setError(committed && verifyParticipation ? "Participação não confirmada na reconsulta. Solicite conferência administrativa antes de repetir." : committed ? "Escrita confirmada, mas a consulta posterior falhou. Não repita a operação; atualize a consulta." : erroOperacional(e)); setState(null); if ((verifyParticipation && committed) || (!committed && (!e.response || e.response.status >= 500))) { setUnknown(true); onUncertain?.(); } }
     } finally { lock.current = false; onBusy?.(false); if (alive.current) setBusy(false); }
   }
   function navigate(next) {
