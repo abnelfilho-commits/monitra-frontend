@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Button from "./ui/Button";
-import { estadoOperacional, executarOperacao, erroOperacional } from "../services/operacaoAssistencial";
+import { estadoOperacional, executarOperacao, erroOperacional, participacaoVigente } from "../services/operacaoAssistencial";
 import "../pages/OperacaoAssistencial.css";
 
 const labels = { CONTEXTO_ADMINISTRAR: "Administrar participações", ASSISTENCIAL_LER: "Consultar atendimento", ASSISTENCIAL_REGISTRAR: "Registrar atendimento e check-ins" };
@@ -9,7 +9,7 @@ const date = value => value ? value.split("-").reverse().join("/") : "em aberto"
 const contextLabel = c => `${date(c.data_inicio)} → ${date(c.data_fim)} · referência ${c.id}`;
 const validState = (s, institution, context) => s?.instituicao_id === institution && s?.contexto_id === context && s.acoes && [s.contas, s.profissionais, s.autoridades, s.grants, s.participacoes].every(Array.isArray);
 
-export default function ContextoOperacoes({ institution, context, institutionName, selected, externalStep, embedded = false, onBusy, onUncertain, blocked = false, refreshKey = 0, onState, verifyParticipation = false }) {
+export default function ContextoOperacoes({ institution, context, institutionName, selected, externalStep, embedded = false, onBusy, onUncertain, blocked = false, refreshKey = 0, onState, verifyParticipation = false, participationTarget = null, participationId = null }) {
   const [state, setState] = useState(null), [error, setError] = useState(""), [success, setSuccess] = useState("");
   const [busy, setBusy] = useState(false), [unknown, setUnknown] = useState(false), [retry, setRetry] = useState(0);
   const [localStep, setStep] = useState(0);
@@ -33,15 +33,36 @@ export default function ContextoOperacoes({ institution, context, institutionNam
     lock.current = true; setBusy(true); onBusy?.(true); setError(""); setSuccess("");
     let committed = false;
     try {
+      if (participationTarget) {
+        const fresh = await estadoOperacional(institution, context);
+        if (!validState(fresh, institution, context)) throw Error("Invalid scope");
+        const targetProfessional = participacaoVigente(fresh, institution, context, participationId);
+        if (command !== "grants" || !["ASSISTENCIAL_LER", "ASSISTENCIAL_REGISTRAR"].includes(body.capacidade) ||
+            !fresh.acoes.conceder_capacidades.includes(body.capacidade) || !targetProfessional?.pode_receber_grant ||
+            targetProfessional.usuario_instituicao_acesso_id !== body.usuario_instituicao_acesso_id ||
+            !fresh.participacoes.some(p => p.profissional_instituicao_id === participationTarget && !p.invalidado_em && !p.encerrado_em)) {
+          setState(fresh); throw Object.assign(Error("Authority changed"), {response: {status: 403}});
+        }
+      }
+      if (participationTarget) {
+        const existing = await estadoOperacional(institution, context);
+        if (!validState(existing, institution, context)) throw Error("Invalid scope");
+        if (existing.grants.some(g => g.usuario_instituicao_acesso_id === body.usuario_instituicao_acesso_id && g.capacidade === body.capacidade && g.instituicao_id === institution && g.contexto_assistencial_id === context && !g.revogado_em)) {
+          setState(existing); setSuccess("Permissão já concedida e confirmada. Nenhuma nova concessão enviada."); return;
+        }
+      }
       const receipt = await executarOperacao(institution, context, command, body); committed = true;
       const next = await estadoOperacional(institution, context);
       if (!validState(next, institution, context)) throw Error("Invalid operational scope");
+      if (participationTarget && !next.grants.some(g => Number.isInteger(receipt?.id) && g.id === receipt.id &&
+        g.instituicao_id === institution && g.contexto_assistencial_id === context && g.escopo_tipo === "CONTEXTO" &&
+        g.usuario_instituicao_acesso_id === body.usuario_instituicao_acesso_id && g.capacidade === body.capacidade && !g.revogado_em)) throw Error("Grant not confirmed");
       if (verifyParticipation && command === "participacoes" && !next.participacoes.some(p =>
         Number.isInteger(receipt?.id) && p.id === receipt.id && p.profissional_instituicao_id === body.profissional_instituicao_id && p.data_inicio === body.data_inicio && p.data_fim === body.data_fim && !p.invalidado_em && !p.encerrado_em
       )) throw Error("Participation not confirmed");
-      if (alive.current) { setState(next); onState?.(next); setSuccess(verifyParticipation ? `Participação #${receipt.id} confirmada. Nenhum acesso clínico foi concedido.` : "Operação confirmada. Estado consultado novamente. Confira o resumo antes de continuar."); setAccount(""); setCaps([]); setTarget(""); setCap(""); setProfessional(""); setReason(""); setRevoke(""); }
+      if (alive.current) { setState(next); onState?.(next); setSuccess(participationTarget ? "Permissão concedida e confirmada na reconsulta." : verifyParticipation ? `Participação #${receipt.id} confirmada. Nenhum acesso clínico foi concedido.` : "Operação confirmada. Estado consultado novamente. Confira o resumo antes de continuar."); setAccount(""); setCaps([]); setTarget(""); setCap(""); setProfessional(""); setReason(""); setRevoke(""); }
     } catch (e) {
-      if (alive.current) { setError(committed && verifyParticipation ? "Participação não confirmada na reconsulta. Solicite conferência administrativa antes de repetir." : committed ? "Escrita confirmada, mas a consulta posterior falhou. Não repita a operação; atualize a consulta." : erroOperacional(e)); setState(null); if ((verifyParticipation && committed) || (!committed && (!e.response || e.response.status >= 500))) { setUnknown(true); onUncertain?.(); } }
+      if (alive.current) { setError(committed && verifyParticipation ? "Participação não confirmada na reconsulta. Solicite conferência administrativa antes de repetir." : committed ? "Escrita confirmada, mas a consulta posterior falhou. Não repita a operação; atualize a consulta." : erroOperacional(e)); setState(null); if (((verifyParticipation || participationTarget) && committed) || (!committed && (!e.response || e.response.status >= 500))) { setUnknown(true); onUncertain?.(); } }
     } finally { lock.current = false; onBusy?.(false); if (alive.current) setBusy(false); }
   }
   function navigate(next) {
@@ -51,7 +72,7 @@ export default function ContextoOperacoes({ institution, context, institutionNam
   const actions = state?.acoes;
   const nominate = actions && (actions.bootstrap || actions.recovery_capacidades.length > 0);
   const grantCapability = step === 2 ? "CONTEXTO_ADMINISTRAR" : cap;
-  const clinicalTargets = (state?.profissionais || []).filter(p => p.pode_receber_grant).filter((p, i, all) => all.findIndex(x => x.usuario_instituicao_acesso_id === p.usuario_instituicao_acesso_id) === i).map(p => ({id: p.usuario_instituicao_acesso_id, nome: p.profissional}));
+  const clinicalTargets = (state?.profissionais || []).filter(p => p.pode_receber_grant && (!participationTarget || p.id === participationTarget)).filter((p, i, all) => all.findIndex(x => x.usuario_instituicao_acesso_id === p.usuario_instituicao_acesso_id) === i).map(p => ({id: p.usuario_instituicao_acesso_id, nome: p.profissional}));
   const targets = step === 2 ? state?.contas || [] : clinicalTargets;
   const grantAllowed = actions?.conceder_capacidades.includes(grantCapability);
   const clinicalCaps = (actions?.conceder_capacidades || []).filter(c => c !== "CONTEXTO_ADMINISTRAR");
@@ -86,7 +107,12 @@ export default function ContextoOperacoes({ institution, context, institutionNam
         {(step === 2 || step === 4) && <>
           <p>Quem executa: responsável autorizado a delegar a permissão selecionada, utilizando sua própria conta. Não é permitido conceder permissão à própria conta.</p>
           {step === 2 && <p>Escolha quem poderá estabelecer participações profissionais. Esta permissão não concede acesso clínico.</p>}
-          {step === 4 && <p>Conceda somente as permissões necessárias ao atendimento. A participação profissional é preparada separadamente.</p>}
+          {step === 4 && <p>Selecione explicitamente cada permissão necessária ao atendimento. Nenhuma permissão será concedida automaticamente.</p>}
+          {step === 4 && participationTarget && <ul>{["ASSISTENCIAL_LER", "ASSISTENCIAL_REGISTRAR"].map(c => {
+            const professional = state.profissionais.find(p => p.id === participationTarget);
+            const granted = professional && state.grants.some(g => g.usuario_instituicao_acesso_id === professional.usuario_instituicao_acesso_id && g.capacidade === c && !g.revogado_em && g.instituicao_id === institution && g.contexto_assistencial_id === context && g.escopo_tipo === "CONTEXTO");
+            return <li key={c}>{labels[c]}: {granted ? "concedida" : !clinicalCaps.includes(c) ? "pendente — sua conta não possui autoridade para conceder" : !professional?.pode_receber_grant ? "pendente — destinatário indisponível ou autoconcessão proibida" : "não concedida — seleção explícita necessária"}</li>;
+          })}</ul>}
           {(step === 2 ? !grantAllowed : !clinicalCaps.length) ? <p>Esta conta não está autorizada a delegar estas permissões. O responsável nomeado deve acessar este contexto com sua própria conta para continuar.</p> : !targets.length ? <p role="status">Nenhum destinatário elegível disponível. {step === 2 ? "É necessária outra conta ativa com Pessoa e acesso institucional ativos." : "O profissional precisa de conta e Pessoa ativas, acesso institucional e vínculo profissional vigente; a própria conta não pode receber a concessão."}</p> : <>
             {step === 4 && <label>Permissão de atendimento<select aria-label="Permissão de atendimento" value={cap} onChange={e => { setCap(e.target.value); setTarget(""); }}><option value="">Selecione</option>{clinicalCaps.map(c => <option key={c} value={c}>{labels[c]}</option>)}</select></label>}
             <label>Destinatário<select aria-label="Destinatário" value={target} onChange={e => setTarget(e.target.value)}><option value="">Selecione</option>{targets.map(t => <option key={t.id} value={t.id}>{t.nome}</option>)}</select></label>

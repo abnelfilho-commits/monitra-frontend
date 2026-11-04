@@ -38,3 +38,18 @@ export async function contextosDaPessoa(instituicao, vinculos) {
   }
   return result;
 }
+
+// Match persisted operational identities; UTC civil dates mirror the backend gate.
+export function participacaoVigente(state, institution, context, participationId) {
+  const today = new Date().toISOString().slice(0, 10);
+  const current = p => typeof p.data_inicio === "string" && p.data_inicio <= today && (!p.data_fim || p.data_fim >= today);
+  if (state?.instituicao_id !== institution || state?.contexto_id !== context) return null;
+  const parts = (state.participacoes || []).filter(p => p.id === participationId);
+  if (parts.length !== 1) return null;
+  const p = parts[0];
+  if (p.instituicao_id !== institution || p.contexto_assistencial_id !== context || p.invalidado_em || p.encerrado_em || p.revogado_em || !current(p)) return null;
+  const links = (state.profissionais || []).filter(l => l.id === p.profissional_instituicao_id);
+  if (links.length !== 1 || !current(links[0]) || !Number.isSafeInteger(links[0].usuario_instituicao_acesso_id)) return null;
+  const same = state.participacoes.filter(other => other.profissional_instituicao_id === p.profissional_instituicao_id && !other.invalidado_em && !other.encerrado_em && current(other));
+  return same.length === 1 ? links[0] : null;
+}
