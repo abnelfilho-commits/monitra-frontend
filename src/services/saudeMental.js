@@ -50,3 +50,7 @@ export const salvarProgramacaoWhatsAppMental = async (instituicao, pessoa, conte
   payload,
   { params: { instituicao_id: instituicao } }
 )).data;
+
+export const configurarWhatsAppMental = async (instituicao, pessoa, contexto, telefone) => (await api.put(
+  whatsappMentalPath(pessoa, contexto), { telefone }, { params: { instituicao_id: instituicao } }
+)).data;

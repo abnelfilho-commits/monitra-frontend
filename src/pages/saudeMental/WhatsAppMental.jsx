@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import "./WhatsAppMental.css";
 import Button from "../../components/ui/Button";
-import { consultarWhatsAppMental, solicitarWhatsAppMental, salvarProgramacaoWhatsAppMental } from "../../services/saudeMental";
+import { consultarWhatsAppMental, solicitarWhatsAppMental, salvarProgramacaoWhatsAppMental, configurarWhatsAppMental } from "../../services/saudeMental";
 const weekdays = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 const civilTime = value => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d(:00)?$/.test(value);
 const hasScheduleContract = a => a && typeof a.programacao_ativa === "boolean"
@@ -90,6 +90,39 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const mounted = useRef(false), sending = useRef(false), reader = useRef(null), dialog = useRef(null);
   const titleId = useId();
   const modal = useRef(null), heading = useRef(null);
+  const configKey = storageKey + ":initial-configuration";
+  const [phone, setPhone] = useState(""), [configConfirmed, setConfigConfirmed] = useState(false);
+  const [configUncertain, setConfigUncertain] = useState(() => readPending(configKey) !== null);
+  const configLock = useRef(false);
+  const normalizedPhone = phone.replace(/[+().\s-]/g, "");
+  const validPhone = /^[0-9]{8,15}$/.test(normalizedPhone);
+  async function configureInitial(event) {
+    event.preventDefault();
+    if (configLock.current || busy || saving || loading || configUncertain || !canWrite || !snapshot || snapshot.acompanhamento !== null || !validPhone || !configConfirmed) return;
+    configLock.current = true; setSaving(true); setError(""); setMessage("");
+    let sent = false, accepted = false;
+    try {
+      const before = await consultarWhatsAppMental(institution, person, context);
+      if (!validSnapshot(before, jornada)) throw Error("Invalid scope");
+      if (before.acompanhamento !== null) { setSnapshot(before); setDraft(scheduleDraft(before.acompanhamento)); setError("Já existe acompanhamento. Confira os dados atualizados."); return; }
+      sessionStorage.setItem(configKey, JSON.stringify({ key: "pending" }));
+      setConfigUncertain(true); sent = true;
+      const saved = await configurarWhatsAppMental(institution, person, context, normalizedPhone);
+      accepted = true;
+      const after = await consultarWhatsAppMental(institution, person, context);
+      if (!validSnapshot(after, jornada) || !Number.isInteger(saved?.id) || after.acompanhamento?.id !== saved.id ||
+          after.acompanhamento.telefone !== normalizedPhone || saved.contexto_assistencial_id !== context || saved.paciente_id !== jornada.paciente_id) throw Error("Unconfirmed");
+      sessionStorage.removeItem(configKey);
+      if (mounted.current) { setConfigUncertain(false); setSnapshot(after); setDraft(scheduleDraft(after.acompanhamento)); setMessage("WhatsApp configurado e persistência confirmada. Nenhuma mensagem foi enviada."); setPhone(""); setConfigConfirmed(false); }
+    } catch (e) {
+      const status = e?.response?.status;
+      // Only a definitive rejection of the PUT can clear the pending marker.
+      if (sent && !accepted && [400,401,403,404,409,422].includes(status)) {
+        sessionStorage.removeItem(configKey); if (mounted.current) setConfigUncertain(false);
+      }
+      if (mounted.current) setError(status === 403 ? "Configuração WhatsApp não autorizada neste contexto." : "Configuração não confirmada. Não repita sem conferir o estado persistido.");
+    } finally { configLock.current = false; if (mounted.current) setSaving(false); }
+  }
   const canWrite = jornada.bem_estar?.pode_registrar === true && jornada.linha_estado === "ATIVA" && jornada.contexto_estado === "ABERTO";
 
   async function load() {
@@ -145,7 +178,7 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   }, [confirming]);
 
   const reason = snapshot ? impediment(snapshot, canWrite) : "";
-  const disabled = loading || busy || saving || !snapshot || Boolean(reason) || Boolean(pending) || refused;
+  const disabled = loading || busy || saving || !snapshot || Boolean(reason) || Boolean(pending) || refused || configUncertain;
   async function send() {
     if (sending.current || disabled || !confirming) return;
     const existing = readPending(storageKey);
@@ -191,7 +224,7 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const scheduleAvailable = hasScheduleContract(a);
   const scheduleAllowed = canWrite && scheduleAvailable && ["ATIVO", "PAUSADO"].includes(a.status)
     && ["PENDENTE", "CONSENTIDO"].includes(a.consentimento_status);
-  const scheduleDisabled = loading || busy || saving || confirming || !scheduleAllowed || scheduleUncertain;
+  const scheduleDisabled = loading || busy || saving || confirming || !scheduleAllowed || scheduleUncertain || configUncertain;
   async function saveSchedule(event) {
     event.preventDefault();
     if (saveLock.current || scheduleDisabled) return;
@@ -225,7 +258,7 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const current = [...conversations].sort((a, b) => b.conversa_id - a.conversa_id).find(c => openStates.includes(c.estado_assistencial))
     || [...conversations].sort((a, b) => b.conversa_id - a.conversa_id)[0];
   const lastAttempt = [...(current?.tentativas || [])].sort((a, b) => b.tentativa - a.tentativa)[0];
-  return <dialog ref={modal} className="mental-whatsapp-dialog mental-whatsapp-dialog--overview" aria-labelledby={titleId} onCancel={e => { e.preventDefault(); onClose(); }}>
+  return <dialog ref={modal} className="mental-whatsapp-dialog mental-whatsapp-dialog--overview" aria-labelledby={titleId} onCancel={e => { e.preventDefault(); if (!saving) onClose(); }}>
     <header className="mental-whatsapp-dialog__header">
     <h2 ref={heading} tabIndex={-1} id={titleId}>Check-in via WhatsApp</h2>
     <p>Pessoa: <strong>{jornada.nome_social || jornada.nome_completo}</strong></p>
@@ -234,6 +267,16 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
     <div className="mental-whatsapp-dialog__body" aria-busy={loading}>
     {loading && <p role="status">Consultando acompanhamento WhatsApp…</p>}
     {error && <p role="alert">{error}</p>}
+    {configUncertain && <p role="alert">Configuração com resultado incerto. Novas escritas bloqueadas; solicite conferência administrativa. Atualizar não repete a operação.</p>}
+    {snapshot && !a && <form onSubmit={configureInitial}>
+      <fieldset disabled={!canWrite || loading || busy || saving || configUncertain}>
+        <legend>Configuração inicial do WhatsApp</legend>
+        <label>Telefone com código do país e DDD<input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setConfigConfirmed(false); }} required /></label>
+        <label><input type="checkbox" checked={configConfirmed} onChange={e => setConfigConfirmed(e.target.checked)} /> Confirmo o telefone para esta Pessoa e este contexto. Esta configuração não envia mensagens nem substitui o consentimento.</label>
+        <Button type="submit" disabled={!validPhone || !configConfirmed}>Configurar WhatsApp</Button>
+      </fieldset>
+      {!canWrite && <p>Configuração não autorizada para registro neste contexto.</p>}
+    </form>}
     <section aria-labelledby={`${titleId}-weekly`}>
     <h3 id={`${titleId}-weekly`}>Programação semanal</h3>
     {a && !scheduleAvailable && <p>Configuração semanal indisponível neste ambiente.</p>}
@@ -279,7 +322,7 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
     </section>
     </div>
     <footer className="mental-whatsapp-dialog__footer">
-      <Button variant="secondary" onClick={onClose}>Fechar</Button>
+      <Button variant="secondary" disabled={saving} onClick={onClose}>Fechar</Button>
       <Button type="submit" form={`${titleId}-schedule`} disabled={scheduleDisabled}>{saving ? "Salvando…" : "Salvar programação"}</Button>
       <Button disabled={disabled} onClick={() => setConfirming(true)}>Solicitar check-in</Button>
       <Button variant="secondary" disabled={loading || busy || saving} onClick={() => void load()}>Atualizar WhatsApp</Button>

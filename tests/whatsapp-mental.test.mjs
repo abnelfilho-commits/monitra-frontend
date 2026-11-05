@@ -376,3 +376,49 @@ test('weekly mismatched response is unconfirmed and cannot update current scope'
   reset(); await mount(); await preferences(); putHandler=({body})=>({...data.acompanhamento,...body,contexto_assistencial_id:999});
   await click('Salvar programação'); assert.match(text(),/Não foi possível confirmar o salvamento/); assert.equal(scheduleButton().disabled,true);
 });
+
+function absent() {
+  data.acompanhamento = null;
+  for (const key of ['autorizacao','comunicacao','diagnostico']) data[key].acompanhamento_id = null;
+}
+async function initialForm() {
+  await change(element().querySelector('input[type=tel]'), '+55 (65) 99999-1234');
+  await act(async () => element().querySelector('input[type=checkbox]').click());
+}
+test('initial configuration requires valid phone and explicit confirmation; persists and does not send', async () => {
+  reset(); absent(); await mount();
+  assert.equal(button('Configurar WhatsApp').disabled,true);
+  await change(element().querySelector('input[type=tel]'),'invalid');
+  assert.equal(button('Configurar WhatsApp').disabled,true);
+  await initialForm();
+  putHandler=({url,body,config})=>{
+    assert.match(url,/contextos\/1\/whatsapp$/);assert.equal(config.params.instituicao_id,2);
+    assert.deepEqual(body,{telefone:'5565999991234'});data=fixture();data.autorizacao.estado='AUSENTE';data.acompanhamento.consentimento_status='PENDENTE';return data.acompanhamento;
+  };
+  await click('Configurar WhatsApp');
+  assert.match(text(),/persistência confirmada/);assert.equal(button('Configurar WhatsApp'),undefined);
+  assert.equal(requestButton().disabled,true);
+  assert.equal(requests.filter(r=>r.method==='PUT').length,1);assert.equal(requests.filter(r=>r.method==='POST').length,0);
+});
+test('existing follow and denied contextual permission cannot configure',async()=>{
+ reset();await mount();assert.equal(button('Configurar WhatsApp'),undefined);
+ await unmount();absent();await mount({...jornada,bem_estar:{pode_registrar:false}});
+ assert.equal(element().querySelector('input[type=tel]').closest('fieldset').disabled,true);
+ assert.equal(requests.filter(r=>r.method==='PUT').length,0);
+});
+test('configuration PUT authorization rejection is shown without success',async()=>{
+ reset();absent();await mount();await initialForm();
+ putHandler=()=>{throw {response:{status:403}};};await click('Configurar WhatsApp');
+ assert.match(text(),/Configuração WhatsApp não autorizada/);assert.doesNotMatch(text(),/persistência confirmada/);
+});
+test('uncertain configuration and mismatched readback remain blocked after refresh and reopen',async()=>{
+ for(const scenario of ['network','readback']){
+  reset();sessionStorage.clear();absent();await mount();await initialForm();
+  putHandler=()=>{if(scenario==='network')throw Error('connection lost');return fixture().acompanhamento;};
+  await click('Configurar WhatsApp');assert.match(text(),/resultado incerto/);
+  await refresh();await click('Fechar');await click('Check-in via WhatsApp');
+  assert.equal(element().querySelector('input[type=tel]').closest('fieldset').disabled,true);
+  assert.equal(requests.filter(r=>r.method==='PUT').length,1);
+  await unmount();
+ }
+});
