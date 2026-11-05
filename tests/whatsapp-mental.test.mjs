@@ -422,3 +422,46 @@ test('uncertain configuration and mismatched readback remain blocked after refre
   await unmount();
  }
 });
+
+const permissionForm = () => [...element().querySelectorAll('form')].find(f => f.textContent.includes('Confirmar permissão para contato'));
+async function fillPermission() {
+  const form = permissionForm();
+  await change(form.querySelector('select'), 'PRESENCIAL');
+  await change(form.querySelector('input[type=datetime-local]'), '2026-01-01T10:00');
+  await act(async () => form.querySelector('input[type=checkbox]').click());
+}
+test('operational permission requires explicit factual fields and confirms persisted event without sending',async()=>{
+ reset();data.autorizacao.estado='AUSENTE';data.acompanhamento.consentimento_status='PENDENTE';
+ await mount();assert.equal(button('Registrar confirmação').disabled,true);
+ await fillPermission();
+ postHandler=({url,body,config})=>{
+  assert.match(url,/\/confirmacao-operacional$/);assert.equal(config.params.instituicao_id,2);
+  assert.equal(body.modalidade,'PRESENCIAL');assert.equal(body.atestacao,true);assert.equal(body.permissao_previa_identificada,true);
+  const row={id:77,chave:config.headers['Idempotency-Key'],origem:'CONFIRMACAO_OPERACIONAL',estado:'AUTORIZADA'};
+  data.autorizacao={acompanhamento_id:1,estado:'AUTORIZADA',historico:[row]};return row;
+ };
+ await click('Registrar confirmação');assert.match(text(),/Permissão prévia registrada por atestação profissional/);
+ assert.equal(data.acompanhamento.consentimento_status,'PENDENTE');assert.equal(permissionForm(),undefined);
+ assert.equal(requests.filter(r=>r.method==='POST').length,1);
+});
+test('operational permission is absent for authorized follow and blocked for read-only actor',async()=>{
+ reset();await mount();assert.equal(permissionForm(),undefined);
+ await unmount();data.autorizacao.estado='AUSENTE';await mount({...jornada,bem_estar:{pode_registrar:false}});
+ assert.equal(permissionForm().querySelector('fieldset').disabled,true);
+});
+test('operational 403 never reports success',async()=>{
+ reset();data.autorizacao.estado='AUSENTE';await mount();await fillPermission();
+ postHandler=()=>{throw {response:{status:403}};};
+ await click('Registrar confirmação');assert.match(text(),/Registro da permissão não autorizado/);assert.equal(data.autorizacao.estado,'AUSENTE');
+});
+test('operational uncertain POST blocks retry across reopen and reconciles exact key',async()=>{
+ reset();data.autorizacao.estado='AUSENTE';await mount();await fillPermission();
+ let key;
+ postHandler=({config})=>{key=config.headers['Idempotency-Key'];throw Error('lost response');};
+ await click('Registrar confirmação');
+ await click('Fechar');await click('Check-in via WhatsApp');
+ assert.equal(permissionForm().querySelector('fieldset').disabled,true);
+ assert.equal(requestButton().disabled,true);
+ data.autorizacao={acompanhamento_id:1,estado:'AUTORIZADA',historico:[{id:78,chave:key,origem:'CONFIRMACAO_OPERACIONAL',estado:'AUTORIZADA'}]};
+ await refresh();assert.equal(permissionForm(),undefined);assert.equal(requests.filter(r=>r.method==='POST').length,1);
+});

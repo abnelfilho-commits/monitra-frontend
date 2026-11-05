@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import "./WhatsAppMental.css";
 import Button from "../../components/ui/Button";
-import { consultarWhatsAppMental, solicitarWhatsAppMental, salvarProgramacaoWhatsAppMental, configurarWhatsAppMental } from "../../services/saudeMental";
+import { consultarWhatsAppMental, solicitarWhatsAppMental, salvarProgramacaoWhatsAppMental, configurarWhatsAppMental, confirmarPermissaoWhatsAppMental } from "../../services/saudeMental";
 const weekdays = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
 const civilTime = value => typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d(:00)?$/.test(value);
 const hasScheduleContract = a => a && typeof a.programacao_ativa === "boolean"
@@ -90,6 +90,46 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const mounted = useRef(false), sending = useRef(false), reader = useRef(null), dialog = useRef(null);
   const titleId = useId();
   const modal = useRef(null), heading = useRef(null);
+  const authorizationKey = storageKey + ":operational-confirmation";
+  const [permissionMode, setPermissionMode] = useState(""), [permissionTime, setPermissionTime] = useState("");
+  const [permissionAttested, setPermissionAttested] = useState(false);
+  const [permissionPending, setPermissionPending] = useState(() => readPending(authorizationKey));
+  const permissionLock = useRef(false);
+  const permissionDate = permissionTime ? new Date(permissionTime) : null;
+  const validPermission = ["PRESENCIAL", "TELEFONE", "CANAL_ELETRONICO"].includes(permissionMode) &&
+    permissionDate && !Number.isNaN(permissionDate.getTime()) && permissionDate.getTime() <= Date.now() && permissionAttested;
+  async function confirmPermission(event) {
+    event.preventDefault();
+    if (permissionLock.current || permissionPending || !canWrite || !validPermission || loading || busy || saving ||
+        !snapshot?.acompanhamento || snapshot.autorizacao.estado !== "AUSENTE" || configUncertain) return;
+    permissionLock.current = true; setSaving(true); setError(""); setMessage("");
+    let sent = false, accepted = false;
+    try {
+      const fresh = await consultarWhatsAppMental(institution, person, context);
+      if (!validSnapshot(fresh, jornada) || fresh.acompanhamento?.id !== snapshot.acompanhamento.id ||
+          fresh.acompanhamento.telefone !== snapshot.acompanhamento.telefone || fresh.autorizacao.estado !== "AUSENTE") throw Error("State changed");
+      const key = crypto.randomUUID();
+      sessionStorage.setItem(authorizationKey, JSON.stringify({key}));
+      setPermissionPending({key}); sent = true;
+      const receipt = await confirmarPermissaoWhatsAppMental(institution, person, context, key, {
+        modalidade: permissionMode, obtida_em: permissionDate.toISOString(),
+        permissao_previa_identificada: true, atestacao: true
+      });
+      accepted = true;
+      const after = await consultarWhatsAppMental(institution, person, context);
+      if (!validSnapshot(after, jornada) || after.acompanhamento?.id !== fresh.acompanhamento.id ||
+          after.autorizacao.estado !== "AUTORIZADA" ||
+          !after.autorizacao.historico?.some(row => row.id === receipt.id && row.chave === key &&
+            row.origem === "CONFIRMACAO_OPERACIONAL" && row.estado === "AUTORIZADA")) throw Error("Unconfirmed");
+      sessionStorage.removeItem(authorizationKey);
+      if (mounted.current) { setSnapshot(after); setPermissionPending(null); setMessage("Permissão prévia registrada por atestação profissional. O aceite do acompanhamento continua sendo solicitado pelo WhatsApp."); }
+    } catch (e) {
+      if (sent && !accepted && [400,401,403,404,409,422].includes(e?.response?.status)) {
+        sessionStorage.removeItem(authorizationKey); if (mounted.current) setPermissionPending(null);
+      }
+      if (mounted.current) setError(e?.response?.status === 403 ? "Registro da permissão não autorizado neste contexto." : "Não foi possível confirmar o registro da permissão. Consulte o estado; não repita automaticamente.");
+    } finally { permissionLock.current = false; if (mounted.current) setSaving(false); }
+  }
   const configKey = storageKey + ":initial-configuration";
   const [phone, setPhone] = useState(""), [configConfirmed, setConfigConfirmed] = useState(false);
   const [configUncertain, setConfigUncertain] = useState(() => readPending(configKey) !== null);
@@ -135,6 +175,10 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
       if (!mounted.current || controller.signal.aborted) return;
       if (!validSnapshot(data, jornada)) throw new Error("INVALID_RESPONSE");
       setSnapshot(data);
+      const permissionSaved = readPending(authorizationKey);
+      if (permissionSaved && data.autorizacao.historico?.some(row => row.chave === permissionSaved.key && row.origem === "CONFIRMACAO_OPERACIONAL")) {
+        sessionStorage.removeItem(authorizationKey); setPermissionPending(null);
+      }
       setDraft(scheduleDraft(data.acompanhamento));
       setScheduleUncertain(false); setScheduleError(""); setScheduleMessage("");
       // Resolve only the exact attempt returned by our POST, never a nearby conversation.
@@ -178,7 +222,7 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   }, [confirming]);
 
   const reason = snapshot ? impediment(snapshot, canWrite) : "";
-  const disabled = loading || busy || saving || !snapshot || Boolean(reason) || Boolean(pending) || refused || configUncertain;
+  const disabled = loading || busy || saving || !snapshot || Boolean(reason) || Boolean(pending) || refused || configUncertain || Boolean(permissionPending);
   async function send() {
     if (sending.current || disabled || !confirming) return;
     const existing = readPending(storageKey);
@@ -224,7 +268,7 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
   const scheduleAvailable = hasScheduleContract(a);
   const scheduleAllowed = canWrite && scheduleAvailable && ["ATIVO", "PAUSADO"].includes(a.status)
     && ["PENDENTE", "CONSENTIDO"].includes(a.consentimento_status);
-  const scheduleDisabled = loading || busy || saving || confirming || !scheduleAllowed || scheduleUncertain || configUncertain;
+  const scheduleDisabled = loading || busy || saving || confirming || !scheduleAllowed || scheduleUncertain || configUncertain || Boolean(permissionPending);
   async function saveSchedule(event) {
     event.preventDefault();
     if (saveLock.current || scheduleDisabled) return;
@@ -276,6 +320,20 @@ function WhatsAppScope({ jornada, storageKey, onClose, trigger }) {
         <Button type="submit" disabled={!validPhone || !configConfirmed}>Configurar WhatsApp</Button>
       </fieldset>
       {!canWrite && <p>Configuração não autorizada para registro neste contexto.</p>}
+    </form>}
+    {permissionPending && <p role="alert">Registro da permissão com resultado incerto. Novas escritas bloqueadas até reconsulta ou conferência administrativa.</p>}
+    {a && snapshot.autorizacao.estado === "AUSENTE" && <form onSubmit={confirmPermission}>
+      <fieldset disabled={!canWrite || loading || saving || busy || Boolean(permissionPending) || configUncertain}>
+        <legend>Confirmar permissão para contato</legend>
+        <p>Destino: {maskedPhone(a.telefone)}. Registre uma permissão prévia efetivamente obtida para contato desta instituição. Esta atestação profissional não é prova independente da manifestação do titular e não substitui o SIM ao acompanhamento.</p>
+        <label>Como a permissão foi obtida<select required value={permissionMode} onChange={e => { setPermissionMode(e.target.value); setPermissionAttested(false); }}>
+          <option value="">Selecione</option><option value="PRESENCIAL">Presencialmente</option><option value="TELEFONE">Por telefone</option><option value="CANAL_ELETRONICO">Por canal eletrônico</option>
+        </select></label>
+        <label>Quando a permissão foi obtida (horário deste dispositivo)<input required type="datetime-local" value={permissionTime} onChange={e => { setPermissionTime(e.target.value); setPermissionAttested(false); }} /></label>
+        <label><input type="checkbox" checked={permissionAttested} onChange={e => setPermissionAttested(e.target.checked)} /> Confirmo que verifiquei a permissão prévia identificada para esta instituição, finalidade e destino. Não estou registrando uma nova manifestação do titular.</label>
+        <Button type="submit" disabled={!validPermission}>Registrar confirmação</Button>
+      </fieldset>
+      {!canWrite && <p>É necessária autorização para registrar neste contexto.</p>}
     </form>}
     <section aria-labelledby={`${titleId}-weekly`}>
     <h3 id={`${titleId}-weekly`}>Programação semanal</h3>
