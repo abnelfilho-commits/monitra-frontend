@@ -4,6 +4,33 @@ import { useAuth } from "../context/AuthContext";
 import { cockpitGestaoMental, MANAGEMENT_DENIED, MANAGEMENT_AVAILABLE } from "../services/cockpitGestaoMental";
 import { instituicoesOperacionais } from "../services/operacaoAssistencial";
 
+export function useManagementAccess() {
+  const { user } = useAuth();
+  const id = user?.id, profile = user?.perfil;
+  const [retry, setRetry] = useState(0);
+  const [management, setManagement] = useState(null);
+  useEffect(() => {
+    if (!id) return;
+    let current = true;
+    const controller = new AbortController();
+    const denied = () => {
+      current = false; controller.abort();
+      setManagement({ id, profile, status: "denied" });
+    };
+    const available = () => { if (current) setManagement({ id, profile, status: "allowed" }); };
+    window.addEventListener(MANAGEMENT_AVAILABLE, available);
+    window.addEventListener(MANAGEMENT_DENIED, denied);
+    cockpitGestaoMental(4, null, controller.signal).then(() => {
+      if (current) setManagement({ id, profile, status: "allowed" });
+    }).catch(error => {
+      if (current) setManagement({ id, profile, status: [401, 403].includes(error?.response?.status) ? "denied" : "error" });
+    });
+    return () => { current = false; controller.abort(); window.removeEventListener(MANAGEMENT_DENIED, denied); window.removeEventListener(MANAGEMENT_AVAILABLE, available); };
+  }, [id, profile, retry]);
+  return { status: management?.id === id && management?.profile === profile ? management.status : "loading",
+    retry: () => { setManagement(null); setRetry(n => n + 1); } };
+}
+
 // Discovery only. Existing page guards and backend contracts remain authoritative.
 export default function useInstitutionalNavigation() {
   const { user } = useAuth();
@@ -22,25 +49,7 @@ export default function useInstitutionalNavigation() {
     }
     return () => { current = false; };
   }, [id, profile]);
-  const [management, setManagement] = useState(null);
-  useEffect(() => {
-    if (!id) return;
-    let current = true;
-    const controller = new AbortController();
-    const denied = () => {
-      current = false; controller.abort();
-      setManagement({ id, profile, status: "denied" });
-    };
-    const available = () => setManagement({ id, profile, status: "allowed" });
-    window.addEventListener(MANAGEMENT_AVAILABLE, available);
-    window.addEventListener(MANAGEMENT_DENIED, denied);
-    cockpitGestaoMental(4, null, controller.signal).then(() => {
-      if (current) setManagement({ id, profile, status: "allowed" });
-    }).catch(error => {
-      if (current) setManagement({ id, profile, status: [401, 403].includes(error?.response?.status) ? "denied" : "error" });
-    });
-    return () => { current = false; controller.abort(); window.removeEventListener(MANAGEMENT_DENIED, denied); window.removeEventListener(MANAGEMENT_AVAILABLE, available); };
-  }, [id, profile]);
+  const management = useManagementAccess();
   const items = [];
   const cardio = new URLSearchParams(search).get("modulo") === "cardiometabolico" ? "?modulo=cardiometabolico" : "";
   if (profile === "ADMIN") items.push(
@@ -57,7 +66,7 @@ export default function useInstitutionalNavigation() {
   }
   if (user && profile !== "PROFISSIONAL") items.push({ label: "Dimensionamento", to: `/dimensionamento${cardio}` });
   if (["ADMIN", "ADMIN_CLINICA"].includes(profile)) items.push({ label: "Financeiro Institucional", to: "/financeiro/institucional" });
-  if (management?.id === id && management?.profile === profile && management.status !== "denied") {
+  if (["allowed", "error"].includes(management.status)) {
     items.push({ label: management.status === "allowed" ? "Visão Geral" : "Visão Geral (verificar acesso)", to: "/saude-mental/gestao", managementConfirmed: management.status === "allowed" });
   }
   return items;

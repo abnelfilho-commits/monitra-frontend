@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageLayout from "../../components/layouts/PageLayout/PageLayout";
 import CockpitMental from "./CockpitMental";
 import ProntuarioSaudeMental from "./ProntuarioSaudeMental";
 import Button from "../../components/ui/Button";
 import { instituicoesMentais, pessoasMentais, jornadaMental, erroMental } from "../../services/saudeMental";
+
+import { useAuth } from "../../context/AuthContext";
+import { useManagementAccess } from "../../hooks/useInstitutionalNavigation";
 
 const card = { background: "white", border: "1px solid #e5e7eb", borderRadius: 12, padding: 20, marginBottom: 16 };
 const lineLabels = { ATIVA: "Ativa", INATIVA: "Inativa", AUSENTE: "Não vinculada" };
@@ -29,10 +32,23 @@ export default function SaudeMental() {
   const rawOffset = Number(search.get("offset") || 0);
   const offset = Number.isSafeInteger(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
   const detail = Boolean(pessoaId);
-  if (!detail && location.hash !== "#pessoas") return <CockpitMental key={institution} />;
+  if (!detail && location.hash !== "#pessoas") return <MentalOverview key={institution} institution={institution} />;
   // Remount on explicit scope changes: previous person's data is never reused.
   const content = <SaudeMentalContent key={`${institution}:${pessoaId}:${contextoId}:${offset}`} {...{institution, pessoaId, contextoId, offset, detail, setSearch}} />;
   return detail ? <div style={{ padding: 24, maxWidth: 1220, margin: "0 auto" }}>{content}</div> : <PageLayout>{content}</PageLayout>;
+}
+
+function MentalOverview({ institution }) {
+  const { user } = useAuth();
+  const access = useManagementAccess();
+  if (access.status === "loading") return <p role="status">Verificando acesso à Visão Geral…</p>;
+  if (access.status === "allowed") {
+    const query = institution ? `?${new URLSearchParams({ instituicao_id: institution })}` : "";
+    return <Navigate to={`/saude-mental/gestao${query}`} replace />;
+  }
+  if (access.status === "error") return <div role="alert"><p>Não foi possível verificar o acesso gerencial. Tente novamente.</p><Button onClick={access.retry}>Tentar novamente</Button></div>;
+  if (["ADMIN", "GESTOR"].includes(user?.perfil)) return <p role="alert">Acesso gerencial indisponível para esta conta. As demais rotas mantêm suas autorizações próprias.</p>;
+  return <CockpitMental />;
 }
 
 function SaudeMentalContent({ institution, pessoaId, contextoId, offset, detail, setSearch }) {
