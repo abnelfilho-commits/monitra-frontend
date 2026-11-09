@@ -1,3 +1,4 @@
+import "../GestaoInstitucionalVisual.css";
 import { useEffect, useRef, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import Button from "../../components/ui/Button";
@@ -20,7 +21,7 @@ const numero = (valor) => valor == null ? "Não disponível" : Number(valor).toL
 const data = (valor) => valor ? valor.split("-").reverse().join("/") : "Não informado";
 const referencia = (tipo, id) => id == null ? "Não informado" : `${tipo} #${id}`;
 const motivo = (codigo) => codigo ? pendencias[codigo] || `Pendência: ${codigo}` : "—";
-const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: 16 };
+const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(190px, 100%), 1fr))", gap: 16 };
 const campo = { width: "100%", padding: 10, marginTop: 6, boxSizing: "border-box" };
 const celula = { padding: "12px 10px", textAlign: "left", borderBottom: "1px solid #e5e7eb" };
 
@@ -105,7 +106,7 @@ export default function FinanceiroInstitucional() {
   };
   function tabela(linhas, tituloColuna, rotulo, chave, identidade) {
     if (!linhas?.length) return <EmptyState compact title="Sem itens nesta dimensão" />;
-    return <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse" }}>
+    return <div className="institutional-table finance-visual-table" tabIndex={0} role="region" aria-label={`Projeção por ${tituloColuna.toLowerCase()}`} style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse" }}>
       <caption style={{ textAlign: "left", padding: "8px 10px" }}>Selecione um item para consultar sua origem.</caption>
       <thead><tr>{[tituloColuna, "Consideradas", "Precificadas", "Pendentes", "Subtotal precificado"].map((h) => <th scope="col" style={celula} key={h}>{h}</th>)}</tr></thead>
       <tbody>{linhas.map((r) => <tr key={r[identidade]}>
@@ -115,7 +116,7 @@ export default function FinanceiroInstitucional() {
       </tr>)}</tbody></table></div>;
   }
 
-  return <PageLayout size="wide"><PageHeader title="Financeiro Institucional" description="Projeção financeiro-assistencial por instituição, contrato, linha e período." />
+  return <PageLayout size="wide" className="institutional-visual"><PageHeader title="Financeiro Institucional" description="Projeção financeiro-assistencial por instituição, contrato, linha e período." />
     <div style={{ display: "grid", gap: 24, minWidth: 0 }}>
       <CardWidget title="Contexto da projeção" description="Selecione explicitamente o contexto. Cada execução gera uma nova projeção.">
         {loadingContexto ? <p role="status">Carregando contexto financeiro...</p> : contexto && !contexto.instituicoes?.length ?
@@ -168,7 +169,7 @@ export default function FinanceiroInstitucional() {
                 ["Versão", i.versao_id == null ? "Não informada" : `Versão ${i.versao_numero ?? "—"} (#${i.versao_id})`], ["Vigente desde", data(i.vigente_desde)],
                 ["Preço aplicado", moeda(i.preco_unitario)], ["Subtotal", moeda(i.subtotal)], ["Estado", i.estado === "CALCULADO" ? "Precificado" : i.estado === "PENDENTE" ? "Pendente" : "Não informado"], ["Pendência", motivo(i.pendencia)],
               ];
-              return <details key={`${d.paciente_id}-${i.sessao_id}`} style={{ borderBottom: "1px solid #e5e7eb", padding: "14px 0" }}><summary style={{ cursor: "pointer" }}>{paciente(d.paciente_id)} · {referencia("Sessão", i.sessao_id)} · {data(i.data_economica)} · {moeda(i.subtotal)}</summary><dl style={{ ...grid, marginTop: 16 }}>{campos.map(([nome, valor]) => <div key={nome}><dt style={{ color: "#4b5563" }}>{nome}</dt><dd style={{ margin: "4px 0", overflowWrap: "anywhere" }}>{valor}</dd></div>)}</dl></details>;
+              return <details className="finance-visual-detail" key={`${d.paciente_id}-${i.sessao_id}`} style={{ borderBottom: "1px solid #e5e7eb", padding: "14px 0" }}><summary style={{ cursor: "pointer" }}>{paciente(d.paciente_id)} · {referencia("Sessão", i.sessao_id)} · {data(i.data_economica)} · {moeda(i.subtotal)}</summary><dl style={{ ...grid, marginTop: 16 }}>{campos.map(([nome, valor]) => <div key={nome}><dt style={{ color: "#4b5563" }}>{nome}</dt><dd style={{ margin: "4px 0", overflowWrap: "anywhere" }}>{valor}</dd></div>)}</dl></details>;
             }) : <EmptyState compact title="Nenhuma sessão neste recorte" />)}
           </CardWidget>
         </div>

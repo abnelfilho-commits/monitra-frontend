@@ -1,0 +1,48 @@
+/* Local presentation only: no changes to shared tables or button defaults. */
+.institutional-visual,
+.institutional-visual .card-widget,
+.institutional-visual .card-widget__content { min-width: 0; }
+.institutional-visual .institutional-refresh {
+  align-self: flex-start;
+  justify-self: start;
+  width: auto;
+  white-space: nowrap;
+}
+.institutional-visual .economic-fields + .institutional-refresh { margin-top: 16px; }
+.institutional-table { max-width: 100%; min-width: 0; overflow-x: auto; }
+.institutional-table:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.institutional-table table { table-layout: auto; }
+.institutional-visual .institutional-table th,
+.institutional-visual .institutional-table td {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+  vertical-align: middle;
+}
+.institutional-table thead th { white-space: nowrap; }
+.institutional-table button { width: auto; white-space: nowrap; margin: 0; }
+.mapping-visual-table table { min-width: 1240px; }
+.mapping-visual-table th:first-child { min-width: 200px; }
+.mapping-visual-table th:nth-child(2),
+.mapping-visual-table th:nth-child(6) { min-width: 180px; }
+.mapping-visual-table th:nth-child(3) { min-width: 130px; }
+.mapping-visual-table th:nth-child(5) { min-width: 210px; }
+.mapping-visual-table td:nth-child(4),
+.mapping-visual-table td:nth-child(7),
+.mapping-visual-table td:last-child { white-space: nowrap; }
+.beneficiary-visual-table table { min-width: 1050px; }
+.beneficiary-visual-table th:first-child { min-width: 210px; }
+.beneficiary-visual-table td:nth-child(2),
+.beneficiary-visual-table td:nth-child(4),
+.beneficiary-visual-table td:nth-child(5),
+.beneficiary-visual-table td:last-child { white-space: nowrap; }
+.beneficiary-visual-table td:nth-child(3) { min-width: 140px; }
+.beneficiary-visual-table td:nth-child(6) { min-width: 190px; }
+.finance-visual-table table { min-width: 660px; }
+.finance-visual-table th:first-child { min-width: 190px; }
+.finance-visual-table td { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.finance-visual-table th button { white-space: normal; text-align: left; }
+.finance-visual-detail summary { line-height: 1.6; overflow-wrap: break-word; }
+.finance-visual-detail dl > div { min-width: 0; }
+.staffing-visual-table table { min-width: 680px; }
+.staffing-visual-table td { font-variant-numeric: tabular-nums; }

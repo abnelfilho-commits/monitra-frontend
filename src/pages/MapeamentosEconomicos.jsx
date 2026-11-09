@@ -1,3 +1,4 @@
+import "./GestaoInstitucionalVisual.css";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -90,7 +91,7 @@ function Mapeamentos() {
     && (filters.situation === "TODOS" || (filters.situation === "MAPEADOS" ? r.mapeamento_id != null : r.mapeamento_id == null))
     && `${r.paciente_nome} ${r.atividade_nome}`.toLocaleLowerCase().includes(filters.search.trim().toLocaleLowerCase()));
   const filter = (key, value) => setFilters(current => ({ ...current, [key]: value }));
-  return <PageLayout>
+  return <PageLayout className="institutional-visual">
     <Link to="/admin/economia">Voltar à Administração Econômica</Link>
     <PageHeader title="Mapeamentos Econômicos" description="Associe cada planejamento individual a um serviço econômico. Preços e contratos são administrados separadamente." />
     {success && <p role="status">{success}</p>}
@@ -100,8 +101,8 @@ function Mapeamentos() {
         <label>Situação<select value={filters.situation} onChange={e => filter("situation", e.target.value)}><option value="TODOS">Todos</option><option value="MAPEADOS">Mapeados</option><option value="NAO_MAPEADOS">Não mapeados</option></select></label>
         <label>Paciente ou atividade<input value={filters.search} onChange={e => filter("search", e.target.value)} /></label>
       </div>
-      <Button onClick={() => setRevision(value => value + 1)} disabled={busy}>Atualizar</Button>
-      {list.revision !== revision ? <p role="status">Carregando planejamentos...</p> : list.error ? <p role="alert">{list.error}</p> : !rows.length ? <p>Nenhum planejamento encontrado.</p> : <div className="economic-table"><table>
+      <Button className="institutional-refresh" onClick={() => setRevision(value => value + 1)} disabled={busy}>Atualizar</Button>
+      {list.revision !== revision ? <p role="status">Carregando planejamentos...</p> : list.error ? <p role="alert">{list.error}</p> : !rows.length ? <p>Nenhum planejamento encontrado.</p> : <div className="economic-table institutional-table mapping-visual-table" tabIndex={0} role="region" aria-label="Mapeamentos econômicos"><table>
         <thead><tr>{["Paciente / Agenda", "Atividade", "Ocupação", "Duração", "Linha / Período", "Serviço Econômico", "Situação", "Ação"].map(label => <th key={label}>{label}</th>)}</tr></thead>
         <tbody>{rows.map(row => <tr key={row.agenda_cuidado_id}>
           <th scope="row">{row.paciente_nome}<small> · Agenda #{row.agenda_cuidado_id}</small></th>

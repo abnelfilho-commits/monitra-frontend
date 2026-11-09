@@ -1,3 +1,4 @@
+import "./GestaoInstitucionalVisual.css";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -157,7 +158,7 @@ export default function ContratosEconomicos() {
   }
 
   return (
-    <PageLayout>
+    <PageLayout className="institutional-visual">
       <Link to="/admin/economia">Voltar à Administração Econômica</Link>
 
       <PageHeader
@@ -184,6 +185,7 @@ export default function ContratosEconomicos() {
       />
 
       <Button
+        className="institutional-refresh"
         variant="secondary"
         disabled={state.loading}
         onClick={() => setRevision(value => value + 1)}
@@ -468,7 +470,7 @@ function DetalheContrato({ id }) {
   }
 
   return (
-    <PageLayout>
+    <PageLayout className="institutional-visual">
       <Link to="/admin/economia/contratos">Voltar aos Contratos</Link>
 
       <PageHeader title="Detalhe do Contrato" />
@@ -477,6 +479,7 @@ function DetalheContrato({ id }) {
       {!editor && feedback.success && <p role="status">{feedback.success}</p>}
 
       <Button
+        className="institutional-refresh"
         variant="secondary"
         disabled={state.loading || busy || !!editor}
         onClick={() => setRevision(value => value + 1)}
@@ -580,7 +583,7 @@ function DetalheContrato({ id }) {
               description="Adicione um paciente elegível para iniciar sua cobertura neste contrato."
             />
           ) : (
-            <div className="price-table">
+            <div className="price-table institutional-table beneficiary-visual-table" tabIndex={0} role="region" aria-label="Beneficiários do contrato">
               <table>
                 <thead>
                   <tr>

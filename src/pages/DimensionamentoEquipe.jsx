@@ -1,3 +1,4 @@
+import "./GestaoInstitucionalVisual.css";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../services/api";
@@ -76,14 +77,14 @@ const maiorHorasAnuais = maiorDemanda
 
   if (loading) {
     return (
-      <div style={{ padding: 24 }}>
+      <div className="institutional-visual staffing-visual" style={{ padding: 24 }}>
         <p>Carregando dimensionamento...</p>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 24 }}>
+    <div className="institutional-visual staffing-visual" style={{ padding: 24 }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
         <div style={headerStyle}>
           <div>
@@ -206,7 +207,7 @@ const maiorHorasAnuais = maiorDemanda
               Nenhum planejamento encontrado para dimensionamento.
             </p>
           ) : (
-            <div style={{ overflowX: "auto" }}>
+            <div className="institutional-table staffing-visual-table" tabIndex={0} role="region" aria-label="Dimensionamento por ocupação" style={{ overflowX: "auto" }}>
               <table style={tableStyle}>
                 <thead>
                   <tr>
@@ -247,7 +248,7 @@ const maiorHorasAnuais = maiorDemanda
                 Comparativo de capacidade não disponível nesta visão.
               </p>
             ) : (
-              <div style={{ overflowX: "auto" }}>
+              <div className="institutional-table staffing-visual-table" tabIndex={0} role="region" aria-label="Dimensionamento por ocupação" style={{ overflowX: "auto" }}>
                 <table style={tableStyle}>
                   <thead>
                     <tr>
@@ -391,6 +392,7 @@ const graficoLinhaHeaderStyle = {
   gap: 12,
   alignItems: "center",
   marginBottom: 8,
+  flexWrap: "wrap",
 };
 
 const graficoLabelStyle = {
