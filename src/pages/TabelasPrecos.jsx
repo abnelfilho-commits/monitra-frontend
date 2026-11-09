@@ -10,6 +10,7 @@ import { listarInstituicoes } from "../services/instituicoes";
 import * as api from "../services/economia";
 import "./ServicosEconomicos.css";
 import "./TabelasPrecos.css";
+import "./GestaoInstitucionalVisual.css";
 
 const base = "/admin/economia/tabelas";
 const date = value => value ? value.split("-").reverse().join("/") : "—";
@@ -111,12 +112,12 @@ function Tables() {
   const [form, setForm] = useState(null);
   const { busy, feedback, run } = useCommand(state.reload);
   const navigate = useNavigate();
-  return <PageLayout>
+  return <PageLayout className="institutional-visual">
     <Link to="/admin/economia">Voltar à Administração Econômica</Link>
     <PageHeader title="Tabelas de Preços" description="Configure preços por instituição, versão e serviço econômico." actions={<Button disabled={busy || state.loading || !!state.error} onClick={() => setForm({ proprietario_instituicao_id: "", codigo: "", nome: "" })}>Nova Tabela</Button>} />
-    {!form && <Feedback value={feedback} />}<Button variant="secondary" disabled={busy} onClick={state.reload}>Atualizar</Button><State state={state} />
+    {!form && <Feedback value={feedback} />}<Button className="institutional-refresh" variant="secondary" disabled={busy} onClick={state.reload}>Atualizar</Button><State state={state} />
     {!state.loading && !state.error && <CardWidget title="Tabelas cadastradas">
-      {!state.data.tables.length ? <EmptyState title="Nenhuma tabela cadastrada" description="Crie uma tabela e depois sua primeira versão." /> : <div className="price-table"><table><thead><tr><th>Proprietário</th><th>Código</th><th>Nome</th><th>Moeda</th><th>Ação</th></tr></thead><tbody>{state.data.tables.map(row => <tr key={row.id}><td>{row.proprietario_nome}</td><td>{row.codigo}</td><td>{row.nome}</td><td>{row.moeda}</td><td><Link to={`${base}/${row.id}`}>Abrir</Link></td></tr>)}</tbody></table></div>}
+      {!state.data.tables.length ? <EmptyState title="Nenhuma tabela cadastrada" description="Crie uma tabela e depois sua primeira versão." /> : <div className="price-table institutional-table price-list-visual" tabIndex={0} role="region" aria-label="Tabelas de preços cadastradas"><table><thead><tr><th>Proprietário</th><th>Código</th><th>Nome</th><th>Moeda</th><th>Ação</th></tr></thead><tbody>{state.data.tables.map(row => <tr key={row.id}><td>{row.proprietario_nome}</td><td>{row.codigo}</td><td>{row.nome}</td><td>{row.moeda}</td><td><Link to={`${base}/${row.id}`}>Abrir</Link></td></tr>)}</tbody></table></div>}
     </CardWidget>}
     {form && <Modal title="Nova Tabela" busy={busy} close={() => setForm(null)}><Feedback value={feedback} /><form onSubmit={e => { e.preventDefault(); run(() => api.criarTabela({ ...form, proprietario_instituicao_id: Number(form.proprietario_instituicao_id), moeda: "BRL" }), row => navigate(`${base}/${row.id}`)); }}>
       <fieldset disabled={busy}><div className="economic-fields">

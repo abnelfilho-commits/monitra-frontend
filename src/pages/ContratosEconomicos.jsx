@@ -206,7 +206,7 @@ export default function ContratosEconomicos() {
               description="Os contratos econômicos cadastrados aparecerão aqui."
             />
           ) : (
-            <div className="price-table">
+            <div className="price-table institutional-table contract-list-visual" tabIndex={0} role="region" aria-label="Contratos cadastrados">
               <table>
                 <thead>
                   <tr>

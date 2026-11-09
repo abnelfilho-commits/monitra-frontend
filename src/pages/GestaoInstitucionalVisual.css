@@ -46,3 +46,21 @@
 .finance-visual-detail dl > div { min-width: 0; }
 .staffing-visual-table table { min-width: 680px; }
 .staffing-visual-table td { font-variant-numeric: tabular-nums; }
+
+/* F23.1: list views only; details and previously approved tables are preserved. */
+.price-list-visual table { min-width: 760px; }
+.price-list-visual th:first-child,
+.price-list-visual th:nth-child(3) { min-width: 200px; }
+.price-list-visual th:nth-child(2) { min-width: 150px; }
+.price-list-visual td:nth-child(4),
+.price-list-visual td:last-child,
+.contract-list-visual td:nth-child(3),
+.contract-list-visual td:nth-child(5),
+.contract-list-visual td:nth-child(6),
+.contract-list-visual td:last-child { white-space: nowrap; }
+.price-list-visual a,
+.contract-list-visual a { display: inline-block; white-space: nowrap; }
+.contract-list-visual table { min-width: 1100px; }
+.contract-list-visual th:first-child,
+.contract-list-visual th:nth-child(4) { min-width: 200px; }
+.contract-list-visual th:nth-child(2) { min-width: 180px; }
