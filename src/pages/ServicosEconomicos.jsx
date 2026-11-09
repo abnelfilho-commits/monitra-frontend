@@ -104,7 +104,7 @@ function Catalogo() {
     <CardWidget title="Catálogo de serviços">
       <Button variant="secondary" disabled={busy} onClick={() => setRevision(value => value + 1)}>Atualizar catálogo</Button>
       {list.revision !== revision ? <p role="status">Carregando serviços...</p> : list.error ? <p role="alert">{list.error}</p> : !list.rows.length ? <EmptyState title="Nenhum serviço cadastrado" description="Crie o primeiro serviço econômico." /> :
-        <div className="economic-table"><table><thead><tr>{["Código", "Descrição", "Ocupação", "Duração", "Unidade", "Tipo", "Status", "Ações"].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
+        <div className="economic-table economic-services-table" role="region" aria-label="Catálogo de serviços — tabela com rolagem horizontal" tabIndex={0}><table><thead><tr>{["Código", "Descrição", "Ocupação", "Duração", "Unidade", "Tipo", "Status", "Ações"].map(label => <th key={label} scope="col">{label}</th>)}</tr></thead>
           <tbody>{list.rows.map(row => <tr key={row.id}><th scope="row">{row.codigo}</th><td>{row.descricao}</td><td>{row.ocupacao_nome}</td><td>{row.duracao_minutos} min</td><td>Sessão</td><td>Individual</td><td>{row.ativo ? "Ativo" : "Inativo"}</td><td><div className="economic-actions"><Button variant="secondary" disabled={busy} onClick={() => open(row.id)}>Editar</Button><Button variant={row.ativo ? "danger" : "secondary"} disabled={busy} onClick={() => toggle(row)}>{row.ativo ? "Inativar" : "Ativar"}</Button></div></td></tr>)}</tbody>
         </table></div>}
     </CardWidget>
