@@ -95,6 +95,9 @@ export default function FinanceiroInstitucional() {
     if (selecao.chave === "mes") return d.item.data_economica?.slice(0, 7) === selecao.valor;
     return d.item[selecao.chave] === selecao.valor;
   });
+  const nomesPacientes = new Map((preview?.pacientes || []).map(p => [p.paciente_id, p.paciente_nome]));
+  const paciente = id => nomesPacientes.get(id)
+    ? `${nomesPacientes.get(id)} · #${id}` : referencia("Paciente", id);
   const resumo = preview?.resumo;
   const servico = (id) => {
     const codigo = preview?.detalhes?.find((d) => d.item.servico_id === id)?.item.servico_codigo;
@@ -151,7 +154,7 @@ export default function FinanceiroInstitucional() {
           {tabela(preview.totais_por_mes, "Mês", (r) => r.mes, "mes", "mes")}
         </CardWidget>
         <CardWidget title="Por serviço">{tabela(preview.totais_por_servico, "Serviço", (r) => servico(r.servico_id), "servico_id", "servico_id")}</CardWidget>
-        <CardWidget title="Por paciente" description="Identificadores retornados pela projeção, sem consulta ao prontuário.">{tabela(preview.pacientes, "Paciente", (r) => referencia("Paciente", r.paciente_id), "paciente_id", "paciente_id")}</CardWidget>
+        <CardWidget title="Por paciente" description="Identificadores retornados pela projeção, sem consulta ao prontuário.">{tabela(preview.pacientes, "Paciente", (r) => paciente(r.paciente_id), "paciente_id", "paciente_id")}</CardWidget>
         <CardWidget title="Pendências de precificação">{preview.pendencias?.length ? tabela(preview.pendencias, "Motivo", (r) => motivo(r.codigo), "pendencia", "codigo") : <EmptyState compact title="Nenhuma pendência retornada" />}</CardWidget>
         <div ref={detalheRef} tabIndex={-1}>
           <CardWidget title={selecao ? `Detalhes — ${selecao.titulo}` : "Origem dos valores"} description="Selecione um agregado para consultar as sessões que o compõem." action={selecao && <Button onClick={() => setSelecao(null)}>Fechar detalhes</Button>}>
@@ -165,7 +168,7 @@ export default function FinanceiroInstitucional() {
                 ["Versão", i.versao_id == null ? "Não informada" : `Versão ${i.versao_numero ?? "—"} (#${i.versao_id})`], ["Vigente desde", data(i.vigente_desde)],
                 ["Preço aplicado", moeda(i.preco_unitario)], ["Subtotal", moeda(i.subtotal)], ["Estado", i.estado === "CALCULADO" ? "Precificado" : i.estado === "PENDENTE" ? "Pendente" : "Não informado"], ["Pendência", motivo(i.pendencia)],
               ];
-              return <details key={`${d.paciente_id}-${i.sessao_id}`} style={{ borderBottom: "1px solid #e5e7eb", padding: "14px 0" }}><summary style={{ cursor: "pointer" }}>{referencia("Paciente", d.paciente_id)} · {referencia("Sessão", i.sessao_id)} · {data(i.data_economica)} · {moeda(i.subtotal)}</summary><dl style={{ ...grid, marginTop: 16 }}>{campos.map(([nome, valor]) => <div key={nome}><dt style={{ color: "#4b5563" }}>{nome}</dt><dd style={{ margin: "4px 0", overflowWrap: "anywhere" }}>{valor}</dd></div>)}</dl></details>;
+              return <details key={`${d.paciente_id}-${i.sessao_id}`} style={{ borderBottom: "1px solid #e5e7eb", padding: "14px 0" }}><summary style={{ cursor: "pointer" }}>{paciente(d.paciente_id)} · {referencia("Sessão", i.sessao_id)} · {data(i.data_economica)} · {moeda(i.subtotal)}</summary><dl style={{ ...grid, marginTop: 16 }}>{campos.map(([nome, valor]) => <div key={nome}><dt style={{ color: "#4b5563" }}>{nome}</dt><dd style={{ margin: "4px 0", overflowWrap: "anywhere" }}>{valor}</dd></div>)}</dl></details>;
             }) : <EmptyState compact title="Nenhuma sessão neste recorte" />)}
           </CardWidget>
         </div>
