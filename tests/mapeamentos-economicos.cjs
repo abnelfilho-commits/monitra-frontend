@@ -6,7 +6,7 @@ const FRONT = process.env.AE4_FRONT_URL || 'http://127.0.0.1:5176';
   try {
     const page = await browser.newPage();
     await page.addInitScript(() => localStorage.setItem('access_token','synthetic-only'));
-    const rows = [1,2].map(id => ({agenda_cuidado_id:id,paciente_id:id,paciente_nome:`Pessoa ${id}`,atividade_nome:'Atividade',ocupacao_nome:'Ocupação',duracao_minutos:45,modulo_id:3,modulo_nome:'Saúde Mental',contexto_assistencial_id:10,data_inicio:'2026-10-01',data_fim:null,status:'PLANEJADO',mapeamento_id:id===2?20:null,servico_id:id===2?2:null,servico_codigo:'OLD',servico_descricao:'Anterior',servico_ativo:false}));
+    const rows = [1,2].map(id => ({agenda_cuidado_id:id,paciente_id:id,paciente_nome:`Pessoa ${id}`,atividade_nome:'Atividade',ocupacao_id:1,ocupacao_nome:'Ocupação',duracao_minutos:45,modulo_id:3,modulo_nome:'Saúde Mental',contexto_assistencial_id:10,data_inicio:'2026-10-01',data_fim:null,status:'PLANEJADO',mapeamento_id:id===2?20:null,servico_id:id===2?2:null,servico_codigo:'OLD',servico_descricao:'Anterior',servico_ativo:false}));
     const writes=[],errors=[];
     let conflict=false;
     page.on('pageerror',e=>errors.push(e.message));
@@ -15,7 +15,7 @@ const FRONT = process.env.AE4_FRONT_URL || 'http://127.0.0.1:5176';
       if(url.origin===FRONT) return route.continue();
       const reply=(data,status=200)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
       if(path==='/me') return reply({id:99,nome:'ADMIN',perfil:'ADMIN',modulos:[]});
-      if(path==='/admin/economia/servicos/') return reply([{id:1,codigo:'ACTIVE',descricao:'Serviço ativo',ocupacao_nome:'Ocupação',duracao_minutos:45,ativo:true},{id:2,codigo:'OLD',descricao:'Anterior',ativo:false}]);
+      if(path==='/admin/economia/servicos/') return reply([{id:1,codigo:'ACTIVE',descricao:'Serviço ativo',ocupacao_id:1,ocupacao_nome:'Ocupação',duracao_minutos:45,unidade:'SESSAO',tipo_atendimento:'INDIVIDUAL',ativo:true},{id:2,codigo:'OLD',descricao:'Anterior',ativo:false}, ...[{duracao_minutos:50},{ocupacao_id:2},{unidade:'HORA'},{tipo_atendimento:'GRUPO'}].map((change,i)=>({id:3+i,codigo:'BAD'+i,descricao:'Incompatível',ocupacao_id:1,ocupacao_nome:'Ocupação',duracao_minutos:45,unidade:'SESSAO',tipo_atendimento:'INDIVIDUAL',ativo:true,...change}))]);
       if(path==='/admin/economia/mapeamentos/' && req.method()==='GET') return reply(rows);
       if(path.startsWith('/admin/economia/mapeamentos/') && ['POST','PUT'].includes(req.method())) {
         writes.push([req.method(),req.postDataJSON()]);
@@ -33,8 +33,14 @@ const FRONT = process.env.AE4_FRONT_URL || 'http://127.0.0.1:5176';
     assert.match(await row(2).innerText(),/INATIVO/);
     await row(1).getByRole('button',{name:'Mapear',exact:true}).click();
     await page.getByLabel('Serviço Econômico *').waitFor();
-    assert.equal(await page.getByLabel('Serviço Econômico *').locator('option').count(),2);
+    assert.equal(await page.getByLabel('Serviço Econômico *').locator('option').count(),6);
     assert.equal(await page.getByRole('button',{name:'Salvar mapeamento'}).isDisabled(),true);
+    for (const id of ['3','4','5','6']) {
+      await page.getByLabel('Serviço Econômico *').selectOption(id);
+      assert.equal(await page.getByRole('button',{name:'Salvar mapeamento'}).isDisabled(),true);
+      await page.getByRole('alert').filter({hasText:'Serviço incompatível:'}).waitFor();
+    }
+    assert.equal(writes.length,0);
     await page.getByLabel('Serviço Econômico *').selectOption('1');
     conflict=true;
     await page.getByRole('button',{name:'Salvar mapeamento'}).click();

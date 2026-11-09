@@ -14,10 +14,21 @@ function errorMessage(error) {
   if (status === 403) return "Esta operação é exclusiva do ADMIN global.";
   const code = error?.response?.data?.detail?.code;
   if (code === "MAPPING_CONFLICT") return "Este planejamento já foi mapeado. Feche o formulário, atualize a lista e use Alterar.";
+  if (code === "INCOMPATIBLE_ECONOMIC_SERVICE_MAPPING") return "Serviço incompatível com a ocupação ou duração do planejamento, unidade ou tipo de atendimento. Atualize a lista e escolha um serviço compatível.";
   if (code === "INACTIVE_SERVICE") return "O serviço foi inativado. Reabra o formulário e escolha um serviço ativo.";
   if (status === 404) return "Planejamento ou serviço não encontrado. Atualize a lista.";
   if (status === 422) return "Confira o serviço selecionado.";
   return "Não foi possível concluir a operação. Tente novamente.";
+}
+function incompatibility(agenda, service) {
+  if (!service) return "Selecione um serviço compatível.";
+  const reasons = [];
+  if (!service.ativo) reasons.push("serviço inativo");
+  if (service.ocupacao_id !== agenda.ocupacao_id) reasons.push("ocupação diferente");
+  if (service.duracao_minutos !== agenda.duracao_minutos) reasons.push(`duração diferente (${agenda.duracao_minutos} × ${service.duracao_minutos} min)`);
+  if (service.unidade !== "SESSAO") reasons.push("unidade incompatível");
+  if (service.tipo_atendimento !== "INDIVIDUAL") reasons.push("tipo incompatível");
+  return reasons.join("; ");
 }
 const serviceLabel = row => `${row.servico_codigo} — ${row.servico_descricao}${row.servico_ativo === false ? " — INATIVO" : ""}`;
 const period = row => `${row.data_inicio} → ${row.data_fim || "Sem término"}`;
@@ -60,7 +71,7 @@ function Mapeamentos() {
   }
   async function save(event) {
     event.preventDefault();
-    if (sending.current || !editor.selected) return;
+    if (sending.current || !editor.selected || incompatibility(editor.row, editor.services?.find(s => String(s.id) === editor.selected))) return;
     sending.current = true; setBusy(true);
     const call = generation.current;
     setEditor(current => ({ ...current, error: "" }));
@@ -110,10 +121,11 @@ function Mapeamentos() {
       {editor.error && <p role="alert">{editor.error}</p>}
       {editor.loading ? <p role="status">Carregando serviços...</p> : editor.services && <form onSubmit={save}>
         <fieldset disabled={busy} className="economic-fields"><label>Serviço Econômico *<select required value={editor.selected} onChange={e => setEditor(current => ({ ...current, selected: e.target.value }))}>
-          <option value="">Selecione um serviço ativo</option>{editor.services.map(s => <option key={s.id} value={s.id}>{s.codigo} — {s.descricao} — {s.ocupacao_nome} — {s.duracao_minutos} min</option>)}
+          <option value="">Selecione um serviço ativo</option>{editor.services.map(s => <option key={s.id} value={s.id}>{s.codigo} — {s.descricao} — {s.ocupacao_nome} — {s.duracao_minutos} min{incompatibility(editor.row, s) ? ` — Incompatível: ${incompatibility(editor.row, s)}` : ""}</option>)}
         </select></label></fieldset>
+        {editor.selected && incompatibility(editor.row, editor.services.find(s => String(s.id) === editor.selected)) && <p role="alert">Serviço incompatível: {incompatibility(editor.row, editor.services.find(s => String(s.id) === editor.selected))}. Escolha outro serviço.</p>}
         {!editor.services.length && <p>Nenhum serviço ativo disponível. Cadastre ou ative um serviço no catálogo.</p>}
-        <Button type="submit" disabled={busy || !editor.selected}>{busy ? "Salvando..." : editor.row.mapeamento_id != null ? "Confirmar alteração" : "Salvar mapeamento"}</Button>
+        <Button type="submit" disabled={busy || !editor.selected || Boolean(incompatibility(editor.row, editor.services.find(s => String(s.id) === editor.selected)))}>{busy ? "Salvando..." : editor.row.mapeamento_id != null ? "Confirmar alteração" : "Salvar mapeamento"}</Button>
       </form>}
       <Button type="button" onClick={close} disabled={busy}>Cancelar</Button>
     </dialog>}
