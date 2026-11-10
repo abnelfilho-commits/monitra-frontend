@@ -1,0 +1,18 @@
+import { test, beforeEach } from 'node:test';
+import assert from 'node:assert/strict';
+import {pendingKey,readPending,savePending,clearPending,matchesPending} from '../src/services/capacidadePendencias.js';
+let store;
+beforeEach(()=>{store=new Map();globalThis.sessionStorage={getItem:k=>store.get(k)??null,setItem:(k,v)=>store.set(k,v),removeItem:k=>store.delete(k)};});
+const key=()=>pendingKey(1,3,100);
+const intent=()=>({action:'create',id:null,expected:{minutos_semanais:90,data_inicio:'2026-11-10',data_fim:null}});
+const row=()=>({id:10,minutos_semanais:90,data_inicio:'2026-11-10',data_fim:null,ativo:true});
+test('persistência e releitura não dependem do modal',()=>{const op=savePending(key(),intent());assert.deepEqual(readPending(key()),op);assert.throws(()=>savePending(key(),intent()));});
+test('usuário e vínculo isolados',()=>{savePending(key(),intent());assert.equal(readPending(pendingKey(2,3,100)),null);assert.equal(readPending(pendingKey(1,3,101)),null);assert.ok(readPending(key()));});
+test('armazenamento indisponível bloqueia',()=>{sessionStorage.getItem=()=>{throw Error();};assert.throws(()=>readPending(key()));assert.throws(()=>savePending(key(),intent()));});
+test('JSON inválido não é descartado',()=>{store.set(key(),'{');assert.throws(()=>readPending(key()));assert.equal(store.get(key()),'{');});
+test('estrutura ou escopo inválido bloqueia',()=>{store.set(key(),JSON.stringify({scope:'outro'}));assert.throws(()=>readPending(key()));});
+test('gravação silenciosamente perdida detectada',()=>{sessionStorage.setItem=()=>{};assert.throws(()=>savePending(key(),intent()));});
+test('cadastro exige minutos, período e estado exatos',()=>{const op=intent();assert.ok(matchesPending(row(),op));for(const patch of [{minutos_semanais:45},{data_inicio:'2026-11-09'},{data_fim:'2026-12-01'},{ativo:false}])assert.equal(matchesPending({...row(),...patch},op),false);});
+test('encerramento exige ID e fim exato',()=>{const op={...intent(),action:'close',id:10,expected:{...intent().expected,data_fim:'2026-11-15'}};assert.ok(matchesPending({...row(),data_fim:'2026-11-15'},op));assert.equal(matchesPending(row(),op),false);assert.equal(matchesPending({...row(),id:11,data_fim:'2026-11-15'},op),false);});
+test('invalidação exige identidade, estado e período preservado',()=>{const op={...intent(),action:'invalidate',id:10};assert.ok(matchesPending({...row(),ativo:false},op));assert.equal(matchesPending({...row(),ativo:false,minutos_semanais:45},op),false);});
+test('remoção não pode descartar outra pendência',()=>{const op=savePending(key(),intent());assert.throws(()=>clearPending(key(),{...op,id:55}));assert.ok(readPending(key()));clearPending(key(),op);assert.equal(readPending(key()),null);});

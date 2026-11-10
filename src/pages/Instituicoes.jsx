@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import PageLayout from "../components/layouts/PageLayout";
 import PageHeader from "../components/ui/PageHeader";
@@ -227,6 +227,7 @@ function AdministracaoInstituicoes() {
               <th scope="row" style={{ ...celula, overflowWrap: "anywhere" }}>{nome(item)}</th>
               <td style={celula}>{tipos[item.tipo_instituicao] || item.tipo_instituicao}</td><td style={celula}>{item.cnpj || "—"}</td><td style={celula}>{item.ativo ? "Ativa" : "Inativa"}</td>
               <td style={celula}><div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <Link to={`/admin/instituicoes/capacidade?instituicao_id=${item.id}`}>Capacidade instalada</Link>
                 <Button variant="secondary" disabled={ocupado} onClick={() => abrir(item.id)}>Editar</Button>
                 <Button variant={item.ativo ? "danger" : "secondary"} disabled={ocupado || !!editor} onClick={() => mudarStatus(item)}>{item.ativo ? "Inativar" : "Ativar"}</Button>
               </div></td>

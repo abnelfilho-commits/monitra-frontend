@@ -22,6 +22,7 @@ import AdministracaoEconomica from "./pages/AdministracaoEconomica";
 import ServicosEconomicos from "./pages/ServicosEconomicos";
 import { TabelasPrecos, DetalheTabelaPreco, VersaoTabelaPreco } from "./pages/TabelasPrecos";
 import ContratosEconomicos, { DetalheContratoEconomico } from "./pages/ContratosEconomicos";
+import CapacidadeInstalada from "./pages/CapacidadeInstalada";
 import Instituicoes from "./pages/Instituicoes";
 import Pessoas from "./pages/Pessoas";
 import OperacaoAssistencial from "./pages/OperacaoAssistencial";
@@ -159,6 +160,7 @@ function ApplicationRoutes() {
               <Route path="/admin/economia/contratos/:contratoId" element={<DetalheContratoEconomico />} />
               <Route path="/admin/economia/tabelas/:tabelaId" element={<DetalheTabelaPreco />} />
               <Route path="/admin/economia/tabelas/:tabelaId/versoes/:versaoId" element={<VersaoTabelaPreco />} />
+              <Route path="/admin/instituicoes/capacidade" element={<CapacidadeInstalada />} />
               <Route path="/admin/instituicoes" element={<Instituicoes />} />
               <Route path="/admin/pessoas" element={<Pessoas />} />
               <Route path="/usuarios" element={<Usuarios />} />
