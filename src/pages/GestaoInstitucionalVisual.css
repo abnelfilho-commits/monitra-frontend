@@ -74,6 +74,18 @@
 .capacity-panel small { display: block; font-weight: normal; color: #475569; }
 
 .capacity-panel .capacity-missing { display: inline-block; padding: 2px 6px; border-radius: 4px; background: #f1f5f9; color: #475569; font-weight: 600; }
+/* Keep identity and actions legible without expanding the page. */
+.capacity-panel .capacity-links-table summary { white-space: nowrap; }
+.capacity-panel .capacity-links-table button { max-width: none; }
+@media (min-width: 601px) {
+  .capacity-panel .capacity-links-table table { min-width: 1000px; }
+  .capacity-panel .capacity-links-table thead th { white-space: normal; }
+  .capacity-panel .capacity-links-table th:first-child { min-width: 220px; width: 24%; }
+  .capacity-panel .capacity-links-table th:nth-child(2) { min-width: 90px; }
+  .capacity-panel .capacity-links-table th:nth-child(4),
+  .capacity-panel .capacity-links-table th:nth-child(5) { min-width: 115px; }
+  .capacity-panel .capacity-links-table td:last-child { width: 1%; white-space: nowrap; }
+}
 @media (max-width: 600px) {
   .capacity-panel .institutional-table { overflow: visible; }
   .capacity-panel table, .capacity-panel tbody { display: block; min-width: 0; width: 100%; }
