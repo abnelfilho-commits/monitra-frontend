@@ -11,6 +11,7 @@ export default function GerenciarCapacidade({ link, institutionName, institution
   const initial = () => { try { return { op: readPending(key), blocked: false }; } catch { return { op: null, blocked: true }; } };
   const [journal] = useState(initial);
   const [storageBlocked, setStorageBlocked] = useState(journal.blocked);
+  const historyRead = useRef(0);
   const dialog = useRef(null), busyRef = useRef(false), alive = useRef(false);
   const [rows,setRows]=useState(null), [busy,setBusy]=useState(false), [error,setError]=useState(''), [notice,setNotice]=useState('');
   const [pending,setPending]=useState(journal.op), [action,setAction]=useState('create'), [record,setRecord]=useState(null);
@@ -21,11 +22,18 @@ export default function GerenciarCapacidade({ link, institutionName, institution
     return data;
   }
   useEffect(()=>{
-    alive.current=true;const origin=document.activeElement;const controller=new AbortController();
+    alive.current=true;let active=true;const request=++historyRead.current;
+    const origin=document.activeElement;const controller=new AbortController();
     dialog.current.showModal();
     consultarHistorico(link.id,{instituicao_id:institution,data_referencia:reference},controller.signal)
-      .then(data=>{if(alive.current)setRows(validate(data));}).catch(e=>{if(alive.current)setError(message(e));});
-    return ()=>{alive.current=false;controller.abort();if (origin?.isConnected) origin.focus(); else document.getElementById('capacity-management-entry')?.focus();};
+      .then(data=>{
+        if(!active||request!==historyRead.current)return;
+        const history=validate(data);setRows(history);setError('');
+      }).catch(e=>{
+        if(!active||request!==historyRead.current||controller.signal.aborted||e?.code==='ERR_CANCELED'||e?.name==='AbortError')return;
+        setError(message(e));
+      });
+    return ()=>{active=false;alive.current=false;controller.abort();if (origin?.isConnected) origin.focus(); else document.getElementById('capacity-management-entry')?.focus();};
     // Component is keyed by institution/link/reference; no request survives its scope.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
@@ -37,7 +45,7 @@ export default function GerenciarCapacidade({ link, institutionName, institution
     clearPending(key,op);setPending(null);setNotice('Operação confirmada no histórico.');setReason('');setAction('create');setRecord(null);setEnd('');onConfirmed();
   }
   async function retryRead() {
-    if(busyRef.current)return;busyRef.current=true;setBusy(true);setError('');
+    if(busyRef.current)return;++historyRead.current;busyRef.current=true;setBusy(true);setError('');
     try{const saved=readPending(key);if(saved){setPending(saved);await reconcile(saved);}else if(pending||storageBlocked)throw Error('Conferência necessária');else{const data=validate(await consultarHistorico(link.id,params));if(alive.current)setRows(data);}}
     catch(e){if(alive.current)setError(pending?'Resultado ainda não confirmado. Escritas bloqueadas; solicite conferência administrativa.':message(e));}
     finally{busyRef.current=false;if(alive.current)setBusy(false);}
@@ -48,7 +56,7 @@ export default function GerenciarCapacidade({ link, institutionName, institution
     const total=Number(hours)*60+Number(minutes);
     if(action==='create'&&(start<link.data_inicio||(link.data_fim&&(!end||start>link.data_fim||end>link.data_fim)))){setError('A capacidade deve estar integralmente dentro da vigência do vínculo.');return;}
     if(!reason.trim()||(action==='create'&&(!Number.isSafeInteger(total)||total<=0||total>2147483647||!start||(end&&end<start)))||(action==='close'&&(!end||end<record.data_inicio||(record.data_fim&&end>record.data_fim)))){setError('Confira minutos, motivo e datas de vigência.');return;}
-    if(!window.confirm(`Confirmar ${action==='create'?'cadastro':action==='close'?'encerramento':'invalidação'} da capacidade no vínculo #${link.id}${record?`, registro #${record.id}`:''}?`))return;
+    if(!window.confirm(`Confirmar ${action==='create'?'cadastro':action==='close'?'encerramento':'invalidação'} da capacidade de ${professionalName} — ${occupationName}, ${institutionName}${record?`: ${capacityLabel(record)} (referência de suporte #${record.id})`:''}?`))return;
     const payload=action==='create'?{minutos_semanais:total,data_inicio:start,data_fim:end||null,motivo:reason.trim()}:action==='close'?{data_fim:end,motivo:reason.trim()}:{motivo:reason.trim()};
     let op;
     const expected=action==='create'?{minutos_semanais:total,data_inicio:start,data_fim:end||null}:{minutos_semanais:record.minutos_semanais,data_inicio:record.data_inicio,data_fim:action==='close'?end:record.data_fim};
@@ -63,17 +71,20 @@ export default function GerenciarCapacidade({ link, institutionName, institution
     }catch(e){if(alive.current){if(!accepted&&[403,404,409,422].includes(e?.response?.status)){try{clearPending(key,op);setPending(null);}catch{setStorageBlocked(true);}setError(message(e));}else setError('Resultado não confirmado. Não repita a operação. Reconsulte ou solicite conferência administrativa.');}}
     finally{busyRef.current=false;if(alive.current)setBusy(false);}
   }
+  const professionalName = link.profissional_nome || `Profissional #${link.profissional_id}`;
+  const occupationName = link.ocupacao_nome || `Ocupação #${link.ocupacao_id}`;
+  const capacityLabel = r => `${r.minutos_semanais} min semanais · ${date(r.data_inicio)} — ${date(r.data_fim)}`;
   function choose(type,row){setAction(type);setRecord(row);setEnd(row?.data_fim||'');setReason('');setNotice('');setError('');}
   return <dialog ref={dialog} className="capacity-dialog" aria-labelledby="capacity-title" onCancel={e=>{e.preventDefault();if(!busyRef.current)onClose();}}>
-    <header><h2 id="capacity-title">Gerenciar capacidade</h2><p>{institutionName} — {link.profissional_nome||`Profissional #${link.profissional_id}`}<br/>{link.ocupacao_nome||`Ocupação #${link.ocupacao_id}`} · Vínculo #{link.id}</p></header>
+    <header><h2 id="capacity-title">Gerenciar capacidade</h2><p>{professionalName}<br/>{occupationName} — {institutionName}</p></header>
     <div className="capacity-dialog-body">
-      <p>Referência: {date(reference)}. Vigência do vínculo: {date(link.data_inicio)} — {date(link.data_fim)}{!link.ativo?' (inativo)':''}.</p>
+      <details><summary>Dados para suporte</summary>Vínculo #{link.id} · Profissional #{link.profissional_id} · Instituição #{institution}</details><p>Referência: {date(reference)}. Vigência do vínculo: {date(link.data_inicio)} — {date(link.data_fim)}{!link.ativo?' (inativo)':''}.</p>
       {storageBlocked&&<p role="alert">Armazenamento indisponível ou inválido. Escritas bloqueadas; solicite conferência administrativa.</p>}{error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
       {!rows?<p role="status">Histórico ainda não disponível.</p>:<><p>Capacidade vigente: {rows.filter(r=>r.vigente).map(r=>`${r.minutos_semanais} min`).join(', ')||'Não informada'}</p>
       <h3>Histórico</h3>{!rows.length&&<p>Nenhuma capacidade cadastrada.</p>}
-      {rows.map(r=><article key={r.id}><strong>Registro #{r.id} · {r.estado}</strong><p>{r.minutos_semanais} min semanais · {date(r.data_inicio)} — {date(r.data_fim)}</p>{r.ativo&&<><button disabled={busy||!!pending||storageBlocked} onClick={()=>choose('close',r)}>Encerrar #{r.id}</button> <button disabled={busy||!!pending||storageBlocked} onClick={()=>choose('invalidate',r)}>Invalidar #{r.id}</button></>}</article>)}
+      {rows.map(r=><article key={r.id} data-capacidade-id={r.id}><strong>{capacityLabel(r)} · {r.estado}</strong><details><summary>Dados para suporte</summary>Registro #{r.id}</details>{r.ativo&&<><button disabled={busy||!!pending||storageBlocked} onClick={()=>choose('close',r)} aria-label={`Encerrar ${capacityLabel(r)}`}>Encerrar</button> <button disabled={busy||!!pending||storageBlocked} onClick={()=>choose('invalidate',r)} aria-label={`Invalidar ${capacityLabel(r)}`}>Invalidar</button></>}</article>)}
       <button disabled={busy||!!pending||storageBlocked||!link.ativo} onClick={()=>choose('create',null)}>Nova capacidade</button>
-      <form onSubmit={submit}><fieldset disabled={busy||!!pending||storageBlocked||(action==='create'&&!link.ativo)}><legend>{action==='create'?'Cadastrar capacidade':action==='close'?'Encerrar capacidade':'Invalidar registro'}{record?` #${record.id}`:''}</legend>
+      <form onSubmit={submit}><fieldset disabled={busy||!!pending||storageBlocked||(action==='create'&&!link.ativo)}><legend>{action==='create'?'Cadastrar capacidade':action==='close'?'Encerrar capacidade':'Invalidar registro'}{record?`: ${capacityLabel(record)}`:''}</legend>
         {action==='create'&&<><label>Horas inteiras<input type="number" min="0" max="35791394" step="1" required value={hours} onChange={e=>setHours(e.target.value)}/></label><label>Minutos inteiros<input type="number" min="0" max="59" step="1" required value={minutes} onChange={e=>setMinutes(e.target.value)}/></label><label>Data de início<input type="date" required value={start} onChange={e=>setStart(e.target.value)}/></label></>}
         {action!=='invalidate'&&<label>Data de término{action==='create'?' (opcional)':''}<input type="date" required={action==='close'} value={end} onChange={e=>setEnd(e.target.value)}/></label>}
         <label>Motivo<textarea required value={reason} onChange={e=>setReason(e.target.value)}/></label>

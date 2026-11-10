@@ -98,7 +98,7 @@ function CapacityPanel() {
   const available = links?.institution === institution ? links.rows : [];
   function manage(id) {
     const found = available.find(r => r.id === Number(id));
-    if (found) setManaging({ ...found, ...data?.vinculos.find(v => v.vinculo_id === found.id), reference: date, institutionName: institutions?.find(i => i.id === Number(institution))?.nome_fantasia || institutions?.find(i => i.id === Number(institution))?.razao_social });
+    if (found) setManaging({ ...data?.vinculos.find(v => v.vinculo_id === found.id), ...found, reference: date, institutionName: institutions?.find(i => i.id === Number(institution))?.nome_fantasia || institutions?.find(i => i.id === Number(institution))?.razao_social });
   }
   function change(field, value) {
     const next = new URLSearchParams(params);
@@ -131,7 +131,7 @@ function CapacityPanel() {
       {linkError && <p role="alert">{linkError}</p>}
       <label>Vínculo profissional institucional<select id="capacity-management-entry" aria-label="Vínculo profissional institucional" value="" onChange={e => manage(e.target.value)}>
         <option value="">Selecione um vínculo (inclusive fora da data de referência)</option>
-        {available.map(v => <option key={v.id} value={v.id}>{data?.vinculos.find(d => d.vinculo_id === v.id)?.profissional_nome || `Profissional #${v.profissional_id}`} · Vínculo #{v.id} · Ocupação #{v.ocupacao_id}{v.ativo ? "" : " (inativo)"}</option>)}
+        {available.map(v => <option key={v.id} value={v.id}>{v.profissional_nome || data?.vinculos.find(d => d.vinculo_id === v.id)?.profissional_nome || `Profissional #${v.profissional_id}`} · {v.ocupacao_nome || data?.vinculos.find(d => d.vinculo_id === v.id)?.ocupacao_nome || `Ocupação #${v.ocupacao_id}`} · {civil(v.data_inicio)} — {civil(v.data_fim)}{v.ativo ? "" : " (inativo)"}</option>)}
       </select></label>
       {links?.institution === institution && !available.length && <p>Nenhum vínculo cadastrado nesta instituição.</p>}
     </CardWidget>}
@@ -156,7 +156,7 @@ function CapacityPanel() {
           </table></div></CardWidget>
           <CardWidget title="Vínculos institucionais"><div className="institutional-table" tabIndex={0} role="region" aria-label="Detalhamento dos vínculos"><table role="table">
             <thead role="rowgroup"><tr role="row">{["Profissional", "Ocupação", "Capacidade semanal", "Vigência do vínculo", "Vigência da capacidade", "Gestão"].map(t => <th role="columnheader" key={t} scope="col">{t}</th>)}</tr></thead>
-            <tbody role="rowgroup">{data.vinculos.map(v => <tr role="row" key={v.vinculo_id} data-vinculo-id={v.vinculo_id}><th role="rowheader" scope="row" data-label="Profissional">{v.profissional_nome}<small>Vínculo #{v.vinculo_id}</small></th><td role="cell" data-label="Ocupação">{v.ocupacao_nome}{!v.ocupacao_ativa && " (inativa)"}</td><td role="cell" data-label="Capacidade semanal">{weeklyLoad(v.minutos_semanais)}</td><td role="cell" data-label="Vigência do vínculo">{civil(v.vinculo_data_inicio)} — {civil(v.vinculo_data_fim)}</td><td role="cell" data-label="Vigência da capacidade">{v.capacidade_id == null ? <span className="capacity-missing">Não informada</span> : `${civil(v.capacidade_data_inicio)} — ${civil(v.capacidade_data_fim)}`}</td><td role="cell" data-label="Gestão"><button disabled={!available.some(l => l.id === v.vinculo_id)} onClick={() => manage(v.vinculo_id)}>Gerenciar capacidade</button></td></tr>)}</tbody>
+            <tbody role="rowgroup">{data.vinculos.map(v => <tr role="row" key={v.vinculo_id} data-vinculo-id={v.vinculo_id}><th role="rowheader" scope="row" data-label="Profissional">{v.profissional_nome}<details><summary>Dados para suporte</summary><small>Vínculo #{v.vinculo_id}</small></details></th><td role="cell" data-label="Ocupação">{v.ocupacao_nome}{!v.ocupacao_ativa && " (inativa)"}</td><td role="cell" data-label="Capacidade semanal">{weeklyLoad(v.minutos_semanais)}</td><td role="cell" data-label="Vigência do vínculo">{civil(v.vinculo_data_inicio)} — {civil(v.vinculo_data_fim)}</td><td role="cell" data-label="Vigência da capacidade">{v.capacidade_id == null ? <span className="capacity-missing">Não informada</span> : `${civil(v.capacidade_data_inicio)} — ${civil(v.capacidade_data_fim)}`}</td><td role="cell" data-label="Gestão"><button disabled={!available.some(l => l.id === v.vinculo_id)} onClick={() => manage(v.vinculo_id)}>Gerenciar capacidade</button></td></tr>)}</tbody>
           </table></div></CardWidget>
         </>}
       </>}
