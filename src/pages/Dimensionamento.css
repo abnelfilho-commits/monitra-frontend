@@ -1,0 +1,36 @@
+.dimensionamento-abas { min-width: 0; }
+.dimensionamento-abas-lista { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 24px; }
+.dimensionamento-abas-lista [role="tab"] { width: auto; max-width: 100%; padding: 10px 16px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #374151; font: inherit; cursor: pointer; }
+.dimensionamento-abas-lista [aria-selected="true"] { background: #ecfdf5; border-color: #15803d; color: #166534; font-weight: 700; }
+.dimensionamento-abas [role="tab"]:focus-visible, .dimensionamento-abas [role="tabpanel"]:focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.dimensionamento-abas [role="tabpanel"][hidden] { display: none; }
+.dimensionamento-mensal-provisorio { padding: 24px; }
+@media (max-width: 480px) { .dimensionamento-abas-lista { padding: 12px; } .dimensionamento-mensal-provisorio { padding: 16px; } }
+.dimensionamento-mensal-filtros { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+.dimensionamento-mensal-filtros label { display: flex; flex: 1 1 200px; flex-direction: column; gap: 6px; min-width: 0; }
+.dimensionamento-mensal-filtros input, .dimensionamento-mensal-filtros select { box-sizing: border-box; width: 100%; min-width: 0; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+.dimensionamento-mensal-filtros button { flex: 0 0 auto; width: auto; padding: 10px 16px; border: 1px solid #15803d; border-radius: 6px; background: #166534; color: white; font: inherit; cursor: pointer; }
+.dimensionamento-mensal-filtros button:disabled { opacity: .6; cursor: default; }
+.dimensionamento-mensal-filtros :focus-visible { outline: 3px solid #2563eb; outline-offset: 3px; }
+.dimensionamento-mensal-resumo { overflow-wrap: anywhere; }
+.dimensionamento-mensal-resumo dt { font-weight: 600; margin-top: 8px; }
+.dimensionamento-mensal-resumo dd { margin-left: 0; }
+.mensal-resultado { min-width: 0; margin-top: 24px; }
+.mensal-indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 16px; }
+.mensal-indicador { min-width: 0; padding: 16px; border: 1px solid #d1d5db; border-radius: 8px; background: #f9fafb; overflow-wrap: anywhere; }
+.mensal-indicador h3 { margin-top: 0; }
+.mensal-valor { font-size: 1.5rem; font-weight: 700; }
+.mensal-motivos { padding-left: 20px; font-size: .9rem; }
+.mensal-transparencia dt { font-weight: 600; }
+.mensal-transparencia dd { margin: 0 0 8px; }
+.mensal-aviso { padding: 12px; border-left: 4px solid #64748b; background: #f1f5f9; }
+.mensal-tabela-scroll { width: 100%; max-width: 100%; overflow-x: auto; margin-top: 24px; }
+.mensal-tabela { width: 100%; min-width: 850px; border-collapse: collapse; table-layout: auto; }
+.mensal-tabela caption { text-align: left; padding: 12px 0; font-weight: 700; }
+.mensal-tabela th, .mensal-tabela td { padding: 12px; border-bottom: 1px solid #d1d5db; text-align: left; vertical-align: top; word-break: normal; overflow-wrap: normal; }
+.mensal-tabela thead { background: #f1f5f9; }
+.mensal-tabela th { min-width: 110px; }
+.mensal-tabela td { font-variant-numeric: tabular-nums; }
+.mensal-tabela summary { cursor: pointer; margin-top: 8px; }
+.mensal-tabela-scroll:focus-visible, .mensal-tabela summary:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+@media (min-width: 601px) and (max-width: 1100px) { .mensal-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -60,7 +60,7 @@ import PTS from "./pages/PTS";
 import AtividadesTerapeuticas from "./pages/AtividadesTerapeuticas";
 import NovaAtividadeTerapeutica from "./pages/NovaAtividadeTerapeutica";
 import NovaOcupacaoProfissional from "./pages/NovaOcupacaoProfissional";
-import DimensionamentoEquipe from "./pages/DimensionamentoEquipe";
+import Dimensionamento from "./pages/Dimensionamento";
 
 /* Login */
 import Login from "./pages/Login";
@@ -167,7 +167,7 @@ function ApplicationRoutes() {
               <Route path="/profissionais" element={<Profissionais />} />
               <Route path="/profissionais/novo" element={<NovoProfissional />} />
               <Route path="/profissionais/:id/editar" element={<EditarProfissional />} />
-              <Route path="/dimensionamento" element={<DimensionamentoEquipe />} />
+              <Route path="/dimensionamento" element={<Dimensionamento />} />
               <Route path="/financeiro/institucional" element={<FinanceiroInstitucional />} />
               <Route path="/operacao-assistencial" element={<OperacaoAssistencial />} />
             </Route>
