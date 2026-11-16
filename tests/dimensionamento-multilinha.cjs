@@ -44,7 +44,8 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   for(const [slug,hours] of [['neurodesenvolvimento',5],['cardiometabolico',2],['saude_mental',.75],['todas',7.75]]){
    await select().selectOption(slug);await verify(slug,hours,slug==='todas'?3:1);
   }
-  assert.deepEqual(requests.filter(r=>r.path.includes('capacidade-instalada')).map(r=>r.query),['?modulo_id=11','?modulo_id=22']);
+  assert.equal(requests.filter(r=>r.path.includes('capacidade-instalada')).length,0);
+  assert.equal(await page.getByText('Demanda x Capacidade Instalada',{exact:true}).count(),0);
   await select().selectOption('saude_mental');await verify('saude_mental',.75,1);
   await page.getByText('Horas Mensais',{exact:true}).locator('..').getByText('3.25 h',{exact:true}).waitFor();
   await page.getByText('Equipe Necessária',{exact:true}).locator('..').getByText('0.02 FTE',{exact:true}).waitFor();
@@ -64,6 +65,6 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
   await page.goto(FRONT+'/dimensionamento?modulo=cardiometabolico');await verify('cardiometabolico',2,1);
   assert.ok(requests.every(r=>r.method==='GET'));assert.deepEqual(errors,[]);
   assert.equal(await main().getByText(/Saúde Mental não está incluída/).count(),0);
-  console.log('DIMENSIONAMENTO_MULTILINHA_PASS: 4 filters, canonical slugs/catalog IDs, cards/bars/insight/table, loading/empty/error/recovery, legacy capacity separate, GET-only, responsive 1440/768/390.');
+  console.log('DIMENSIONAMENTO_MULTILINHA_PASS: 4 filters, canonical slugs/catalog IDs, cards/bars/insight/table, loading/empty/error/recovery, legacy capacity absent, GET-only, responsive 1440/768/390.');
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exit(1)});

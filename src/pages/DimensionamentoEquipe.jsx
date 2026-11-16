@@ -3,16 +3,14 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../services/api";
 
-export default function DimensionamentoEquipe() {
+export default function DimensionamentoEquipe({ onAbrirConsolidacao }) {
   const [dados, setDados] = useState([]);
-  const [capacidade, setCapacidade] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
 
   const [linha, setLinha] = useState(() => searchParams.get("modulo") === "cardiometabolico" ? "cardiometabolico" : "todas");
   const [linhas, setLinhas] = useState(null);
   const [erro, setErro] = useState("");
-  const [erroCapacidade, setErroCapacidade] = useState("");
   useEffect(() => {
     let current = true;
     api.get("/atividades-terapeuticas/linhas").then(({data}) => {
@@ -24,20 +22,12 @@ export default function DimensionamentoEquipe() {
     if (!linhas) return;
     let current = true;
     async function load() {
-      setLoading(true);setErro("");setErroCapacidade("");setDados([]);setCapacidade([]);
+      setLoading(true);setErro("");setDados([]);
       try {
         const response = await api.get("/dimensionamento/ocupacoes", {params:{linha}});
         if (!current) return;
         if (!Array.isArray(response.data)) throw new Error("Resposta inválida");
         setDados(response.data);
-        const legacy = linhas.find(item => item.slug === linha && item.slug !== "saude_mental");
-        if (legacy) {
-          try {
-            const result = await api.get("/capacidade-instalada/demanda-capacidade", {params:{modulo_id:legacy.id}});
-            if (!Array.isArray(result.data)) throw new Error("Resposta inválida");
-            if (current) setCapacidade(result.data);
-          } catch { if (current) setErroCapacidade("Comparativo legado indisponível nesta consulta."); }
-        }
       } catch { if (current) setErro("Não foi possível consultar o dimensionamento. Tente novamente."); }
       finally { if (current) setLoading(false); }
     }
@@ -237,74 +227,8 @@ const maiorHorasAnuais = maiorDemanda
           )}
 
           <div style={cardStyle}>
-            <h3 style={{ marginTop: 0 }}>
-              Demanda x Capacidade Instalada
-            </h3>
-
-            <p>A capacidade instalada ainda não está integrada ao cálculo transversal. Os valores legados de capacidade não representam a disponibilidade real da equipe.</p>
-            {erroCapacidade && <p role="alert">{erroCapacidade}</p>}
-            {capacidade.length === 0 ? (
-              <p style={{ color: "#6b7280" }}>
-                Comparativo de capacidade não disponível nesta visão.
-              </p>
-            ) : (
-              <div className="institutional-table staffing-visual-table" tabIndex={0} role="region" aria-label="Dimensionamento por ocupação" style={{ overflowX: "auto" }}>
-                <table style={tableStyle}>
-                  <thead>
-                    <tr>
-                      <th style={thStyle}>Ocupação</th>
-                      <th style={thStyle}>Demanda/Ano</th>
-                      <th style={thStyle}>Capacidade/Ano</th>
-                      <th style={thStyle}>Saldo</th>
-                      <th style={thStyle}>Utilização</th>
-                      <th style={thStyle}>Status</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {capacidade.map((item) => {
-                      const saldo = Number(item.saldo_horas || 0);
-                      const utilizacao = Number(item.percentual_utilizacao || 0);
-
-                      const status =
-                        saldo < 0
-                          ? "DÉFICIT"
-                          : utilizacao >= 90
-                          ? "CRÍTICO"
-                          : utilizacao >= 70
-                          ? "ATENÇÃO"
-                          : "OK";
-
-                      return (
-                        <tr key={item.ocupacao_id}>
-                          <td style={tdStyle}>{item.ocupacao_nome}</td>
-
-                          <td style={tdStyle}>
-                            {Number(item.demanda_horas_ano || 0).toFixed(2)}
-                          </td>
-
-                          <td style={tdStyle}>
-                            {Number(item.capacidade_horas_ano || 0).toFixed(2)}
-                          </td>
-
-                          <td style={tdStyle}>
-                            {saldo.toFixed(2)}
-                          </td>
-
-                          <td style={tdStyle}>
-                            {utilizacao.toFixed(2)}%
-                          </td>
-
-                          <td style={tdStyle}>
-                            {status}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <p>Consulte demanda e capacidade por competência na aba Consolidação Mensal, disponível para administradores autorizados.</p>
+            {onAbrirConsolidacao && <button type="button" onClick={onAbrirConsolidacao}>Abrir Consolidação Mensal</button>}
           </div>
         </div>
         </>}

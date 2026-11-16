@@ -78,10 +78,26 @@ test('Clique duplo não duplica consulta em andamento',async t=>{
  let release;const gate=new Promise(r=>release=r);const f=await fixture(t,{handler:async route=>{await gate;await route.fulfill({json:response})}});t.after(()=>release());await f.select();
  await f.page.getByRole('button',{name:'Atualizar'}).evaluate(b=>{b.click();b.click()});await f.page.getByText('Consultando consolidação mensal…').waitFor();assert.equal(await f.page.getByRole('button',{name:'Atualizar'}).isDisabled(),true);release();await success(f.page);assert.equal(f.calls.length,1);
 });
-test('Resposta antiga após desmontagem não substitui consulta da nova montagem',async t=>{
- let old;const f=await fixture(t,{handler:async(route,n)=>{if(n===1){old=route;return;}await route.fulfill({json:{...response,qualidade:'CONCLUSIVO'}})}});await f.query();await f.page.getByText('Consultando consolidação mensal…').waitFor();
- await f.page.getByRole('tab',{name:'Planejamento de Equipe',exact:true}).click();await f.page.getByRole('tab',{name:'Consolidação Mensal',exact:true}).click();await f.page.waitForFunction(()=>!document.querySelector('.dimensionamento-mensal-filtros select')?.disabled);await f.query();await success(f.page);
- assert.ok(old, "Consulta anterior efetivamente iniciada");await old.fulfill({json:{...response,qualidade:'INCONSISTENTE'}}).catch(()=>{});await settle(f.page);assert.equal(await f.page.getByText('Conclusivo',{exact:true}).count(),1);assert.equal(await f.page.getByText('Inconsistente',{exact:true}).count(),0);assert.equal(f.calls.length,2);
+test('Alternância preserva consulta em andamento sem duplicar GET',async t=>{
+ let release;const gate=new Promise(r=>release=r);
+ const f=await fixture(t,{handler:async route=>{await gate;await route.fulfill({json:response})}});t.after(()=>release());
+ await f.query();await f.page.getByText('Consultando consolidação mensal…').waitFor();
+ await f.page.getByRole('tab',{name:'Planejamento de Equipe',exact:true}).click();
+ assert.equal(await f.page.getByRole('button',{name:'Atualizar'}).count(),0);
+ await f.page.getByRole('tab',{name:'Consolidação Mensal',exact:true}).click();
+ assert.equal(await f.page.getByRole('button',{name:'Atualizar'}).isDisabled(),true);
+ assert.equal(f.calls.length,1);release();await success(f.page);assert.equal(f.calls.length,1);
+});
+test('Resposta antiga após troca de ADMIN não substitui nova consulta',async t=>{
+ let old;const f=await fixture(t,{handler:async(route,n)=>{if(n===1){old=route;return;}await route.fulfill({json:{...response,qualidade:'CONCLUSIVO'}})}});
+ await f.query();await f.page.getByText('Consultando consolidação mensal…').waitFor();
+ await f.page.evaluate(()=>window.setIdentity({user:{id:2,perfil:'ADMIN'},loading:false}));
+ await f.page.getByRole('tab',{name:'Planejamento de Equipe',exact:true}).waitFor();
+ await f.page.getByRole('tab',{name:'Consolidação Mensal',exact:true}).click();
+ await f.page.waitForFunction(()=>!document.querySelector('.dimensionamento-mensal-filtros select')?.disabled);
+ await f.query();await success(f.page);assert.ok(old);
+ await old.fulfill({json:{...response,qualidade:'INCONSISTENTE'}}).catch(()=>{});await settle(f.page);
+ assert.equal(await f.page.getByText('Conclusivo',{exact:true}).count(),1);assert.equal(await f.page.getByText('Inconsistente',{exact:true}).count(),0);assert.equal(f.calls.length,2);
 });
 test('Troca de identidade descarta resposta e resultados da sessão anterior',async t=>{
  let old;const f=await fixture(t,{handler:async route=>{old=route}});await f.query();await f.page.getByText('Consultando consolidação mensal…').waitFor();await f.page.evaluate(()=>window.setIdentity({user:{id:2,perfil:'GESTOR'},loading:false}));await f.page.getByRole('tab',{name:'Consolidação Mensal',exact:true}).waitFor({state:'detached'});

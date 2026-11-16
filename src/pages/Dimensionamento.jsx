@@ -13,11 +13,21 @@ export default function Dimensionamento() {
 
 function DimensionamentoAbas({ admin }) {
   const [aba, setAba] = useState("planejamento");
+  const [mensalVisitada, setMensalVisitada] = useState(false);
   const prefixo = useId();
   const botoes = useRef([]);
   const abas = [{ id: "planejamento", titulo: "Planejamento de Equipe" },
     ...(admin ? [{ id: "mensal", titulo: "Consolidação Mensal" }] : [])];
   const selecionada = admin ? aba : "planejamento";
+  function selecionar(id) {
+    if (id === "mensal" && !admin) return;
+    if (id === "mensal") setMensalVisitada(true);
+    setAba(id);
+  }
+  function abrirMensal() {
+    selecionar("mensal");
+    botoes.current[1]?.focus();
+  }
   function teclado(event, index) {
     let next;
     if (event.key === "ArrowRight") next = (index + 1) % abas.length;
@@ -26,7 +36,7 @@ function DimensionamentoAbas({ admin }) {
     else if (event.key === "End") next = abas.length - 1;
     else return;
     event.preventDefault();
-    setAba(abas[next].id);
+    selecionar(abas[next].id);
     botoes.current[next]?.focus();
   }
   return <div className="dimensionamento-abas">
@@ -35,15 +45,15 @@ function DimensionamentoAbas({ admin }) {
         id={`${prefixo}-aba-${item.id}`} aria-controls={`${prefixo}-painel-${item.id}`}
         aria-selected={selecionada === item.id} tabIndex={selecionada === item.id ? 0 : -1}
         ref={element => { botoes.current[index] = element; }}
-        onClick={() => setAba(item.id)} onKeyDown={event => teclado(event, index)}>{item.titulo}</button>)}
+        onClick={() => selecionar(item.id)} onKeyDown={event => teclado(event, index)}>{item.titulo}</button>)}
     </div>
     <section role="tabpanel" id={`${prefixo}-painel-planejamento`}
       aria-labelledby={`${prefixo}-aba-planejamento`} hidden={selecionada !== "planejamento"} tabIndex={0}>
-      <DimensionamentoEquipe />
+      <DimensionamentoEquipe onAbrirConsolidacao={admin ? abrirMensal : undefined} />
     </section>
     {admin && <section role="tabpanel" id={`${prefixo}-painel-mensal`}
       aria-labelledby={`${prefixo}-aba-mensal`} hidden={selecionada !== "mensal"} tabIndex={0}>
-      {selecionada === "mensal" && <ConsolidacaoMensal />}
+      {mensalVisitada && <ConsolidacaoMensal />}
     </section>}
   </div>;
 }

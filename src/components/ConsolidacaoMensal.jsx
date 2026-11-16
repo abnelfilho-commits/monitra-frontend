@@ -120,7 +120,7 @@ export default function ConsolidacaoMensal() {
       <button type="submit" disabled={consulta.estado === "carregando" || catalogos.instituicoes !== "pronto"}>Atualizar</button>
     </form>
     {catalogos.instituicoes === "carregando" && <p role="status">Carregando instituições…</p>}
-    {catalogos.instituicoes === "erro" && <p role="alert">Não foi possível carregar as instituições. Reabra a aba para tentar novamente.</p>}
+    {catalogos.instituicoes === "erro" && <p role="alert">Não foi possível carregar as instituições. Recarregue a página para tentar novamente.</p>}
     {catalogos.instituicoes === "pronto" && instituicoes.length === 0 && <p>Nenhuma instituição disponível no catálogo.</p>}
     {catalogos.ocupacoes === "erro" && <p role="status">Não foi possível carregar as ocupações. Você pode consultar todas as ocupações, sem filtro.</p>}
     <div aria-live="polite" aria-busy={consulta.estado === "carregando"}>

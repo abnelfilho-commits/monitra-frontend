@@ -34,3 +34,9 @@
 .mensal-tabela summary { cursor: pointer; margin-top: 8px; }
 .mensal-tabela-scroll:focus-visible, .mensal-tabela summary:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
 @media (min-width: 601px) and (max-width: 1100px) { .mensal-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.mensal-saldo { font-weight: 700; }
+.mensal-saldo-deficit { color: #991b1b; }
+.mensal-utilizacao-trilho { height: 12px; overflow: hidden; background: #e5e7eb; border-radius: 6px; }
+.mensal-utilizacao-preenchimento { height: 100%; background: #166534; }
+.mensal-utilizacao p { font-size: .9rem; }

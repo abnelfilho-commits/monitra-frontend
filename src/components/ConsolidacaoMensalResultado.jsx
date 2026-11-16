@@ -39,6 +39,30 @@ const qualidade = (valor) => qualidades[valor] || "Não informado";
 // Formatação textual: não converte strings decimais para ponto flutuante.
 const valor = (numero) => numero == null ? "Não calculável" : String(numero).replace(".", ",");
 const mensagem = (codigo) => Object.hasOwn(mensagens, codigo) ? mensagens[codigo] : "Pendência informada pela API sem descrição disponível. Solicite avaliação administrativa.";
+function Saldo({ dados }) {
+  if (dados.saldo_mensal == null) return null;
+  const saldo = String(dados.saldo_mensal);
+  const zero = /^-?0+(\.0+)?$/.test(saldo);
+  const deficit = !zero && saldo.startsWith("-");
+  return <p className={`mensal-saldo ${deficit ? "mensal-saldo-deficit" : ""}`}>
+    {zero ? "Equilíbrio no recorte" : deficit ? "Déficit" : "Saldo disponível no recorte"}
+    {dados.qualidade === "ESTIMADO" && " — estimado"}
+  </p>;
+}
+function Utilizacao({ dados }) {
+  if (dados.utilizacao_percentual == null) return null;
+  const percentual = String(dados.utilizacao_percentual);
+  // Conversão apenas para a escala visual; o texto preserva o decimal da API.
+  const largura = Math.min(100, Math.max(0, Number(percentual)));
+  const excede = Number(percentual) > 100;
+  return <div className="mensal-utilizacao">
+    <div className="mensal-utilizacao-trilho" aria-hidden="true">
+      <div className="mensal-utilizacao-preenchimento" style={{ width: `${largura}%` }} />
+    </div>
+    <p>Utilização informada: {valor(percentual)}%{dados.qualidade === "ESTIMADO" ? " — estimada" : ""}.</p>
+    {excede && <p>A utilização excede 100%. A barra representa até 100%; o valor acima preserva o percentual integral.</p>}
+  </div>;
+}
 function Motivos({ dados, campo }) {
   const motivos = [...(dados.motivos_nao_calculaveis?.[campo] || [])];
   if (campo === "utilizacao_percentual" && dados.motivo_utilizacao_nula && !motivos.includes(dados.motivo_utilizacao_nula)) motivos.push(dados.motivo_utilizacao_nula);
@@ -67,12 +91,17 @@ export default function ConsolidacaoMensalResultado({ consulta, ocupacoes }) {
   const vazio = { inicial: "Nenhuma consulta executada.", carregando: "Consultando ocupações…", erro: "Consulta não concluída. Revise a mensagem acima.", sucesso: "Não há linhas de ocupação neste resultado." };
   return <div className="mensal-resultado">
     {dados && <>
+      <h2>Demanda × Capacidade Instalada</h2>
+      <p>Qualidade consolidada: {qualidade(dados.qualidade)}.</p>
+      <p>Capacidade declarada no recorte; saldo positivo não representa disponibilidade efetiva de agenda.</p>
       <div className="mensal-indicadores">
         {indicadores.map(([campo, titulo, unidade]) => <section key={campo} aria-label={titulo} className="mensal-indicador">
           <h3>{titulo}</h3><p className="mensal-valor">{valor(dados[campo])}</p>
           <p>{unidade}</p>
           {campo === "demanda_mensal_projetada" && <p>Qualidade da demanda: {qualidade(dados.qualidade_demanda)}</p>}
           {campo === "capacidade_mensal_equivalente" && <p>Qualidade da capacidade: {qualidade(dados.qualidade_capacidade)}</p>}
+          {campo === "saldo_mensal" && <Saldo dados={dados} />}
+          {campo === "utilizacao_percentual" && <Utilizacao dados={dados} />}
           <Motivos dados={dados} campo={campo} />
         </section>)}
       </div>
