@@ -33,7 +33,7 @@ export function useManagementAccess() {
 
 // Discovery only. Existing page guards and backend contracts remain authoritative.
 export default function useInstitutionalNavigation() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { search } = useLocation();
   const [operational, setOperational] = useState(null);
   const id = user?.id;
@@ -65,6 +65,7 @@ export default function useInstitutionalNavigation() {
     items.push({ label: "Operação Assistencial", to: "/operacao-assistencial" });
   }
   if (user && profile !== "PROFISSIONAL") items.push({ label: "Dimensionamento", to: `/dimensionamento${cardio}` });
+  if (!loading && profile === "ADMIN") items.push({ label: "Visão Econômico-Assistencial", to: "/visao-economico-assistencial" });
   if (["ADMIN", "ADMIN_CLINICA"].includes(profile)) items.push({ label: "Financeiro Institucional", to: "/financeiro/institucional" });
   if (["allowed", "error"].includes(management.status)) {
     items.push({ label: management.status === "allowed" ? "Visão Geral" : "Visão Geral (verificar acesso)", to: "/saude-mental/gestao", managementConfirmed: management.status === "allowed" });

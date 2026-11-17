@@ -84,6 +84,7 @@ import RegistrarDiagnostico from "./pages/RegistrarDiagnostico";
 import AgendaAssistencial from "./pages/AgendaAssistencial";
 
 /* Financeiro Institucional */
+import VisaoEconomicoAssistencial from "./pages/VisaoEconomicoAssistencial";
 import FinanceiroInstitucional from "./pages/financeiro/FinanceiroInstitucional";
 
 
@@ -168,6 +169,7 @@ function ApplicationRoutes() {
               <Route path="/profissionais/novo" element={<NovoProfissional />} />
               <Route path="/profissionais/:id/editar" element={<EditarProfissional />} />
               <Route path="/dimensionamento" element={<Dimensionamento />} />
+              <Route path="/visao-economico-assistencial" element={<VisaoEconomicoAssistencial />} />
               <Route path="/financeiro/institucional" element={<FinanceiroInstitucional />} />
               <Route path="/operacao-assistencial" element={<OperacaoAssistencial />} />
             </Route>
