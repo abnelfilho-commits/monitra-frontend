@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { useAuth } from "../context/AuthContext";
-import ConsolidacaoMensalResultado from "../components/ConsolidacaoMensalResultado";
+import ResumoGerencialAssistencial from "../components/ResumoGerencialAssistencial";
 import { listarInstituicoes } from "../services/instituicoes";
 import { listarOcupacoesProfissionais } from "../services/atividadesTerapeuticas";
 import { consultarConsolidacaoMensal } from "../services/consolidacaoMensal";
 import { obterContextoFinanceiroInstitucional, gerarPreviewFinanceiroInstitucional } from "../services/financeiroInstitucional";
 import "./Dimensionamento.css";
+import "./VisaoEconomicoAssistencial.css";
 
 const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: 16 };
 const numero = valor => valor == null ? "Não disponível" : Number(valor).toLocaleString("pt-BR");
@@ -65,7 +66,7 @@ function Assistencial({ instituicao }) {
     listarOcupacoesProfissionais().then(rows => { if (vigente) setOcupacoes(rows); }).catch(() => { if (vigente) setFalhaCatalogo(true); });
     return () => { vigente = false; };
   }, []);
-  return <section aria-labelledby="cockpit-assistencial">
+  return <section className="vg-block" aria-labelledby="cockpit-assistencial">
     <h2 id="cockpit-assistencial">Assistencial — consolidação institucional</h2>
     <p>Recorte de toda a instituição, sem filtro por linha assistencial ou contrato. Não é exclusivo de Neurodesenvolvimento.</p>
     <form className="dimensionamento-mensal-filtros" onSubmit={event => {
@@ -78,8 +79,8 @@ function Assistencial({ instituicao }) {
     </form>
     {falhaCatalogo && <p role="status">Não foi possível carregar ocupações. A consulta sem filtro permanece disponível.</p>}
     <Estado consulta={consulta} />
-    {consulta.estado === "sucesso" && <p>Consulta assistencial: {nome(instituicao)} · {consulta.filtros.mes} · {consulta.filtros.ocupacao}.</p>}
-    <ConsolidacaoMensalResultado consulta={consulta} ocupacoes={ocupacoes} />
+    {consulta.estado === "sucesso" && <p className="vg-selection">Consulta assistencial: {nome(instituicao)} · {consulta.filtros.mes} · {consulta.filtros.ocupacao}.</p>}
+    <ResumoGerencialAssistencial consulta={consulta} ocupacoes={ocupacoes} />
   </section>;
 }
 
@@ -98,7 +99,7 @@ function Financeiro({ instituicao }) {
   const autorizado = contexto?.instituicoes?.some(i => i.id === instituicao.id);
   const contratos = autorizado ? (contexto.contratos || []).filter(c => c.instituicao_id === instituicao.id) : [];
   const resumo = consulta.dados?.resumo;
-  return <section aria-labelledby="cockpit-financeiro">
+  return <section className="vg-block" aria-labelledby="cockpit-financeiro">
     <h2 id="cockpit-financeiro">Econômico — Neurodesenvolvimento</h2>
     <p>Projeção do contrato e período selecionados. Não representa o custo da demanda institucional do bloco assistencial.</p>
     {!contexto && !erroContexto && <p role="status">Carregando contexto financeiro…</p>}
@@ -124,7 +125,7 @@ function Financeiro({ instituicao }) {
       </form>
       <Estado consulta={consulta} />
       {consulta.estado === "sucesso" && <>
-        <p>Consulta econômica: {nome(instituicao)} · Neurodesenvolvimento · {consulta.filtros.contrato} · {consulta.filtros.inicio} a {consulta.filtros.fim}.</p>
+        <p className="vg-selection">Consulta econômica: {nome(instituicao)} · Neurodesenvolvimento · {consulta.filtros.contrato} · {consulta.filtros.inicio} a {consulta.filtros.fim}.</p>
         <p>Completude: {resumo?.completude === "COM_PENDENCIAS" ? "Com pendências" : resumo?.completude || "Não informada"}. O subtotal inclui somente itens precificados e não representa o custo total do planejamento.</p>
         <dl style={grid} className="dimensionamento-mensal-resumo">
           <div className="mensal-indicador"><dt>Subtotal precificado</dt><dd>{moeda(resumo?.subtotal_precificado)}</dd></div>
@@ -155,14 +156,14 @@ function Cockpit() {
     return () => { vigente = false; };
   }, []);
   const instituicao = instituicoes?.find(i => String(i.id) === selecionada);
-  return <div className="dimensionamento-mensal-provisorio" style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-    <h1>Visão Econômico-Assistencial</h1>
+  return <div className="visao-gerencial">
+    <header className="vg-header"><span className="vg-eyebrow">Gestão institucional</span><h1>Visão Gerencial Assistencial</h1><p>Demanda, capacidade e qualidade para apoiar decisões no seu contexto institucional.</p></header>
     <p>Consultas independentes: assistencial institucional e econômico de Neurodesenvolvimento. Não há comparação ou cálculo cruzado entre os blocos.</p>
-    <div className="dimensionamento-mensal-filtros"><label>Instituição comum<select aria-label="Instituição comum" value={selecionada} disabled={!instituicoes} onChange={e => setSelecionada(e.target.value)}><option value="">Selecione uma instituição</option>{instituicoes?.map(i => <option key={i.id} value={i.id}>{nome(i)}</option>)}</select></label></div>
+    <div className="dimensionamento-mensal-filtros vg-context"><label>Instituição comum<select aria-label="Instituição comum" value={selecionada} disabled={!instituicoes} onChange={e => setSelecionada(e.target.value)}><option value="">Selecione uma instituição</option>{instituicoes?.map(i => <option key={i.id} value={i.id}>{nome(i)}</option>)}</select></label></div>
     {falha && <p role="alert">{falha}</p>}
     {!instituicoes && !falha && <p role="status">Carregando instituições…</p>}
     {instituicoes?.length === 0 && <p>Nenhuma instituição disponível.</p>}
-    {instituicao && <div key={instituicao.id}><Assistencial instituicao={instituicao} /><hr /><Financeiro instituicao={instituicao} /></div>}
+    {instituicao && <div key={instituicao.id}><Assistencial instituicao={instituicao} /><Financeiro instituicao={instituicao} /></div>}
   </div>;
 }
 export default function VisaoEconomicoAssistencial() {
