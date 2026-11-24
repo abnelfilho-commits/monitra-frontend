@@ -39,7 +39,7 @@ export default function NeuroDashboard() {
     }).catch(() => {
       if (ativo) setCockpitStatus("error");
     });
-    listarMinhasSessoesAssistenciais().then(data => {
+    listarMinhasSessoesAssistenciais("NEURO").then(data => {
       if (!ativo) return;
       if (!Array.isArray(data)) throw new Error("Resposta de Agenda inválida");
       setSessoesAssistenciais(data);

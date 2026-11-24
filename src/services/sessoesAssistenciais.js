@@ -2,9 +2,10 @@ import api from "./api";
 
 const API = "/sessoes-assistenciais";
 
-export async function listarMinhasSessoesAssistenciais() {
+export async function listarMinhasSessoesAssistenciais(careLine) {
   const { data } = await api.get(
-    "/sessoes-assistenciais/minhas"
+    "/sessoes-assistenciais/minhas",
+    careLine === undefined ? undefined : { params: { care_line: careLine } }
   );
 
   return data;
