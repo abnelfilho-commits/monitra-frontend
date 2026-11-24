@@ -11,7 +11,9 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     const item = { pessoa_id: 18, nome_completo: 'Pessoa sintética', nome_social: 'Nome social sintético', paciente_id: 24, instituicao_id: 5, instituicao_nome: 'Instituição sintética', paciente_instituicao_id: 7, contexto_assistencial_id: 9, data_inicio: '2026-01-01', data_fim: null, contexto_estado: 'ABERTO', modulo_id: 3, linha_estado: 'ATIVA' };
-    let allow = false, status = 200;
+    let allow = false, status = 200, reportStatus = 200;
+    let reportRequests = 0, downloads = 0;
+    page.on('download', () => downloads++);
     const requests = [];
     await page.route('**/*', async route => {
       const req = route.request(), u = new URL(req.url());
@@ -20,6 +22,15 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
       const reply = (body, code = 200) => route.fulfill({ status: code, contentType: 'application/json', body: JSON.stringify(body) });
       if (u.pathname === '/me') return reply({ id: 99, nome: 'Synthetic', perfil: 'PROFISSIONAL', modulos: [] });
       assert.equal(req.method(), 'GET');
+      if (u.pathname === '/pacientes/24/relatorio-pdf') {
+        reportRequests++;
+        assert.deepEqual(Object.fromEntries(u.searchParams), {
+          care_line: 'MENTAL_HEALTH', contexto_assistencial_id: '9',
+          period_start: '2026-11-01', period_end: '2026-11-30',
+        });
+        if (reportStatus !== 200) return reply({ detail: 'SENSITIVE_SYNTHETIC_DENIAL' }, reportStatus);
+        return route.fulfill({ status: 200, contentType: 'application/pdf', body: '%PDF-1.4\nSynthetic contextual report' });
+      }
       assert.ok(u.pathname.startsWith('/saude-mental/'), u.pathname);
       if (u.pathname === '/saude-mental/instituicoes') return reply([{ id: 5, nome: item.instituicao_nome }]);
       assert.equal(u.searchParams.get('instituicao_id'), '5');
@@ -58,12 +69,35 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     assert.equal(await page.locator('.mental-record').count(), 0);
     await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
     await page.getByRole('heading', { name: 'Pessoa: Nome social sintético' }).waitFor();
-    for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'Intervenção', 'Gerar relatório']) {
+    for (const name of ['Registrar Diagnóstico', 'PHQ-9', 'GAD-7', 'CBI', 'Intervenção']) {
       assert.equal(await page.getByLabel('Ações clínicas').getByRole('button', { name, exact: true }).isDisabled(), true);
-      if (!['Registrar Diagnóstico', 'Intervenção', 'PHQ-9', 'GAD-7','CBI'].includes(name)) assert.equal(await page.getByLabel('Ações clínicas').getByRole('button', { name, exact: true }).getAttribute('title'), 'Em implementação');
+
     }
     assert.equal(await page.getByRole('button', { name: 'Intervenção', exact: true }).getAttribute('title'), 'Registro indisponível nesta consulta');
     assert.equal(await page.getByRole('button', { name: 'Atualizar', exact: true }).isEnabled(), true);
+    const reportAction = page.getByLabel('Ações clínicas').getByRole('button', { name: 'Gerar relatório', exact: true });
+    assert.equal(await reportAction.isEnabled(), true);
+    await reportAction.click();
+    const dialog = page.getByRole('dialog', { name: 'Período do relatório' });
+    await dialog.getByLabel('Data inicial').fill('2026-11-01');
+    await dialog.getByLabel('Data final').fill('2026-11-30');
+    const download = page.waitForEvent('download');
+    await dialog.getByRole('button', { name: 'Gerar relatório', exact: true }).click();
+    assert.equal((await download).suggestedFilename(), 'relatorio_mental_health_24.pdf');
+    await dialog.waitFor({ state: 'hidden' });
+    assert.equal(reportRequests, 1);
+    for (const denied of [403, 404]) {
+      reportStatus = denied;
+      await reportAction.click();
+      await dialog.getByRole('button', { name: 'Gerar relatório', exact: true }).click();
+      await dialog.getByRole('alert').waitFor();
+      assert.equal(await dialog.getByRole('alert').innerText(), 'Não foi possível gerar o relatório. Verifique o período e seu acesso.');
+      assert.ok(!(await page.locator('body').innerText()).includes('SENSITIVE_SYNTHETIC_DENIAL'));
+      assert.equal(downloads, 1);
+      await dialog.getByRole('button', { name: 'Cancelar', exact: true }).click();
+    }
+    assert.equal(reportRequests, 3);
+
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: '/tmp/w3a-prontuario-mobile.png', fullPage: true });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
@@ -72,6 +106,8 @@ const FRONT = process.env.MENTAL_FRONT_URL || 'http://127.0.0.1:5177';
     await page.getByRole('alert').waitFor();
     assert.equal(await page.locator('.mental-record').count(), 0);
     assert.equal(await page.getByRole('button', { name: 'Realizar Check-in Inicial' }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: 'Gerar relatório', exact: true }).count(), 0);
+    assert.equal(reportRequests, 3);
     const source = fs.readFileSync('src/pages/saudeMental/ProntuarioSaudeMental.jsx', 'utf8');
     assert.doesNotMatch(source, /clinica_id|ClinicalSummaryCard|services\/pacientes|services\/profissionais/);
     assert.ok(requests.length > 0);
